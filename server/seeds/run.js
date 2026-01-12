@@ -1,6 +1,24 @@
 import bcrypt from 'bcrypt';
 import pool from '../config/database.js';
 
+const { URL } = await import('url');
+
+console.log('--- DEBUG INFO ---');
+if (process.env.DATABASE_URL) {
+    try {
+        const url = new URL(process.env.DATABASE_URL);
+        console.log('Protocol:', url.protocol);
+        console.log('Hostname:', url.hostname);
+        console.log('Port:', url.port);
+    } catch (e) {
+        console.log('Could not parse DATABASE_URL:', e.message);
+        console.log('Raw URL start:', process.env.DATABASE_URL.substring(0, 10) + '...');
+    }
+} else {
+    console.log('DATABASE_URL is not defined in process.env');
+}
+console.log('------------------');
+
 async function seedDatabase() {
     try {
         console.log('🌱 Seeding database...');
