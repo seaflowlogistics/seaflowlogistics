@@ -3,13 +3,10 @@ import Layout from '../components/Layout';
 import { analyticsAPI } from '../services/api';
 import {
     Package,
-    Truck,
-    TrendingUp,
     Clock,
 
     CheckCircle,
     AlertCircle,
-    ArrowUpRight,
     Loader2,
     Users,
     ScrollText
@@ -48,33 +45,7 @@ const Dashboard: React.FC = () => {
         );
     }
 
-    const stats = [
-        {
-            label: 'Total Shipments',
-            value: data?.stats.totalShipments || '0',
-            change: '+12.5%',
-            icon: Package,
-            color: 'from-blue-600 to-blue-400',
-            bgColor: 'bg-blue-50'
-        },
-        {
-            label: 'Active Deliveries',
-            value: data?.stats.activeDeliveries || '0',
-            change: '+8.2%',
-            icon: Truck,
-            color: 'from-green-600 to-green-400',
-            bgColor: 'bg-green-50'
-        },
 
-        {
-            label: 'On-Time Rate',
-            value: `${data?.stats.onTimeRate}%` || '0%',
-            change: '+3.1%',
-            icon: TrendingUp,
-            color: 'from-orange-600 to-orange-400',
-            bgColor: 'bg-orange-50'
-        },
-    ];
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -112,97 +83,73 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Stats Grid */}
-                {user?.role === 'Clearance Manager, Administrator, Adminstrator Assistant, Clearance Manager Assistant, Accountant, Accountant Assistant' ? (
-                    /* Clearance Manager Dashboard View */
-                    <div className="space-y-8">
-                        {/* Team Snapshot */}
-                        <div>
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-bold text-gray-900">Team Snapshot</h2>
-                                <span className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                {/* Stats Grid */}
+                <div className="space-y-8">
+                    {/* Team Snapshot */}
+                    <div>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-gray-900">Team Snapshot</h2>
+                            <span className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="glass-card p-6 border-l-4 border-red-500">
+                                <p className="text-sm text-gray-500 font-medium">Overdue Clearances</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+                                <p className="text-xs text-red-500 mt-1 font-semibold">Requires attention</p>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <div className="glass-card p-6 border-l-4 border-red-500">
-                                    <p className="text-sm text-gray-500 font-medium">Overdue Clearances</p>
-                                    <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
-                                    <p className="text-xs text-red-500 mt-1 font-semibold">Requires attention</p>
-                                </div>
-                                <div className="glass-card p-6 border-l-4 border-blue-500">
-                                    <p className="text-sm text-gray-500 font-medium">Scheduled Today</p>
-                                    <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
-                                    <p className="text-xs text-blue-500 mt-1">Due within 24h</p>
-                                </div>
-                                <div className="glass-card p-6 border-l-4 border-orange-500">
-                                    <p className="text-sm text-gray-500 font-medium">Awaiting Delivery Notes</p>
-                                    <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
-                                    <p className="text-xs text-orange-500 mt-1">Pending documentation</p>
-                                </div>
-                                <div className="glass-card p-6 border-l-4 border-green-500">
-                                    <p className="text-sm text-gray-500 font-medium">Documents Received</p>
-                                    <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
-                                    <p className="text-xs text-green-500 mt-1">Shared today</p>
-                                </div>
+                            <div className="glass-card p-6 border-l-4 border-blue-500">
+                                <p className="text-sm text-gray-500 font-medium">Scheduled Today</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+                                <p className="text-xs text-blue-500 mt-1">Due within 24h</p>
+                            </div>
+                            <div className="glass-card p-6 border-l-4 border-orange-500">
+                                <p className="text-sm text-gray-500 font-medium">Awaiting Delivery Notes</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+                                <p className="text-xs text-orange-500 mt-1">Pending documentation</p>
+                            </div>
+                            <div className="glass-card p-6 border-l-4 border-green-500">
+                                <p className="text-sm text-gray-500 font-medium">Documents Received</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+                                <p className="text-xs text-green-500 mt-1">Shared today</p>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Quick Actions */}
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <Link to="/registry" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
-                                    <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                        <ScrollText className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="font-bold text-gray-900">Clearance Board</h3>
-                                    <p className="text-xs text-gray-500 mt-1">Assign teams & reschedule</p>
-                                </Link>
-                                <div className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
-                                    <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                        <CheckCircle className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="font-bold text-gray-900">Delivery Notes</h3>
-                                    <p className="text-xs text-gray-500 mt-1">Approve documentation</p>
+                    {/* Quick Actions */}
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <Link to="/registry" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
+                                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <ScrollText className="w-6 h-6" />
                                 </div>
-                                <div className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
-                                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                                        <Package className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="font-bold text-gray-900">Container Tracking</h3>
-                                    <p className="text-xs text-gray-500 mt-1">Monitor port status</p>
+                                <h3 className="font-bold text-gray-900">Clearance Board</h3>
+                                <p className="text-xs text-gray-500 mt-1">Assign teams & reschedule</p>
+                            </Link>
+                            <Link to="/delivery-notes" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
+                                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <CheckCircle className="w-6 h-6" />
                                 </div>
-                                <div className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
-                                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                                        <Users className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="font-bold text-gray-900">Client Updates</h3>
-                                    <p className="text-xs text-gray-500 mt-1">Send status pings</p>
+                                <h3 className="font-bold text-gray-900">Delivery Notes</h3>
+                                <p className="text-xs text-gray-500 mt-1">Approve documentation</p>
+                            </Link>
+                            <Link to="/containers" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
+                                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                    <Package className="w-6 h-6" />
                                 </div>
+                                <h3 className="font-bold text-gray-900">Container Tracking</h3>
+                                <p className="text-xs text-gray-500 mt-1">Monitor port status</p>
+                            </Link>
+                            <div className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
+                                <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                    <Users className="w-6 h-6" />
+                                </div>
+                                <h3 className="font-bold text-gray-900">Client Updates</h3>
+                                <p className="text-xs text-gray-500 mt-1">Send status pings</p>
                             </div>
                         </div>
                     </div>
-                ) : (
-                    /* Default Dashboard for Admin/Other */
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {stats.map((stat, index) => (
-                            <div key={index} className="stat-card animate-slide-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-600 font-medium">{stat.label}</p>
-                                        <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                                        <div className="flex items-center gap-1 mt-2">
-                                            <ArrowUpRight className="w-4 h-4 text-green-600" />
-                                            <span className="text-sm text-green-600 font-semibold">{stat.change}</span>
-                                            <span className="text-sm text-gray-500">vs last month</span>
-                                        </div>
-                                    </div>
-                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                                        <stat.icon className="w-6 h-6 text-white" />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                </div>
 
                 {/* Admin Management Section */}
                 {user?.role === 'Administrator' && (
