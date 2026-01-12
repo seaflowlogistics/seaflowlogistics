@@ -103,9 +103,9 @@ const CreateShipment: React.FC = () => {
     };
 
     const getTransportDocLabel = () => {
-        if (formData.transport_mode === 'Sea') return 'Bill of Lading (BL)';
-        if (formData.transport_mode === 'Air') return 'Airway Bill (AWB)';
-        return 'Transport Document';
+        if (formData.transport_mode === 'Sea') return 'Bill of Lading (BL) (Optional)';
+        if (formData.transport_mode === 'Air') return 'Airway Bill (AWB) (Optional)';
+        return 'Transport Document (Optional)';
     };
 
     return (
