@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { analyticsAPI } from '../services/api';
 import {
-
+    Package,
+    Truck,
+    TrendingUp,
     Clock,
 
     CheckCircle,
@@ -45,6 +47,34 @@ const Dashboard: React.FC = () => {
             </Layout>
         );
     }
+
+    const stats = [
+        {
+            label: 'Total Shipments',
+            value: data?.stats.totalShipments || '0',
+            change: '+12.5%',
+            icon: Package,
+            color: 'from-blue-600 to-blue-400',
+            bgColor: 'bg-blue-50'
+        },
+        {
+            label: 'Active Deliveries',
+            value: data?.stats.activeDeliveries || '0',
+            change: '+8.2%',
+            icon: Truck,
+            color: 'from-green-600 to-green-400',
+            bgColor: 'bg-green-50'
+        },
+
+        {
+            label: 'On-Time Rate',
+            value: `${data?.stats.onTimeRate}%` || '0%',
+            change: '+3.1%',
+            icon: TrendingUp,
+            color: 'from-orange-600 to-orange-400',
+            bgColor: 'bg-orange-50'
+        },
+    ];
 
     const getStatusColor = (status: string) => {
         switch (status) {
