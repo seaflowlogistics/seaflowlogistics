@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS clearance_schedules (
     id SERIAL PRIMARY KEY,
-    job_id UUID REFERENCES shipments(id) ON DELETE CASCADE,
+    job_id VARCHAR(50) REFERENCES shipments(id) ON DELETE CASCADE,
     clearance_date DATE,
     clearance_type VARCHAR(50),
     port VARCHAR(100),
