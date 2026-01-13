@@ -27,6 +27,7 @@ export const sendEmail = async (to, subject, text, html) => {
     }
 
     try {
+        console.log(`Sending email to: ${to} | Subject: ${subject} | From: ${process.env.EMAIL_FROM}`);
         const info = await transporter.sendMail({
             from: process.env.EMAIL_FROM || '"Seaflow Logistics" <no-reply@seaflow.com>',
             to,
