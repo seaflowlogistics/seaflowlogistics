@@ -188,7 +188,7 @@ const Shipments: React.FC = () => {
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {shipments.map((shipment, index) => (
-                            <div key={shipment.id} className="glass-card p-6 hover:shadow-2xl transition-all duration-300 animate-slide-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                            <div key={shipment.id} className="glass-card p-6 hover:shadow-2xl transition-all duration-300 animate-slide-in" style={{ animationDelay: `${index * 0.01}s` }}>
                                 {/* Header */}
                                 <div className="flex items-start justify-between mb-4">
                                     <div>

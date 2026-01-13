@@ -66,7 +66,7 @@ const Login: React.FC = () => {
 
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                                Username
+                                Username or Email
                             </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -78,7 +78,7 @@ const Login: React.FC = () => {
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     className="input-field pl-10"
-                                    placeholder="Enter your username"
+                                    placeholder="Enter username or email"
                                     disabled={isLoading}
                                 />
                             </div>
