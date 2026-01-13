@@ -68,7 +68,11 @@ router.post('/', authorizeRole(['Administrator']), async (req, res) => {
             [req.user.id, 'CREATE_USER', `Created user ${username} with role ${role}`, 'USER', result.rows[0].id]
         );
 
-        res.status(201).json(result.rows[0]);
+        const newUser = result.rows[0];
+        // Return the generated password so the admin can give it to the user if email fails
+        newUser.temporaryPassword = generatedPassword;
+
+        res.status(201).json(newUser);
     } catch (error) {
         if (error.code === '23505') { // Unique violation
             return res.status(409).json({ error: 'Username or email already exists' });

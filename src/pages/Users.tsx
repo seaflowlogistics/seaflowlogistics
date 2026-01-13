@@ -51,6 +51,8 @@ const Users: React.FC = () => {
         }
     };
 
+    const [newUserCredentials, setNewUserCredentials] = useState<{ username: string, password: string, email: string } | null>(null);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -68,17 +70,29 @@ const Users: React.FC = () => {
                 if (formData.password) {
                     data.password = formData.password;
                 }
-                await usersAPI.update(editingUser.id, data);
+                const response = await usersAPI.update(editingUser.id, data);
+
+                // Update local state immediately
+                setUsers(users.map(u => u.id === editingUser.id ? { ...u, ...response.data } : u));
                 setSuccess('User updated successfully');
             } else {
-                await usersAPI.create(formData);
-                setSuccess('User created and role assigned successfully');
+                const response = await usersAPI.create(formData);
+                const newUser = response.data;
+
+                // Update local state immediately (add to top)
+                setUsers([newUser, ...users]);
+                setSuccess('User created successfully');
+
+                // Show credentials modal
+                setNewUserCredentials({
+                    username: newUser.username,
+                    password: newUser.temporaryPassword,
+                    email: newUser.email
+                });
             }
             setIsModalOpen(false);
-            fetchUsers();
+            // No need to fetchUsers() since we updated state locally
             resetForm();
-            // Clear success message after 3 seconds
-            setTimeout(() => setSuccess(''), 3000);
         } catch (err: any) {
             setError(err.response?.data?.error || 'An error occurred');
         }
@@ -214,6 +228,60 @@ const Users: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Created User Credentials Modal */}
+                {newUserCredentials && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-fade-in p-6 border-2 border-green-500">
+                            <div className="text-center mb-6">
+                                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                                    <Shield className="h-6 w-6 text-green-600" />
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900">User Created Successfully</h3>
+                                <p className="text-sm text-gray-500 mt-2">
+                                    Please copy these credentials and share them with the user securely.
+                                </p>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-3 mb-6 border border-gray-200">
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Username</label>
+                                    <div className="flex items-center justify-between mt-1">
+                                        <code className="text-sm font-mono font-bold text-gray-900 bg-white px-2 py-1 rounded border">{newUserCredentials.username}</code>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Temporary Password</label>
+                                    <div className="flex items-center justify-between mt-1">
+                                        <code className="text-lg font-mono font-bold text-primary-600 bg-white px-2 py-1 rounded border">{newUserCredentials.password}</code>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</label>
+                                    <div className="text-sm text-gray-900 mt-1">{newUserCredentials.email}</div>
+                                </div>
+                            </div>
+
+                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                                <div className="flex">
+                                    <div className="ml-3">
+                                        <p className="text-sm text-yellow-700">
+                                            The user will be required to change this password upon their first login.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setNewUserCredentials(null)}
+                                className="btn-primary w-full justify-center"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Modal */}
                 {isModalOpen && (
