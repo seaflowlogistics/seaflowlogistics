@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { shipmentsAPI } from '../services/api';
+import { shipmentsAPI, consigneesAPI, exportersAPI } from '../services/api';
 import {
     Search, Plus, Ship,
     FileText,
@@ -17,6 +17,10 @@ const ShipmentRegistry: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // Dropdown Data State
+    const [consigneesList, setConsigneesList] = useState<any[]>([]);
+    const [exportersList, setExportersList] = useState<any[]>([]);
+
     // Form State (for Register New Job)
     const [formData, setFormData] = useState({
         service: 'Clearance',
@@ -26,11 +30,12 @@ const ShipmentRegistry: React.FC = () => {
         shipment_type: 'IMP',
         billing_contact_same: true,
         billing_contact: ''
-        // Reverted: Removed extra fields like description, weight, price
     });
 
     useEffect(() => {
         loadJobs();
+        loadDropdownData();
+
         // Poll for updates every 5 seconds
         const intervalId = setInterval(() => {
             // Only poll if we aren't currently searching (to avoid UI jumpiness during typing)
@@ -42,6 +47,19 @@ const ShipmentRegistry: React.FC = () => {
 
         return () => clearInterval(intervalId);
     }, [searchTerm]);
+
+    const loadDropdownData = async () => {
+        try {
+            const [consigneesRes, exportersRes] = await Promise.all([
+                consigneesAPI.getAll(),
+                exportersAPI.getAll()
+            ]);
+            setConsigneesList(consigneesRes.data || []);
+            setExportersList(exportersRes.data || []);
+        } catch (error) {
+            console.error("Failed to load dropdown data", error);
+        }
+    };
 
     const loadJobs = async (silent = false) => {
         if (!silent) setLoading(true);
@@ -75,6 +93,8 @@ const ShipmentRegistry: React.FC = () => {
         });
         setViewMode('create');
         setSelectedJob(null);
+        // Ensure dropdowns are fresh
+        loadDropdownData();
     };
 
     const handleJobClick = (job: any) => {
@@ -85,6 +105,47 @@ const ShipmentRegistry: React.FC = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCreateSubmit = async () => {
+        try {
+            setLoading(true);
+
+            // Construct FormData as expected by the backend
+            // The backend expects generic fields: sender_name, receiver_name, transport_mode, etc.
+            const apiData = new FormData();
+
+            // Map UI 'Exporter' -> sender_name / customer
+            apiData.append('sender_name', formData.exporter);
+
+            // Map UI 'Consignee' -> receiver_name
+            apiData.append('receiver_name', formData.consignee);
+
+            apiData.append('transport_mode', formData.transport_mode);
+
+            // Backend requires these, so we provide defaults or mapped values
+            apiData.append('description', `${formData.service}`);
+            apiData.append('weight', '0'); // default
+            apiData.append('price', '0');  // default
+
+            // Default dates
+            apiData.append('date', new Date().toISOString());
+            apiData.append('expected_delivery_date', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()); // +7 days
+
+            // Note: File uploads are not in this simplified form yet, but backend handles them optionally.
+
+            await shipmentsAPI.create(apiData);
+
+            alert('Job Created Successfully!');
+            setViewMode('empty');
+            loadJobs();
+
+        } catch (error: any) {
+            console.error('Create Job Failed', error);
+            alert('Failed to create job: ' + (error.response?.data?.error || error.message));
+        } finally {
+            setLoading(false);
+        }
     };
 
     const getModeIcon = (mode: string) => {
@@ -192,11 +253,16 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="relative">
                             <select
                                 name="consignee"
+                                value={formData.consignee}
                                 onChange={handleInputChange}
                                 className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none appearance-none text-gray-700"
                             >
                                 <option value="">Select Consignee</option>
-                                <option value="Contact 1">Consignee</option>
+                                {consigneesList.map((consignee: any) => (
+                                    <option key={consignee.id} value={consignee.name || consignee.id}>
+                                        {consignee.name}
+                                    </option>
+                                ))}
                             </select>
                             <div className="absolute right-3 top-3.5 pointer-events-none text-gray-400">
                                 <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
@@ -207,15 +273,20 @@ const ShipmentRegistry: React.FC = () => {
                 {/* Section C: Exporter */}
                 <div className="form-group">
                     <div className="mt-4 animate-fade-in-down">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Exporter</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">exporter</label>
                         <div className="relative">
                             <select
-                                name="billing_contact"
+                                name="exporter"
+                                value={formData.exporter}
                                 onChange={handleInputChange}
                                 className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none appearance-none text-gray-700"
                             >
                                 <option value="">Select Exporter</option>
-                                <option value="Contact 1">Exporter</option>
+                                {exportersList.map((exporter: any) => (
+                                    <option key={exporter.id} value={exporter.name || exporter.id}>
+                                        {exporter.name}
+                                    </option>
+                                ))}
                             </select>
                             <div className="absolute right-3 top-3.5 pointer-events-none text-gray-400">
                                 <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
@@ -289,6 +360,7 @@ const ShipmentRegistry: React.FC = () => {
                             <div className="relative">
                                 <select
                                     name="billing_contact"
+                                    value={formData.billing_contact}
                                     onChange={handleInputChange}
                                     className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none appearance-none text-gray-700"
                                 >
@@ -313,10 +385,11 @@ const ShipmentRegistry: React.FC = () => {
                     Cancel
                 </button>
                 <button
-                    onClick={() => { alert('Job Saved!'); setViewMode('empty'); }}
-                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all shadow"
+                    onClick={handleCreateSubmit}
+                    disabled={loading}
+                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all shadow flex justify-center items-center"
                 >
-                    Save Job
+                    {loading ? 'Saving...' : 'Save Job'}
                 </button>
             </div>
         </div>
@@ -538,7 +611,7 @@ const ShipmentRegistry: React.FC = () => {
                             <h3 className="text-xl font-bold text-gray-900 mb-2">Nothing here yet</h3>
                             <p className="text-gray-500 max-w-sm mb-8">
                                 To view a job, select a job from the inbox.<br />
-                                To add a new job, click the + button.
+                                To add a new job, click the + button to create manually, or use the upload icon for Excel import.
                             </p>
                         </div>
                     )}
