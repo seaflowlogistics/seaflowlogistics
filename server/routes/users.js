@@ -251,10 +251,11 @@ router.post('/:id/photo', (req, res, next) => {
     try {
         const photoUrl = `/uploads/${req.file.filename}`;
 
-        await pool.query(
+        const updateResult = await pool.query(
             'UPDATE users SET photo_url = $1 WHERE id = $2',
             [photoUrl, id]
         );
+        console.log(`[DEBUG] Updated photo for user ${id}. Rows affected: ${updateResult.rowCount}`);
 
         res.json({ photoUrl });
     } catch (error) {

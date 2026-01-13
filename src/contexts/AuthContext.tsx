@@ -49,6 +49,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (userStr && token) {
             try {
                 setUser(JSON.parse(userStr));
+                // Fetch fresh data from server to ensure sync
+                refreshUser();
             } catch (e) {
                 console.error('Failed to parse user data', e);
             }
