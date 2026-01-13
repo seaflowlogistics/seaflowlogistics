@@ -118,9 +118,14 @@ router.post('/forgot-password', async (req, res) => {
             [token, user.id]
         );
 
-        // Send Email
-        const { sendPasswordResetEmail } = await import('../utils/email.js');
-        await sendPasswordResetEmail(email, token);
+        // Send Email (Async)
+        import('../utils/email.js').then(({ sendPasswordResetEmail }) => {
+            sendPasswordResetEmail(email, token).catch(err => {
+                console.error('Failed to send password reset email (async):', err);
+            });
+        }).catch(err => {
+            console.error('Failed to import email utils:', err);
+        });
 
         res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
 

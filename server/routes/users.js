@@ -54,13 +54,14 @@ router.post('/', authorizeRole(['Administrator']), async (req, res) => {
         );
 
         // Send Welcome Email
-        try {
-            const { sendWelcomeEmail } = await import('../utils/email.js');
-            await sendWelcomeEmail(email, username, generatedPassword);
-        } catch (emailError) {
-            console.error('Failed to send welcome email:', emailError);
-            // Don't fail the request, just log it
-        }
+        // Send Welcome Email (Async - don't wait for it)
+        import('../utils/email.js').then(({ sendWelcomeEmail }) => {
+            sendWelcomeEmail(email, username, generatedPassword).catch(err => {
+                console.error('Failed to send welcome email (async):', err);
+            });
+        }).catch(err => {
+            console.error('Failed to import email utils:', err);
+        });
 
         // Log action
         await pool.query(
