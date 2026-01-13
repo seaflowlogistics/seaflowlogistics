@@ -101,8 +101,10 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                                     className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.port ? 'text-gray-400' : 'text-gray-700'}`}
                                 >
                                     <option value="" disabled>Select an option</option>
-                                    <option value="Port A">Port A</option>
-                                    <option value="Port B">Port B</option>
+                                    <option value="Port A">MALE</option>
+                                    <option value="Port B">HULHUMALE</option>
+                                    <option value="Port C">MALE AIRPORT</option>
+                                    <option value="Port D">ADDU</option>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
                             </div>
