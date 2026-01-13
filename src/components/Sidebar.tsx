@@ -40,9 +40,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     if (isClearance) {
         menuItems.push(
             { icon: FileText, label: 'Shipment Registry', path: '/registry' },
+            { icon: Calendar, label: 'Clearance Schedule', path: '/schedule' },
             { icon: ClipboardList, label: 'Delivery Notes', path: '/delivery-notes' },
             { icon: Container, label: 'Containers', path: '/containers' },
-            { icon: Calendar, label: 'Clearance Schedule', path: '/schedule' },
             { icon: FileText, label: 'Reports', path: '/reports' }
         );
     }
