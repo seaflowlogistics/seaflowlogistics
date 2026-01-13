@@ -51,7 +51,7 @@ const ClearanceSchedule: React.FC = () => {
                                 >
                                     <option>All types</option>
                                     <option>Normal</option>
-                                    <option>Priority</option>
+                                    <option>Express</option>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                             </div>
@@ -67,7 +67,8 @@ const ClearanceSchedule: React.FC = () => {
                                     className="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer"
                                 >
                                     <option>All modes</option>
-                                    <option>Ocean</option>
+                                    <option>Road</option>
+                                    <option>Sea</option>
                                     <option>Air</option>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
