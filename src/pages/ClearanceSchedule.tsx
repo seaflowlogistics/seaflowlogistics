@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { Search, Calendar, ChevronDown, RotateCcw } from 'lucide-react';
+import { Search, Calendar, ChevronDown, Pencil } from 'lucide-react';
 import { clearanceAPI } from '../services/api';
 
 const ClearanceSchedule: React.FC = () => {
@@ -143,7 +143,7 @@ const ClearanceSchedule: React.FC = () => {
                                     <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Method</th>
                                     <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Transport</th>
                                     <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Date</th>
-                                    <th className="py-4 px-6 text-center text-xs font-bold uppercase tracking-wider w-[80px]">Actions</th>
+                                    <th className="py-4 px-6 text-center text-xs font-bold uppercase tracking-wider w-[80px]">Edit</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -184,8 +184,8 @@ const ClearanceSchedule: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="py-4 px-6 text-center">
-                                                <button className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors">
-                                                    <RotateCcw className="w-4 h-4" />
+                                                <button className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors">
+                                                    <Pencil className="w-4 h-4" />
                                                 </button>
                                             </td>
                                         </tr>
