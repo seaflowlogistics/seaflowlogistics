@@ -121,6 +121,7 @@ export const invoicesAPI = {
 export const consigneesAPI = {
     getAll: () => api.get('/consignees'),
     create: (data: any) => api.post('/consignees', data),
+    update: (id: string, data: any) => api.put(`/consignees/${id}`, data),
     delete: (id: string) => api.delete(`/consignees/${id}`),
     import: (formData: FormData) => api.post('/consignees/import', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },

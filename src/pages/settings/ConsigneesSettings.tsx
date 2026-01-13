@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Users, FileUp, Plus, Trash2, Search, X } from 'lucide-react';
+import { Users, FileUp, Plus, Trash2, Search, X, Edit2 } from 'lucide-react';
 import { consigneesAPI } from '../../services/api';
 
 const ConsigneesSettings: React.FC = () => {
@@ -9,6 +9,7 @@ const ConsigneesSettings: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [importing, setImporting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -38,14 +39,37 @@ const ConsigneesSettings: React.FC = () => {
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await consigneesAPI.create(formData);
+            if (editingId) {
+                await consigneesAPI.update(editingId, formData);
+            } else {
+                await consigneesAPI.create(formData);
+            }
             setShowAddModal(false);
+            setEditingId(null);
             setFormData({ name: '', email: '', phone: '', address: '', code: '' });
             fetchConsignees();
         } catch (error) {
-            console.error('Failed to create consignee', error);
-            alert('Failed to create consignee');
+            console.error('Failed to save consignee', error);
+            alert('Failed to save consignee');
         }
+    };
+
+    const handleEdit = (consignee: any) => {
+        setEditingId(consignee.id);
+        setFormData({
+            name: consignee.name || '',
+            email: consignee.email || '',
+            phone: consignee.phone || '',
+            address: consignee.address || '',
+            code: consignee.code || ''
+        });
+        setShowAddModal(true);
+    };
+
+    const closeModal = () => {
+        setShowAddModal(false);
+        setEditingId(null);
+        setFormData({ name: '', email: '', phone: '', address: '', code: '' });
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +142,11 @@ const ConsigneesSettings: React.FC = () => {
                         <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} disabled={importing} />
                     </label>
                     <button
-                        onClick={() => setShowAddModal(true)}
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({ name: '', email: '', phone: '', address: '', code: '' });
+                            setShowAddModal(true);
+                        }}
                         className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -150,7 +178,7 @@ const ConsigneesSettings: React.FC = () => {
                                     <th className="py-3 px-4 font-semibold">Code</th>
                                     <th className="py-3 px-4 font-semibold">Email</th>
                                     <th className="py-3 px-4 font-semibold">Phone</th>
-                                    <th className="py-3 px-4 font-semibold w-10"></th>
+                                    <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -160,7 +188,14 @@ const ConsigneesSettings: React.FC = () => {
                                         <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.code || '-'}</td>
                                         <td className="py-3 px-4 text-gray-600">{item.email || '-'}</td>
                                         <td className="py-3 px-4 text-gray-600 font-mono">{item.phone || '-'}</td>
-                                        <td className="py-3 px-4 text-right">
+                                        <td className="py-3 px-4 text-right flex justify-end gap-2">
+                                            <button
+                                                onClick={() => handleEdit(item)}
+                                                className="text-gray-300 hover:text-blue-600 transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
                                             <button
                                                 onClick={() => handleDelete(item.id)}
                                                 className="text-gray-300 hover:text-red-600 transition-colors"
@@ -177,13 +212,13 @@ const ConsigneesSettings: React.FC = () => {
                 )}
             </div>
 
-            {/* Add Modal */}
+            {/* Add/Edit Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h3 className="font-bold text-lg text-gray-900">Add New Consignee</h3>
-                            <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+                            <h3 className="font-bold text-lg text-gray-900">{editingId ? 'Edit Consignee' : 'Add New Consignee'}</h3>
+                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -243,7 +278,7 @@ const ConsigneesSettings: React.FC = () => {
                             <div className="pt-2 flex justify-end gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => setShowAddModal(false)}
+                                    onClick={closeModal}
                                     className="px-4 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                     Cancel
@@ -252,7 +287,7 @@ const ConsigneesSettings: React.FC = () => {
                                     type="submit"
                                     className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
                                 >
-                                    Create Consignee
+                                    {editingId ? 'Save Changes' : 'Create Consignee'}
                                 </button>
                             </div>
                         </form>
