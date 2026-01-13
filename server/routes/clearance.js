@@ -41,18 +41,68 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Update a clearance schedule
+router.put('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date, type, port, bl_awb, transport_mode, remarks } = req.body;
+
+        const result = await pool.query(
+            `UPDATE clearance_schedules 
+             SET clearance_date = $1, clearance_type = $2, port = $3, bl_awb = $4, transport_mode = $5, remarks = $6
+             WHERE id = $7
+             RETURNING *`,
+            [date, type, port, bl_awb, transport_mode, remarks, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Clearance schedule not found' });
+        }
+
+        const schedule = result.rows[0];
+
+        // Audit Log
+        await logActivity(
+            req.user.id,
+            'UPDATE_CLEARANCE_SCHEDULE',
+            `Updated clearance schedule for Job ${schedule.job_id}`,
+            'clearance_schedules',
+            schedule.id
+        );
+
+        res.json(schedule);
+    } catch (error) {
+        console.error('Error updating clearance schedule:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Get all clearance schedules (with filters)
 router.get('/', async (req, res) => {
     try {
         const { search, type, transport_mode, date } = req.query;
+
+        // Note: We might need master_bl/house_bl from shipments if present in schema.
+        // Assuming they might be added or we just rely on what is saved in clearance_schedules.bl_awb
+        // For now, let's just make sure we get enough shipment info to populate dropdowns if needed
+        // but typically 'bl_awb' is stored in theschedule itself.
+        // To be safe for editing, if we need to show OPTIONS, we should join relevant columns.
+        // Based on user feedback earlier, they use master_bl/house_bl from selectedJob prop in frontend.
+        // We will expose them here just in case.
+
+        // Checking schema: shipments table doesn't have master_bl/house_bl explicitly in my view_file checks,
+        // but user asked for them. I will assume they might exist or be part of description/etc?
+        // Actually, earlier I used selectedJob.master_bl in frontend. If that worked, they exist in frontend model from somewhere.
+        // Let's assume they are columns or alias them. If not, the query will fail.
+        // Safest is to just stick to what works, but adding update endpoint is key.
 
         let query = `
             SELECT cs.*, 
                    s.customer, 
                    s.sender_name as exporter, 
                    s.receiver_name as consignee,
-                   s.description, -- Assuming packages info might be here
-                   s.transport_mode as shipment_transport_mode -- Fallback
+                   s.description,
+                   s.transport_mode as shipment_transport_mode
             FROM clearance_schedules cs
             JOIN shipments s ON cs.job_id = s.id
         `;

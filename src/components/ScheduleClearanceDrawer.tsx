@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 
 interface ScheduleClearanceDrawerProps {
@@ -6,9 +6,10 @@ interface ScheduleClearanceDrawerProps {
     onClose: () => void;
     onSave: (data: any) => void;
     job?: any;
+    initialData?: any;
 }
 
-const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpen, onClose, onSave, job }) => {
+const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpen, onClose, onSave, job, initialData }) => {
     const [formData, setFormData] = useState({
         date: '',
         type: '',
@@ -18,6 +19,29 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
 
         remarks: ''
     });
+
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                date: initialData.clearance_date ? new Date(initialData.clearance_date).toISOString().split('T')[0] : '',
+                type: initialData.clearance_type || '',
+                port: initialData.port || '',
+                bl_awb: initialData.bl_awb || '',
+                transport_mode: initialData.transport_mode || '',
+                remarks: initialData.remarks || ''
+            });
+        } else {
+            setFormData({
+                date: '',
+                type: '',
+                port: '',
+                bl_awb: '',
+                transport_mode: '',
+                remarks: ''
+            });
+        }
+    }, [initialData, isOpen]);
+
 
     // Derived options from job
     // Assuming job has properties master_bl and house_bl (even if currently placeholders in UI, intention is clear)
@@ -49,7 +73,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
 
                     {/* Header */}
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-gray-900">New schedule clearance</h2>
+                        <h2 className="text-xl font-bold text-gray-900">{initialData ? 'Reschedule Clearance' : 'New schedule clearance'}</h2>
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600"

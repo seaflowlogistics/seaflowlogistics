@@ -156,6 +156,7 @@ export const clearanceAPI = {
     getAll: (params?: { search?: string; type?: string; transport_mode?: string; date?: string }) =>
         api.get('/clearance', { params }),
     create: (data: any) => api.post('/clearance', data),
+    update: (id: number | string, data: any) => api.put(`/clearance/${id}`, data),
 };
 
 export default api;

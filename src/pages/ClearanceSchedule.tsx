@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { Search, Calendar, ChevronDown, Pencil } from 'lucide-react';
 import { clearanceAPI } from '../services/api';
+import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 
 const ClearanceSchedule: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -10,6 +11,8 @@ const ClearanceSchedule: React.FC = () => {
     const [date, setDate] = useState('');
     const [schedules, setSchedules] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [editingSchedule, setEditingSchedule] = useState<any>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     useEffect(() => {
         const fetchSchedules = async () => {
@@ -35,6 +38,26 @@ const ClearanceSchedule: React.FC = () => {
 
         return () => clearTimeout(timeoutId);
     }, [searchTerm, clearanceType, transportMode, date]);
+
+    const handleEditClick = (schedule: any) => {
+        setEditingSchedule(schedule);
+        setIsDrawerOpen(true);
+    };
+
+    const handleSave = async (data: any) => {
+        try {
+            if (editingSchedule) {
+                await clearanceAPI.update(editingSchedule.id, data);
+                alert('Clearance Rescheduled Successfully!');
+            }
+            setEditingSchedule(null);
+            setIsDrawerOpen(false);
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to update clearance', error);
+            alert('Failed to update clearance');
+        }
+    };
 
     return (
         <Layout>
@@ -184,7 +207,10 @@ const ClearanceSchedule: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="py-4 px-6 text-center">
-                                                <button className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors">
+                                                <button
+                                                    onClick={() => handleEditClick(item)}
+                                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
+                                                >
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
                                             </td>
@@ -201,6 +227,16 @@ const ClearanceSchedule: React.FC = () => {
                         </table>
                     </div>
                 </div>
+
+                {isDrawerOpen && (
+                    <ScheduleClearanceDrawer
+                        isOpen={isDrawerOpen}
+                        onClose={() => { setIsDrawerOpen(false); setEditingSchedule(null); }}
+                        onSave={handleSave}
+                        initialData={editingSchedule}
+                        job={editingSchedule}
+                    />
+                )}
             </div>
         </Layout>
     );
