@@ -1,10 +1,10 @@
-
 import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import fs from 'fs';
+import { logActivity } from '../utils/logger.js';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -33,6 +33,9 @@ router.post('/', authenticateToken, async (req, res) => {
             'INSERT INTO customers (name, email, phone, address, code) VALUES ($1, $2, $3, $4, $5) RETURNING *',
             [name, email, phone, address, code]
         );
+
+        await logActivity(req.user.id, 'CREATE_CUSTOMER', `Created customer: ${name}`, 'CUSTOMER', result.rows[0].id);
+
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Error creating customer:', error);
@@ -58,6 +61,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Customer not found' });
         }
+
+        await logActivity(req.user.id, 'UPDATE_CUSTOMER', `Updated customer: ${name}`, 'CUSTOMER', id);
 
         res.json(result.rows[0]);
     } catch (error) {
@@ -109,6 +114,8 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 
         fs.unlinkSync(req.file.path);
 
+        await logActivity(req.user.id, 'IMPORT_CUSTOMERS', `Imported ${successCount} customers`, 'CUSTOMER', 'BATCH');
+
         res.json({
             message: `Imported ${successCount} customers`,
             errors: errors.length > 0 ? errors : undefined
@@ -124,6 +131,9 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         await pool.query('DELETE FROM customers WHERE id = $1', [req.params.id]);
+
+        await logActivity(req.user.id, 'DELETE_CUSTOMER', `Deleted customer ID: ${req.params.id}`, 'CUSTOMER', req.params.id);
+
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
         console.error('Error deleting customer:', error);

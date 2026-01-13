@@ -153,7 +153,7 @@ const Dashboard: React.FC = () => {
 
                 {/* Admin Management Section */}
                 {user?.role === 'Administrator' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="mb-6">
                         <Link to="/users" className="glass-card p-6 flex items-center justify-between hover:shadow-xl transition-all cursor-pointer group">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">User Management</h3>
@@ -163,17 +163,21 @@ const Dashboard: React.FC = () => {
                                 <Users className="w-6 h-6 text-indigo-600 group-hover:text-white transition-colors" />
                             </div>
                         </Link>
-                        <Link to="/logs" className="glass-card p-6 flex items-center justify-between hover:shadow-xl transition-all cursor-pointer group">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-1">Audit Logs</h3>
-                                <p className="text-sm text-gray-600">View system activities and security logs</p>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center group-hover:bg-orange-600 transition-colors">
-                                <ScrollText className="w-6 h-6 text-orange-600 group-hover:text-white transition-colors" />
-                            </div>
-                        </Link>
                     </div>
                 )}
+
+                {/* System Activity Section - Visible to All */}
+                <div className="mb-6">
+                    <Link to="/logs" className="glass-card p-6 flex items-center justify-between hover:shadow-xl transition-all cursor-pointer group">
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">Audit Logs</h3>
+                            <p className="text-sm text-gray-600">View system activities and track changes</p>
+                        </div>
+                        <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center group-hover:bg-orange-600 transition-colors">
+                            <ScrollText className="w-6 h-6 text-orange-600 group-hover:text-white transition-colors" />
+                        </div>
+                    </Link>
+                </div>
 
                 {/* Clearance Agent Actions */}
                 {(user?.role === 'Clearance Agent' || user?.role === 'Administrator') && (

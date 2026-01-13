@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { logsAPI } from '../services/api';
 import { User, Calendar, Activity, Loader2 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
+
 
 interface Log {
     id: number;
@@ -16,23 +17,32 @@ interface Log {
 }
 
 const Logs: React.FC = () => {
-    const { user: currentUser } = useAuth();
+    // const { user: currentUser } = useAuth(); // Unused now
+
     const [logs, setLogs] = useState<Log[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchLogs = async () => {
+        const fetchLogs = async (silent = false) => {
             try {
+                if (!silent) setLoading(true);
                 const response = await logsAPI.getAll();
                 setLogs(response.data);
             } catch (error) {
                 console.error('Error fetching logs:', error);
             } finally {
-                setLoading(false);
+                if (!silent) setLoading(false);
             }
         };
 
         fetchLogs();
+
+        // Poll for updates every 3 seconds for "instant" feel
+        const intervalId = setInterval(() => {
+            fetchLogs(true);
+        }, 3000);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     if (loading) {
@@ -45,15 +55,8 @@ const Logs: React.FC = () => {
         );
     }
 
-    if (currentUser?.role !== 'Administrator') {
-        return (
-            <Layout>
-                <div className="p-6 text-center text-red-600">
-                    Access Denied. You must be an Administrator to view this page.
-                </div>
-            </Layout>
-        );
-    }
+    // Removed Access Denied block to allow all users to view logs
+
 
     return (
         <Layout>

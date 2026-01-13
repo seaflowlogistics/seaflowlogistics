@@ -1,10 +1,10 @@
-
 import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import fs from 'fs';
+import { logActivity } from '../utils/logger.js';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -33,6 +33,9 @@ router.post('/', authenticateToken, async (req, res) => {
             'INSERT INTO consignees (name, email, phone, address, code) VALUES ($1, $2, $3, $4, $5) RETURNING *',
             [name, email, phone, address, code]
         );
+
+        await logActivity(req.user.id, 'CREATE_CONSIGNEE', `Created consignee: ${name}`, 'CONSIGNEE', result.rows[0].id);
+
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Error creating consignee:', error);
@@ -86,6 +89,8 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         // Cleanup
         fs.unlinkSync(req.file.path);
 
+        await logActivity(req.user.id, 'IMPORT_CONSIGNEES', `Imported ${successCount} consignees`, 'CONSIGNEE', 'BATCH');
+
         res.json({
             message: `Imported ${successCount} consignees`,
             errors: errors.length > 0 ? errors : undefined
@@ -116,6 +121,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Consignee not found' });
         }
 
+        await logActivity(req.user.id, 'UPDATE_CONSIGNEE', `Updated consignee: ${name}`, 'CONSIGNEE', id);
+
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Error updating consignee:', error);
@@ -127,6 +134,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         await pool.query('DELETE FROM consignees WHERE id = $1', [req.params.id]);
+
+        await logActivity(req.user.id, 'DELETE_CONSIGNEE', `Deleted consignee ID: ${req.params.id}`, 'CONSIGNEE', req.params.id);
+
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
         console.error('Error deleting consignee:', error);

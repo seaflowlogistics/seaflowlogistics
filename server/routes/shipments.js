@@ -7,6 +7,8 @@ import path from 'path';
 import fs from 'fs';
 import { generateInvoicePDF } from '../utils/invoiceGenerator.js';
 import * as XLSX from 'xlsx';
+import { logActivity } from '../utils/logger.js';
+
 
 const router = express.Router();
 
@@ -160,10 +162,7 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         await pool.query('COMMIT');
 
         // Log Action
-        await pool.query(
-            'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
-            [req.user.id, 'IMPORT_SHIPMENTS', `Imported ${successCount} shipments`, 'BATCH', 'EXCEL']
-        );
+        await logActivity(req.user.id, 'IMPORT_SHIPMENTS', `Imported ${successCount} shipments`, 'BATCH', 'EXCEL');
 
         res.json({
             message: 'Import processed',
@@ -338,10 +337,7 @@ router.post('/', authenticateToken, shipmentUpload, async (req, res) => {
         );
 
         // Log action
-        await pool.query(
-            'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
-            [req.user.id, 'CREATE_SHIPMENT', `Created shipment ${id}`, 'SHIPMENT', id]
-        );
+        await logActivity(req.user.id, 'CREATE_SHIPMENT', `Created shipment ${id}`, 'SHIPMENT', id);
 
         await pool.query('COMMIT');
 
@@ -431,10 +427,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         }
 
         // Log action
-        await pool.query(
-            'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
-            [req.user.id, 'UPDATE_SHIPMENT', `Updated shipment ${id}`, 'SHIPMENT', id]
-        );
+        await logActivity(req.user.id, 'UPDATE_SHIPMENT', `Updated shipment ${id}`, 'SHIPMENT', id);
 
         await pool.query('COMMIT');
         res.json(updatedShipment);
@@ -457,10 +450,7 @@ router.delete('/:id', authenticateToken, authorizeRole(['Administrator', 'Cleara
 
         res.json({ message: 'Shipment deleted successfully' });
 
-        await pool.query(
-            'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
-            [req.user.id, 'DELETE_SHIPMENT', `Deleted shipment ${id}`, 'SHIPMENT', id]
-        );
+        await logActivity(req.user.id, 'DELETE_SHIPMENT', `Deleted shipment ${id}`, 'SHIPMENT', id);
     } catch (error) {
         console.error('Delete shipment error:', error);
         res.status(500).json({ error: 'Internal server error' });

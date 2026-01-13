@@ -1,10 +1,10 @@
-
 import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import fs from 'fs';
+import { logActivity } from '../utils/logger.js';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -33,6 +33,9 @@ router.post('/', authenticateToken, async (req, res) => {
             'INSERT INTO exporters (name, email, phone, country) VALUES ($1, $2, $3, $4) RETURNING *',
             [name, email, phone, country]
         );
+
+        await logActivity(req.user.id, 'CREATE_EXPORTER', `Created exporter: ${name}`, 'EXPORTER', result.rows[0].id);
+
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Error creating exporter:', error);
@@ -58,6 +61,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Exporter not found' });
         }
+
+        await logActivity(req.user.id, 'UPDATE_EXPORTER', `Updated exporter: ${name}`, 'EXPORTER', id);
 
         res.json(result.rows[0]);
     } catch (error) {
@@ -108,6 +113,8 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 
         fs.unlinkSync(req.file.path);
 
+        await logActivity(req.user.id, 'IMPORT_EXPORTERS', `Imported ${successCount} exporters`, 'EXPORTER', 'BATCH');
+
         res.json({
             message: `Imported ${successCount} exporters`,
             errors: errors.length > 0 ? errors : undefined
@@ -123,6 +130,9 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         await pool.query('DELETE FROM exporters WHERE id = $1', [req.params.id]);
+
+        await logActivity(req.user.id, 'DELETE_EXPORTER', `Deleted exporter ID: ${req.params.id}`, 'EXPORTER', req.params.id);
+
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
         console.error('Error deleting exporter:', error);

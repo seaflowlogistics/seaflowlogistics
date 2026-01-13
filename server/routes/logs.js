@@ -5,7 +5,8 @@ import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 const router = express.Router();
 
 router.use(authenticateToken);
-router.use(authorizeRole(['Administrator']));
+// router.use(authorizeRole(['Administrator'])); // Allow all authenticated users
+
 
 router.get('/', async (req, res) => {
     try {
