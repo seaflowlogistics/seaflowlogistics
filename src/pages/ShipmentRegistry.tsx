@@ -273,7 +273,7 @@ const ShipmentRegistry: React.FC = () => {
                 {/* Section C: Exporter */}
                 <div className="form-group">
                     <div className="mt-4 animate-fade-in-down">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">exporter</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Exporter</label>
                         <div className="relative">
                             <select
                                 name="exporter"
