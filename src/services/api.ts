@@ -102,7 +102,8 @@ export const usersAPI = {
 
 // Logs API
 export const logsAPI = {
-    getAll: () => api.get('/logs'),
+    getAll: (params?: { search?: string; date?: string }) =>
+        api.get('/logs', { params }),
 };
 
 // Delivery Notes API
