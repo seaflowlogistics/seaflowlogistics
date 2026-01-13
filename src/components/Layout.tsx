@@ -45,8 +45,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </button>
 
                             <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/50">
-                                <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-accent-600 rounded-full flex items-center justify-center">
-                                    <User className="w-4 h-4 text-white" />
+                                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center border-2 border-white shadow-sm flex-shrink-0">
+                                    {user?.photo_url ? (
+                                        <img
+                                            src={user.photo_url.startsWith('http') ? user.photo_url : `${import.meta.env.MODE === 'production' ? '' : 'http://localhost:5001'}${user.photo_url}`}
+                                            alt="Profile"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <span className="text-white text-xs font-bold">
+                                            {user?.username ? user.username.charAt(0).toUpperCase() : <User className="w-4 h-4 text-white" />}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="hidden md:block">
                                     <p className="text-sm font-semibold text-gray-800">{user?.username}</p>
