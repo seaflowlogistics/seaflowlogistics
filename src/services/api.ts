@@ -117,4 +117,14 @@ export const invoicesAPI = {
     getById: (id: string) => api.get(`/invoices/${id}`),
 };
 
+// Consignees API
+export const consigneesAPI = {
+    getAll: () => api.get('/consignees'),
+    create: (data: any) => api.post('/consignees', data),
+    delete: (id: string) => api.delete(`/consignees/${id}`),
+    import: (formData: FormData) => api.post('/consignees/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+};
+
 export default api;
