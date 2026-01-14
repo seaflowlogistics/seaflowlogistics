@@ -94,22 +94,22 @@ const Dashboard: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <div className="glass-card p-6 border-l-4 border-red-500">
                                 <p className="text-sm text-gray-500 font-medium">Overdue Clearances</p>
-                                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">{data?.teamSnapshot?.overdueClearances || 0}</p>
                                 <p className="text-xs text-red-500 mt-1 font-semibold">Requires attention</p>
                             </div>
                             <div className="glass-card p-6 border-l-4 border-blue-500">
                                 <p className="text-sm text-gray-500 font-medium">Scheduled Today</p>
-                                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
-                                <p className="text-xs text-blue-500 mt-1">Due within 24h</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">{data?.teamSnapshot?.scheduledToday || 0}</p>
+                                <p className="text-xs text-blue-500 mt-1">Created within 24h</p>
                             </div>
                             <div className="glass-card p-6 border-l-4 border-orange-500">
                                 <p className="text-sm text-gray-500 font-medium">Awaiting Delivery Notes</p>
-                                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">{data?.teamSnapshot?.awaitingDeliveryNotes || 0}</p>
                                 <p className="text-xs text-orange-500 mt-1">Pending documentation</p>
                             </div>
                             <div className="glass-card p-6 border-l-4 border-green-500">
                                 <p className="text-sm text-gray-500 font-medium">Documents Received</p>
-                                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">{data?.teamSnapshot?.documentsReceived || 0}</p>
                                 <p className="text-xs text-green-500 mt-1">Shared today</p>
                             </div>
                         </div>
