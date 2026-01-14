@@ -8,6 +8,7 @@ import {
 import ConsigneesSettings from './settings/ConsigneesSettings';
 import CustomersSettings from './settings/CustomersSettings';
 import ExportersSettings from './settings/ExportersSettings';
+import VehicleSettings from './settings/VehicleSettings';
 
 const Settings: React.FC = () => {
     const [activeTab, setActiveTab] = useState('Consignees');
@@ -33,13 +34,7 @@ const Settings: React.FC = () => {
             case 'Exporters':
                 return <ExportersSettings />;
             case 'Vehicles':
-                return (
-                    <div className="flex-1 p-8 flex flex-col items-center justify-center text-center">
-                        <Truck className="w-12 h-12 text-gray-300 mb-4" />
-                        <h2 className="text-xl font-semibold text-gray-900">Vehicle Fleet</h2>
-                        <p className="text-gray-500 mt-2">Manage your trucks and transport vehicles.</p>
-                    </div>
-                );
+                return <VehicleSettings />;
             // ... Add other cases as needed
             default:
                 return (

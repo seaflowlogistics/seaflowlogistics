@@ -77,7 +77,9 @@ export const shipmentsAPI = {
 export const fleetAPI = {
     getAll: () => api.get('/fleet'),
     getById: (id: string) => api.get(`/fleet/${id}`),
+    create: (data: any) => api.post('/fleet', data),
     update: (id: string, data: any) => api.put(`/fleet/${id}`, data),
+    delete: (id: string) => api.delete(`/fleet/${id}`),
     getStats: () => api.get('/fleet/stats/summary'),
 };
 
