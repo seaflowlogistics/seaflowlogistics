@@ -35,13 +35,13 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // Create new vehicle
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        const { id, name, type, owner, phone, driver, status, location } = req.body;
+        const { id, name, type, owner, phone, email, comments, driver, status, location } = req.body;
 
         const result = await pool.query(
-            `INSERT INTO vehicles (id, name, type, owner, phone, driver, status, location)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `INSERT INTO vehicles (id, name, type, owner, phone, email, comments, driver, status, location)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
              RETURNING *`,
-            [id, name, type, owner, phone, driver, status || 'Idle', location]
+            [id, name, type, owner, phone, email, comments, driver, status || 'Idle', location]
         );
 
         res.status(201).json(result.rows[0]);
@@ -55,15 +55,15 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, type, owner, phone, driver, status, location, fuel, maintenance, mileage, next_service } = req.body;
+        const { name, type, owner, phone, email, comments, driver, status, location, fuel, maintenance, mileage, next_service } = req.body;
 
         const result = await pool.query(
             `UPDATE vehicles 
-       SET name = $1, type = $2, owner = $3, phone = $4, driver = $5, status = $6, location = $7, fuel = $8, 
-           maintenance = $9, mileage = $10, next_service = $11, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $12
+       SET name = $1, type = $2, owner = $3, phone = $4, email = $5, comments = $6, driver = $7, status = $8, location = $9, fuel = $10, 
+           maintenance = $11, mileage = $12, next_service = $13, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $14
        RETURNING *`,
-            [name, type, owner, phone, driver, status, location, fuel, maintenance, mileage, next_service, id]
+            [name, type, owner, phone, email, comments, driver, status, location, fuel, maintenance, mileage, next_service, id]
         );
 
         if (result.rows.length === 0) {

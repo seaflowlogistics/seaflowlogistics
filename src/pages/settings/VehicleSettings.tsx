@@ -11,10 +11,13 @@ const VehicleSettings: React.FC = () => {
 
     // Form State
     const [formData, setFormData] = useState({
+        id: '', // Registration No.
         name: '',
         type: '',
         owner: '',
-        phone: ''
+        phone: '',
+        email: '',
+        comments: ''
     });
 
     const fetchVehicles = async () => {
@@ -36,22 +39,16 @@ const VehicleSettings: React.FC = () => {
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const payload = {
-                ...formData,
-                // Assign a random ID if creating new, or backend might handle if we change logic,
-                // but fleet.js currently expects 'id' in body for insert.
-                // Let's generate a simple ID if not editing.
-                id: editingId || `V-${Date.now()}`
-            };
-
             if (editingId) {
+                // Update
                 await fleetAPI.update(editingId, formData);
             } else {
-                await fleetAPI.create(payload);
+                // Create
+                await fleetAPI.create(formData);
             }
             setShowAddModal(false);
             setEditingId(null);
-            setFormData({ name: '', type: '', owner: '', phone: '' });
+            setFormData({ id: '', name: '', type: '', owner: '', phone: '', email: '', comments: '' });
             fetchVehicles();
         } catch (error) {
             console.error('Failed to save vehicle', error);
@@ -62,10 +59,13 @@ const VehicleSettings: React.FC = () => {
     const handleEdit = (vehicle: any) => {
         setEditingId(vehicle.id);
         setFormData({
+            id: vehicle.id,
             name: vehicle.name || '',
             type: vehicle.type || '',
             owner: vehicle.owner || '',
-            phone: vehicle.phone || ''
+            phone: vehicle.phone || '',
+            email: vehicle.email || '',
+            comments: vehicle.comments || ''
         });
         setShowAddModal(true);
     };
@@ -84,13 +84,13 @@ const VehicleSettings: React.FC = () => {
     const closeModal = () => {
         setShowAddModal(false);
         setEditingId(null);
-        setFormData({ name: '', type: '', owner: '', phone: '' });
+        setFormData({ id: '', name: '', type: '', owner: '', phone: '', email: '', comments: '' });
     };
 
     const filteredVehicles = vehicles.filter(v =>
         (v.name && v.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (v.owner && v.owner.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (v.type && v.type.toLowerCase().includes(searchTerm.toLowerCase()))
+        (v.id && v.id.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -118,7 +118,7 @@ const VehicleSettings: React.FC = () => {
                 <button
                     onClick={() => {
                         setEditingId(null);
-                        setFormData({ name: '', type: '', owner: '', phone: '' });
+                        setFormData({ id: '', name: '', type: '', owner: '', phone: '', email: '', comments: '' });
                         setShowAddModal(true);
                     }}
                     className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
@@ -145,20 +145,20 @@ const VehicleSettings: React.FC = () => {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-black text-white text-xs uppercase tracking-wider">
-                                    <th className="py-3 px-4 font-semibold w-1/4">Name</th>
-                                    <th className="py-3 px-4 font-semibold">Type</th>
-                                    <th className="py-3 px-4 font-semibold">Owner</th>
-                                    <th className="py-3 px-4 font-semibold">Phone</th>
+                                    <th className="py-3 px-4 font-semibold w-1/5">Name</th>
+                                    <th className="py-3 px-4 font-semibold w-1/5">Type</th>
+                                    <th className="py-3 px-4 font-semibold w-1/5">Reg. No.</th>
+                                    <th className="py-3 px-4 font-semibold w-1/5">Owner</th>
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {filteredVehicles.map((item) => (
                                     <tr key={item.id} className="hover:bg-gray-50 transition-colors group text-sm">
-                                        <td className="py-3 px-4 font-semibold text-gray-900">{item.name || item.id}</td>
+                                        <td className="py-3 px-4 font-semibold text-gray-900">{item.name}</td>
                                         <td className="py-3 px-4 text-gray-600">{item.type}</td>
+                                        <td className="py-3 px-4 text-gray-600 font-mono">{item.id}</td>
                                         <td className="py-3 px-4 text-gray-600">{item.owner || '-'}</td>
-                                        <td className="py-3 px-4 text-gray-600 font-mono">{item.phone || '-'}</td>
                                         <td className="py-3 px-4 text-right flex justify-end gap-2">
                                             <button
                                                 onClick={() => handleEdit(item)}
@@ -186,40 +186,44 @@ const VehicleSettings: React.FC = () => {
             {/* Add/Edit Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h3 className="font-bold text-lg text-gray-900">{editingId ? 'Edit Vehicle' : 'Add New Vehicle'}</h3>
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-10">
+                            <h3 className="font-bold text-lg text-gray-900">{editingId ? 'Edit Vehicle' : 'New Vehicle'}</h3>
                             <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Name *</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                                 <input
                                     required
                                     type="text"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="e.g. Pickup 01"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-                                <select
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <input
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none bg-white"
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                                     value={formData.type}
                                     onChange={e => setFormData({ ...formData, type: e.target.value })}
-                                >
-                                    <option value="">Select type...</option>
-                                    <option value="Pickup">Pickup</option>
-                                    <option value="Lorry">Lorry</option>
-                                    <option value="Van">Van</option>
-                                    <option value="Bike">Bike</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Registration No.</label>
+                                <input
+                                    required
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                    value={formData.id}
+                                    onChange={e => setFormData({ ...formData, id: e.target.value })}
+                                    disabled={!!editingId}
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name</label>
@@ -228,32 +232,51 @@ const VehicleSettings: React.FC = () => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                                     value={formData.owner}
                                     onChange={e => setFormData({ ...formData, owner: e.target.value })}
-                                    placeholder="e.g. John Doe"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Owner Phone</label>
                                 <input
                                     type="text"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                                     value={formData.phone}
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                    placeholder="+960..."
+                                    placeholder=""
                                 />
                             </div>
-                            <div className="pt-2 flex justify-end gap-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Owner Email</label>
+                                <input
+                                    type="email"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    placeholder=""
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Comments</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                    value={formData.comments}
+                                    onChange={e => setFormData({ ...formData, comments: e.target.value })}
+                                    placeholder=""
+                                />
+                            </div>
+                            <div className="pt-4 flex justify-end gap-3">
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="px-4 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="px-4 py-2 border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 rounded-lg transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
+                                    className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
                                 >
-                                    {editingId ? 'Save Changes' : 'Add Vehicle'}
+                                    Save
                                 </button>
                             </div>
                         </form>
