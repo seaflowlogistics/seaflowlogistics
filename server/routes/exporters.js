@@ -89,13 +89,13 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         for (const row of data) {
             const normalizedRow = {};
             Object.keys(row).forEach(key => {
-                const cleanKey = key.toLowerCase().trim().replace(/_/g, ' ').replace(/\./g, '');
+                const cleanKey = key.toLowerCase().trim().replace(/[_\/]/g, ' ').replace(/[^a-z0-9 ]/g, '');
                 normalizedRow[cleanKey] = row[key];
             });
 
             // Map headers based on user request and common variations
             // Header: Exporter Name -> name
-            const name = normalizedRow['exporter name'] || normalizedRow['name'] || normalizedRow['exporter'];
+            const name = normalizedRow['exporter name'] || normalizedRow['name'] || normalizedRow['exporter'] || normalizedRow['company'] || normalizedRow['exporter name company'];
 
             // Header: Contact No. -> phone
             const phone = normalizedRow['contact no'] || normalizedRow['contact number'] || normalizedRow['phone'] || normalizedRow['mobile'];
