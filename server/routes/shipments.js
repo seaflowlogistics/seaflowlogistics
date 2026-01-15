@@ -6,7 +6,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { generateInvoicePDF } from '../utils/invoiceGenerator.js';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx';
 import { logActivity } from '../utils/logger.js';
 
 
