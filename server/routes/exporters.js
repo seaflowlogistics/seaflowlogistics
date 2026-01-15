@@ -22,7 +22,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // Create single exporter
 router.post('/', authenticateToken, async (req, res) => {
-    const { name, email, phone, country } = req.body;
+    const { name, email, phone, address, country } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -30,8 +30,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'INSERT INTO exporters (name, email, phone, country) VALUES ($1, $2, $3, $4) RETURNING *',
-            [name, email, phone, country]
+            'INSERT INTO exporters (name, email, phone, address, country) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [name, email, phone, address, country]
         );
 
         await logActivity(req.user.id, 'CREATE_EXPORTER', `Created exporter: ${name}`, 'EXPORTER', result.rows[0].id);
@@ -46,7 +46,7 @@ router.post('/', authenticateToken, async (req, res) => {
 // Update exporter
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { name, email, phone, country } = req.body;
+    const { name, email, phone, address, country } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -54,8 +54,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'UPDATE exporters SET name = $1, email = $2, phone = $3, country = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
-            [name, email, phone, country, id]
+            'UPDATE exporters SET name = $1, email = $2, phone = $3, address = $4, country = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
+            [name, email, phone, address, country, id]
         );
 
         if (result.rows.length === 0) {
@@ -89,20 +89,46 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         for (const row of data) {
             const normalizedRow = {};
             Object.keys(row).forEach(key => {
-                normalizedRow[key.toLowerCase()] = row[key];
+                const cleanKey = key.toLowerCase().trim().replace(/_/g, ' ').replace(/\./g, '');
+                normalizedRow[cleanKey] = row[key];
             });
 
-            const name = normalizedRow['name'] || normalizedRow['exporter name'];
+            // Map headers based on user request and common variations
+            // Header: Exporter Name -> name
+            const name = normalizedRow['exporter name'] || normalizedRow['name'] || normalizedRow['exporter'];
+
+            // Header: Contact No. -> phone
+            const phone = normalizedRow['contact no'] || normalizedRow['contact number'] || normalizedRow['phone'] || normalizedRow['mobile'];
+
+            // Header: Mail -> email
+            const email = normalizedRow['mail'] || normalizedRow['email'] || normalizedRow['e-mail'];
+
+            // Header: Address -> address
+            const address = normalizedRow['address'] || normalizedRow['location'];
+
+            // Optional: Country if present
+            const country = normalizedRow['country'];
+
             if (!name) continue;
 
             try {
+                // Check if exists
+                const checkRes = await pool.query('SELECT id FROM exporters WHERE name = $1', [name]);
+                if (checkRes.rows.length > 0) {
+                    // Exporter exists, maybe update? For now sticking to insert if new.
+                    // Or we could update contact details if missing.
+                    errors.push(`Exporter '${name}' already exists.`);
+                    continue;
+                }
+
                 await pool.query(
-                    'INSERT INTO exporters (name, email, phone, country) VALUES ($1, $2, $3, $4)',
+                    'INSERT INTO exporters (name, email, phone, address, country) VALUES ($1, $2, $3, $4, $5)',
                     [
                         name,
-                        normalizedRow['email'] || null,
-                        normalizedRow['phone'] || null,
-                        normalizedRow['country'] || null
+                        email || null,
+                        phone ? String(phone) : null,
+                        address || null,
+                        country || null // If they provide country separately, good. If not, address is what we have.
                     ]
                 );
                 successCount++;

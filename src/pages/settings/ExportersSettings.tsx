@@ -16,7 +16,8 @@ const ExportersSettings: React.FC = () => {
         name: '',
         email: '',
         phone: '',
-        country: ''
+        country: '',
+        address: ''
     });
 
     const fetchExporters = async () => {
@@ -45,7 +46,7 @@ const ExportersSettings: React.FC = () => {
             }
             setShowAddModal(false);
             setEditingId(null);
-            setFormData({ name: '', email: '', phone: '', country: '' });
+            setFormData({ name: '', email: '', phone: '', country: '', address: '' });
             fetchExporters();
         } catch (error) {
             console.error('Failed to save exporter', error);
@@ -59,7 +60,8 @@ const ExportersSettings: React.FC = () => {
             name: exporter.name || '',
             email: exporter.email || '',
             phone: exporter.phone || '',
-            country: exporter.country || ''
+            country: exporter.country || '',
+            address: exporter.address || ''
         });
         setShowAddModal(true);
     };
@@ -67,7 +69,7 @@ const ExportersSettings: React.FC = () => {
     const closeModal = () => {
         setShowAddModal(false);
         setEditingId(null);
-        setFormData({ name: '', email: '', phone: '', country: '' });
+        setFormData({ name: '', email: '', phone: '', country: '', address: '' });
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,7 +142,7 @@ const ExportersSettings: React.FC = () => {
                     <button
                         onClick={() => {
                             setEditingId(null);
-                            setFormData({ name: '', email: '', phone: '', country: '' });
+                            setFormData({ name: '', email: '', phone: '', country: '', address: '' });
                             setShowAddModal(true);
                         }}
                         className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
@@ -229,6 +231,15 @@ const ExportersSettings: React.FC = () => {
                                 />
                             </div>
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                <textarea
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all resize-none h-20"
+                                    value={formData.address}
+                                    onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                    placeholder="Full address..."
+                                />
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
                                 <input
                                     type="text"
@@ -246,7 +257,7 @@ const ExportersSettings: React.FC = () => {
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                        placeholder="sales@globalexports.com"
+                                        placeholder="sales@..."
                                     />
                                 </div>
                                 <div>
