@@ -14,21 +14,19 @@ interface User {
 }
 
 const formatLastActive = (dateStr?: string) => {
-    if (!dateStr) return 'Never';
+    if (!dateStr) return 'Inactive (Never)';
     const date = new Date(dateStr);
     const now = new Date();
     const diff = (now.getTime() - date.getTime()) / 1000; // seconds
 
-    if (diff < 300) return 'Active Now'; // < 5 mins
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return date.toLocaleDateString();
+    if (diff < 300) return 'Active'; // < 5 mins
+
+    return `Inactive (${date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })})`;
 };
 
 const getStatusColor = (text: string) => {
-    if (text === 'Active Now') return 'text-green-600 bg-green-100 border border-green-200';
-    if (text === 'Never') return 'text-gray-400 bg-gray-100 border border-gray-200';
-    return 'text-blue-600 bg-blue-50 border border-blue-100';
+    if (text === 'Active') return 'text-green-600 bg-green-100 border border-green-200';
+    return 'text-gray-500 bg-gray-100 border border-gray-200';
 };
 
 const ROLES = [
