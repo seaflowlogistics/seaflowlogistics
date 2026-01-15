@@ -20,7 +20,12 @@ router.use(authenticateToken);
 // Get all users (Admins only)
 router.get('/', authorizeRole(['Administrator']), async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, username, role, email, created_at FROM users ORDER BY created_at DESC');
+        const result = await pool.query(`
+            SELECT u.id, u.username, u.role, u.email, u.created_at,
+            (SELECT MAX(created_at) FROM audit_logs WHERE user_id = u.id) as last_active
+            FROM users u
+            ORDER BY u.created_at DESC
+        `);
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching users:', error);

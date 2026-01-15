@@ -10,7 +10,26 @@ interface User {
     email?: string;
     role: string;
     created_at: string;
+    last_active?: string;
 }
+
+const formatLastActive = (dateStr?: string) => {
+    if (!dateStr) return 'Never';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = (now.getTime() - date.getTime()) / 1000; // seconds
+
+    if (diff < 300) return 'Active Now'; // < 5 mins
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return date.toLocaleDateString();
+};
+
+const getStatusColor = (text: string) => {
+    if (text === 'Active Now') return 'text-green-600 bg-green-100 border border-green-200';
+    if (text === 'Never') return 'text-gray-400 bg-gray-100 border border-gray-200';
+    return 'text-blue-600 bg-blue-50 border border-blue-100';
+};
 
 const ROLES = [
     'Administrator',
@@ -179,6 +198,7 @@ const Users: React.FC = () => {
                             <tr>
                                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">User</th>
                                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Role</th>
+                                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
                                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Created At</th>
                                 <th className="text-right py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
                             </tr>
@@ -199,6 +219,11 @@ const Users: React.FC = () => {
                                             <Shield className="w-4 h-4" />
                                             {user.role}
                                         </div>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(formatLastActive(user.last_active))}`}>
+                                            {formatLastActive(user.last_active)}
+                                        </span>
                                     </td>
                                     <td className="py-4 px-6 text-sm text-gray-500">
                                         {new Date(user.created_at).toLocaleDateString()}
