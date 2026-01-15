@@ -16,7 +16,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
         port: '',
         bl_awb: '',
         transport_mode: '',
-
+        packages: '',
         remarks: ''
     });
 
@@ -28,6 +28,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                 port: initialData.port || '',
                 bl_awb: initialData.bl_awb || '',
                 transport_mode: initialData.transport_mode || '',
+                packages: initialData.packages || '',
                 remarks: initialData.remarks || ''
             });
         } else {
@@ -37,6 +38,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                 port: '',
                 bl_awb: '',
                 transport_mode: '',
+                packages: '',
                 remarks: ''
             });
         }
@@ -177,6 +179,19 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                                 </select>
                                 <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
                             </div>
+                        </div>
+
+                        {/* Packages */}
+                        <div className="form-group">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Packages</label>
+                            <input
+                                type="text"
+                                name="packages"
+                                value={formData.packages}
+                                onChange={handleInputChange}
+                                placeholder="e.g. 20 PKG"
+                                className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-gray-700"
+                            />
                         </div>
 
                         {/* Remarks */}

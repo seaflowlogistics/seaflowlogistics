@@ -190,7 +190,7 @@ const ClearanceSchedule: React.FC = () => {
                                                 {item.remarks?.includes('Container:') ? item.remarks.split('Container:')[1] : '-'}
                                             </td>
                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                                                20 PKG {/* Placeholder */}
+                                                {item.packages || '-'}
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${item.clearance_type === 'Express' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>

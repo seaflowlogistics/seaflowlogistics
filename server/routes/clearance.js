@@ -10,17 +10,17 @@ router.use(authenticateToken);
 // Create a new clearance schedule
 router.post('/', async (req, res) => {
     try {
-        const { job_id, date, type, port, bl_awb, transport_mode, remarks } = req.body;
+        const { job_id, date, type, port, bl_awb, transport_mode, remarks, packages } = req.body;
 
         if (!job_id || !date) {
             return res.status(400).json({ error: 'Job ID and Date are required' });
         }
 
         const result = await pool.query(
-            `INSERT INTO clearance_schedules (job_id, clearance_date, clearance_type, port, bl_awb, transport_mode, remarks)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO clearance_schedules (job_id, clearance_date, clearance_type, port, bl_awb, transport_mode, remarks, packages)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING *`,
-            [job_id, date, type, port, bl_awb, transport_mode, remarks]
+            [job_id, date, type, port, bl_awb, transport_mode, remarks, packages]
         );
 
         const schedule = result.rows[0];
@@ -45,14 +45,14 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { date, type, port, bl_awb, transport_mode, remarks } = req.body;
+        const { date, type, port, bl_awb, transport_mode, remarks, packages } = req.body;
 
         const result = await pool.query(
             `UPDATE clearance_schedules 
-             SET clearance_date = $1, clearance_type = $2, port = $3, bl_awb = $4, transport_mode = $5, remarks = $6
-             WHERE id = $7
+             SET clearance_date = $1, clearance_type = $2, port = $3, bl_awb = $4, transport_mode = $5, remarks = $6, packages = $7
+             WHERE id = $8
              RETURNING *`,
-            [date, type, port, bl_awb, transport_mode, remarks, id]
+            [date, type, port, bl_awb, transport_mode, remarks, packages, id]
         );
 
         if (result.rows.length === 0) {
