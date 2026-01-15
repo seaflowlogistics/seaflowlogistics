@@ -23,6 +23,46 @@ const Shipments: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [shipmentToDelete, setShipmentToDelete] = useState<any>(null);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = () => {
+        if (selectedIds.length === shipments.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(shipments.map(s => s.id));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) return;
+
+        // Use the modal for confirmation if possible, or simple confirm for bulk
+        // Re-using the modal is tricky for bulk. I'll use a specific bulk confirmation or just generic confirm.
+        // Or I can update shipmentToDelete to be a special 'BULK' object?
+        // Simpler: standard confirm for now.
+        if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} shipments? This cannot be undone.`)) return;
+
+        const idsToDelete = [...selectedIds];
+        // Optimistic update
+        setShipments(prev => prev.filter(s => !idsToDelete.includes(s.id)));
+        setSelectedIds([]);
+
+        try {
+            await Promise.all(idsToDelete.map(id => shipmentsAPI.delete(id)));
+        } catch (error) {
+            console.error('Bulk delete failed', error);
+            alert('Some shipments could not be deleted.');
+            // Reload to sync
+            const response = await shipmentsAPI.getAll({ search: searchTerm, status: filterStatus });
+            setShipments(response.data);
+        }
+    };
 
 
     const handleDeleteClick = (shipment: any) => {
@@ -178,6 +218,20 @@ const Shipments: React.FC = () => {
                                 <option>Delayed</option>
                             </select>
                         </div>
+
+                        {/* Select All */}
+                        <div className="flex items-center gap-2 border-l border-gray-200 pl-4 md:ml-2">
+                            <input
+                                type="checkbox"
+                                checked={shipments.length > 0 && selectedIds.length === shipments.length}
+                                onChange={handleSelectAll}
+                                className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                id="select-all"
+                            />
+                            <label htmlFor="select-all" className="text-sm font-medium text-gray-700 cursor-pointer whitespace-nowrap">
+                                Select All
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -189,12 +243,20 @@ const Shipments: React.FC = () => {
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {shipments.map((shipment, index) => (
-                            <div key={shipment.id} className="glass-card p-6 hover:shadow-2xl transition-all duration-300 animate-slide-in" style={{ animationDelay: `${index * 0.01}s` }}>
+                            <div key={shipment.id} className={`glass-card p-6 hover:shadow-2xl transition-all duration-300 animate-slide-in ${selectedIds.includes(shipment.id) ? 'ring-2 ring-primary-500 bg-primary-50/50' : ''}`} style={{ animationDelay: `${index * 0.01}s` }}>
                                 {/* Header */}
                                 <div className="flex items-start justify-between mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-gray-900">{shipment.id}</h3>
-                                        <p className="text-sm text-gray-600 mt-1">{shipment.customer}</p>
+                                    <div className="flex items-start gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.includes(shipment.id)}
+                                            onChange={(e) => { e.stopPropagation(); toggleSelect(shipment.id); }}
+                                            className="mt-1 w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                        />
+                                        <div>
+                                            <h3 className="text-lg font-bold text-gray-900">{shipment.id}</h3>
+                                            <p className="text-sm text-gray-600 mt-1">{shipment.customer}</p>
+                                        </div>
                                     </div>
                                     <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(shipment.status)}`}>
                                         {getStatusIcon(shipment.status)}
@@ -321,8 +383,24 @@ const Shipments: React.FC = () => {
                     </div>
                 )}
 
+                {/* Bulk Action Bar */}
+                {selectedIds.length > 0 && (
+                    <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white shadow-2xl rounded-full px-6 py-3 flex items-center gap-6 z-50 animate-bounce-in border border-gray-200">
+                        <span className="font-semibold text-gray-900 whitespace-nowrap">{selectedIds.length} Selected</span>
+                        <div className="h-6 w-px bg-gray-300" />
+
+                        <button onClick={() => setSelectedIds([])} className="text-sm font-medium text-gray-500 hover:text-gray-700">
+                            Clear
+                        </button>
+
+                        <button onClick={handleBulkDelete} className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full font-medium hover:bg-red-100 flex items-center gap-2 transition-colors">
+                            <Trash className="w-4 h-4" /> Delete ({selectedIds.length})
+                        </button>
+                    </div>
+                )}
+
             </div>
-        </Layout>
+        </Layout >
     );
 };
 
