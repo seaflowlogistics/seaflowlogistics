@@ -77,7 +77,9 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         const workbook = XLSX.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json(sheet);
+        // Assuming row 1 is Title, Row 2 is Header. 
+        // We use range:1 (skip 0) to get correct headers.
+        const data = XLSX.utils.sheet_to_json(sheet, { range: 1 });
 
         // Remove the uploaded file after parsing
         fs.unlinkSync(filePath);
@@ -124,6 +126,23 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
                 const transport_mode = normalizedRow['transport mode'] || normalizedRow['mode'] || 'SEA';
                 const description = normalizedRow['description'] || normalizedRow['goods'] || 'Import Goods';
                 const weight = normalizedRow['g.w'] || normalizedRow['gw'] || normalizedRow['weight'] || '0';
+
+                // Date Parsing
+                let dateVal = new Date();
+                const rawDate = normalizedRow['date'] || normalizedRow['clearance date'] || normalizedRow['eta'];
+                if (rawDate) {
+                    if (typeof rawDate === 'number') {
+                        dateVal = new Date(Math.round((rawDate - 25569) * 86400 * 1000));
+                    } else if (typeof rawDate === 'string') {
+                        if (rawDate.includes('.')) { // DD.MM.YYYY
+                            const parts = rawDate.split('.');
+                            if (parts.length === 3) dateVal = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                        } else {
+                            dateVal = new Date(rawDate);
+                        }
+                    }
+                }
+
                 const price = parseFloat(normalizedRow['price'] || normalizedRow['value'] || normalizedRow['amount'] || '0');
                 const origin = normalizedRow['origin'] || exporter;
                 const destination = normalizedRow['destination'] || consignee;
@@ -151,13 +170,13 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
                                 id, customer, origin, destination, status, progress, 
                                 sender_name, receiver_name, description, weight, price, transport_mode,
                                 invoice_no, invoice_items, customs_r_form, bl_awb_no, container_no, container_type, cbm, no_of_pkgs,
-                                expense_macl, expense_mpl, expense_mcs, expense_transportation, expense_liner
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)`,
+                                expense_macl, expense_mpl, expense_mcs, expense_transportation, expense_liner, date
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)`,
                     [
                         id, customer, origin, destination, status, progress,
                         exporter, consignee, description, weight, price, transport_mode,
                         invoiceNo, invoiceItems, customsRForm, blAwbNo, containerNo, containerType, cbm, noOfPkg,
-                        expenseMacl, expenseMpl, expenseMcs, expenseTransportation, expenseLiner
+                        expenseMacl, expenseMpl, expenseMcs, expenseTransportation, expenseLiner, dateVal
                     ]
                 );
 
