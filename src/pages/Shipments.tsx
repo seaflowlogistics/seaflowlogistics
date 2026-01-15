@@ -6,13 +6,13 @@ import {
     Package,
     Search,
     Filter,
-    MapPin,
     CheckCircle,
     Clock,
     AlertCircle,
-    Eye,
     Loader2,
-    Trash
+    Trash,
+    Upload,
+    ArrowRight
 } from 'lucide-react';
 
 const Shipments: React.FC = () => {
@@ -153,20 +153,7 @@ const Shipments: React.FC = () => {
         }
     };
 
-    const getProgressColor = (status: string) => {
-        switch (status) {
-            case 'Delivered':
-                return 'bg-green-500';
-            case 'In Transit':
-                return 'bg-blue-500';
-            case 'Processing':
-                return 'bg-yellow-500';
-            case 'Delayed':
-                return 'bg-red-500';
-            default:
-                return 'bg-gray-500';
-        }
-    };
+
 
     return (
         <Layout>
@@ -184,6 +171,34 @@ const Shipments: React.FC = () => {
                         <Package className="w-5 h-5 inline mr-2" />
                         New Shipment
                     </button>
+                    <label className="btn-secondary cursor-pointer relative flex items-center gap-2 px-4">
+                        {loading && <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-lg"><Loader2 className="w-4 h-4 animate-spin text-primary-600" /></div>}
+                        <Upload className="w-4 h-4" />
+                        <span>Import Excel</span>
+                        <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={async (e) => {
+                            if (e.target.files?.[0]) {
+                                const file = e.target.files[0];
+                                const formData = new FormData();
+                                formData.append('file', file);
+                                try {
+                                    setLoading(true);
+                                    const res = await shipmentsAPI.import(formData);
+                                    alert(`Import successful: ${res.data.success} added.`);
+                                    const response = await shipmentsAPI.getAll({
+                                        search: searchTerm,
+                                        status: filterStatus
+                                    });
+                                    setShipments(response.data);
+                                } catch (error) {
+                                    console.error('Import failed', error);
+                                    alert('Failed to import shipments. Please check the file format.');
+                                } finally {
+                                    setLoading(false);
+                                    e.target.value = '';
+                                }
+                            }
+                        }} />
+                    </label>
 
                 </div>
 
@@ -241,99 +256,74 @@ const Shipments: React.FC = () => {
                         <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-3">
                         {shipments.map((shipment, index) => (
-                            <div key={shipment.id} className={`glass-card p-6 hover:shadow-2xl transition-all duration-300 animate-slide-in ${selectedIds.includes(shipment.id) ? 'ring-2 ring-primary-500 bg-primary-50/50' : ''}`} style={{ animationDelay: `${index * 0.01}s` }}>
-                                {/* Header */}
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex items-start gap-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.includes(shipment.id)}
-                                            onChange={(e) => { e.stopPropagation(); toggleSelect(shipment.id); }}
-                                            className="mt-1 w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
-                                        />
-                                        <div>
-                                            <h3 className="text-lg font-bold text-gray-900">{shipment.id}</h3>
-                                            <p className="text-sm text-gray-600 mt-1">{shipment.customer}</p>
-                                        </div>
-                                    </div>
-                                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(shipment.status)}`}>
-                                        {getStatusIcon(shipment.status)}
-                                        {shipment.status}
-                                    </span>
-                                </div>
-
-                                {/* Route */}
-                                <div className="space-y-3 mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-                                            <MapPin className="w-4 h-4 text-primary-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">Origin</p>
-                                            <p className="text-sm font-semibold text-gray-900">{shipment.origin}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-accent-100 flex items-center justify-center">
-                                            <MapPin className="w-4 h-4 text-accent-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">Destination</p>
-                                            <p className="text-sm font-semibold text-gray-900">{shipment.destination}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Progress Bar */}
-                                <div className="mb-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-medium text-gray-600">Progress</span>
-                                        <span className="text-xs font-bold text-gray-900">{shipment.progress}%</span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                        <div
-                                            className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(shipment.status)}`}
-                                            style={{ width: `${shipment.progress}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-
-                                {/* Details */}
-                                <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                            <div
+                                key={shipment.id}
+                                className={`glass-card px-6 py-4 flex items-center justify-between hover:shadow-md transition-all duration-300 animate-slide-in ${selectedIds.includes(shipment.id) ? 'ring-2 ring-primary-500 bg-primary-50/50' : ''}`}
+                                style={{ animationDelay: `${index * 0.01}s` }}
+                                onClick={() => navigate(`/shipments/${shipment.id}`)}
+                            >
+                                {/* Left: Checkbox + ID + Customer */}
+                                <div className="flex items-center gap-4 min-w-[200px]">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.includes(shipment.id)}
+                                        onChange={(e) => { e.stopPropagation(); toggleSelect(shipment.id); }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                    />
                                     <div>
-                                        <p className="text-xs text-gray-500">Weight</p>
-                                        <p className="text-sm font-semibold text-gray-900">{shipment.weight}</p>
+                                        <h3 className="text-sm font-bold text-gray-900">{shipment.id}</h3>
+                                        <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[150px]">{shipment.customer}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">Date</p>
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            {new Date(shipment.date).toLocaleDateString()}
+                                </div>
+
+                                {/* Middle: Route */}
+                                <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 flex-1 px-8">
+                                    <div className="flex flex-col items-start min-w-[100px] max-w-[150px]">
+                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider">Origin</span>
+                                        <span className="font-medium truncate w-full" title={shipment.origin}>{shipment.origin}</span>
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                                    <div className="flex flex-col items-start min-w-[100px] max-w-[150px]">
+                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider">Destination</span>
+                                        <span className="font-medium truncate w-full" title={shipment.destination}>{shipment.destination}</span>
+                                    </div>
+                                </div>
+
+                                {/* Right: Status + Date + Actions */}
+                                <div className="flex items-center gap-6">
+                                    <div className="hidden lg:block text-right">
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">Date</p>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {shipment.date ? new Date(shipment.date).toLocaleDateString() : '-'}
                                         </p>
                                     </div>
 
-                                </div>
+                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(shipment.status)}`}>
+                                        {getStatusIcon(shipment.status)}
+                                        {shipment.status}
+                                    </span>
 
-                                {/* Actions */}
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => navigate(`/shipments/${shipment.id}`)}
-                                        className="btn-secondary flex-1"
-                                    >
-                                        <Eye className="w-4 h-4 inline mr-2" />
-                                        View Details
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteClick(shipment);
-                                        }}
-                                        className="p-2 text-red-600 hover:bg-red-50 border border-red-200 rounded-lg transition-colors"
-                                        title="Delete Shipment"
-                                    >
-                                        <Trash className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            onClick={() => navigate(`/shipments/${shipment.id}`)}
+                                            className="btn-secondary text-xs px-3 py-1.5"
+                                        >
+                                            View
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteClick(shipment);
+                                            }}
+                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                            title="Delete Shipment"
+                                        >
+                                            <Trash className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
