@@ -11,6 +11,7 @@ interface User {
     role: string;
     created_at: string;
     last_active?: string;
+    is_logged_in?: boolean;
 }
 
 const formatLastActive = (dateStr?: string) => {
@@ -19,9 +20,15 @@ const formatLastActive = (dateStr?: string) => {
     const now = new Date();
     const diff = (now.getTime() - date.getTime()) / 1000; // seconds
 
-    if (diff < 300) return 'Active'; // < 5 mins
+    // We handle "Active" via is_logged_in now, but keep logic for recency just in case
+    if (diff < 300) return 'Active';
 
     return `Inactive (${date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })})`;
+};
+
+const getUserStatusText = (user: User) => {
+    if (user.is_logged_in) return 'Active';
+    return formatLastActive(user.last_active);
 };
 
 const getStatusColor = (text: string) => {
@@ -219,8 +226,8 @@ const Users: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="py-4 px-6">
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(formatLastActive(user.last_active))}`}>
-                                            {formatLastActive(user.last_active)}
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(getUserStatusText(user))}`}>
+                                            {getUserStatusText(user)}
                                         </span>
                                     </td>
                                     <td className="py-4 px-6 text-sm text-gray-500">

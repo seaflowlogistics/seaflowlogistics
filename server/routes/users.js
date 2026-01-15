@@ -22,7 +22,8 @@ router.get('/', authorizeRole(['Administrator']), async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT u.id, u.username, u.role, u.email, u.created_at,
-            (SELECT MAX(created_at) FROM audit_logs WHERE user_id = u.id) as last_active
+            (SELECT MAX(created_at) FROM audit_logs WHERE user_id = u.id) as last_active,
+            (SELECT COUNT(*) > 0 FROM user_sessions WHERE user_id = u.id AND expires_at > NOW()) as is_logged_in
             FROM users u
             ORDER BY u.created_at DESC
         `);
