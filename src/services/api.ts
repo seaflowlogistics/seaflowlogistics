@@ -160,6 +160,18 @@ export const exportersAPI = {
     }),
 };
 
+// Delivery Agents API
+export const deliveryAgentsAPI = {
+    getAll: () => api.get('/delivery-agents'),
+    create: (data: any) => api.post('/delivery-agents', data),
+    update: (id: string, data: any) => api.put(`/delivery-agents/${id}`, data),
+    delete: (id: string) => api.delete(`/delivery-agents/${id}`),
+    deleteAll: () => api.delete('/delivery-agents/delete-all'),
+    import: (formData: FormData) => api.post('/delivery-agents/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+};
+
 // Clearance API
 export const clearanceAPI = {
     getAll: (params?: { search?: string; type?: string; transport_mode?: string; date?: string }) =>
