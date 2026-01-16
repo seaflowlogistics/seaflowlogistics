@@ -36,10 +36,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         menuItems.push({ icon: Package, label: 'Shipments', path: '/shipments' });
     }
 
-    // Clearance Team Access
+    // Registry Access
+    if (isClearance || isAdministrator) {
+        menuItems.push(
+            { icon: FileText, label: 'Shipment Registry', path: '/registry' }
+        );
+    }
+
+    // Clearance Tools
     if (isClearance) {
         menuItems.push(
-            { icon: FileText, label: 'Shipment Registry', path: '/registry' },
             { icon: Calendar, label: 'Clearance Schedule', path: '/schedule' },
             { icon: ClipboardList, label: 'Delivery Notes', path: '/delivery-notes' },
             { icon: Container, label: 'Containers', path: '/containers' },
