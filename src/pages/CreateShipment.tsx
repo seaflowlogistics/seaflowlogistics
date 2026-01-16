@@ -1,12 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { shipmentsAPI } from '../services/api';
+import { shipmentsAPI, exportersAPI, vendorsAPI } from '../services/api';
 import { Upload, X, Save, ArrowLeft, FileText, Truck, Anchor, Plane } from 'lucide-react';
 
 const CreateShipment: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [exporters, setExporters] = useState<any[]>([]);
+    const [vendors, setVendors] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [expRes, vendRes] = await Promise.all([
+                    exportersAPI.getAll(),
+                    vendorsAPI.getAll()
+                ]);
+                setExporters(expRes.data);
+                setVendors(vendRes.data);
+            } catch (err) {
+                console.error("Failed to fetch dropdown data", err);
+            }
+        };
+        fetchData();
+    }, []);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -36,6 +54,29 @@ const CreateShipment: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+
+        // Auto-fill address for Exporter
+        if (name === 'sender_name') {
+            const exporter = exporters.find(ex => ex.name === value);
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+                sender_address: exporter ? exporter.address : prev.sender_address
+            }));
+            return;
+        }
+
+        // Auto-fill address for Vendor
+        if (name === 'receiver_name') {
+            const vendor = vendors.find(v => v.name === value);
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+                receiver_address: vendor ? vendor.address : prev.receiver_address
+            }));
+            return;
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -144,15 +185,18 @@ const CreateShipment: React.FC = () => {
                                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Exporter Details</h3>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Exporter Name *</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="sender_name"
                                             required
                                             value={formData.sender_name}
                                             onChange={handleChange}
-                                            className="input-field"
-                                            placeholder="Company Name"
-                                        />
+                                            className="input-field appearance-none"
+                                        >
+                                            <option value="">Select Exporter</option>
+                                            {exporters.map(ex => (
+                                                <option key={ex.id} value={ex.name}>{ex.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
@@ -173,15 +217,18 @@ const CreateShipment: React.FC = () => {
                                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Vendor Details</h3>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Name *</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="receiver_name"
                                             required
                                             value={formData.receiver_name}
                                             onChange={handleChange}
-                                            className="input-field"
-                                            placeholder="Company Name"
-                                        />
+                                            className="input-field appearance-none"
+                                        >
+                                            <option value="">Select Vendor</option>
+                                            {vendors.map(v => (
+                                                <option key={v.id} value={v.name}>{v.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
