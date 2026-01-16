@@ -5,8 +5,9 @@ import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI } from '../serv
 import {
     Search, Plus,
     FileText,
-    MoreVertical,
+    MoreVertical, Pencil, Check,
     Anchor, Plane, Truck, Package, X
+
 } from 'lucide-react';
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 
@@ -19,6 +20,8 @@ const ShipmentRegistry: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('Details');
+    const [editingSection, setEditingSection] = useState<string | null>(null);
+    const [editFormData, setEditFormData] = useState<any>({});
 
     // Dropdown Data State
     const [consigneesList, setConsigneesList] = useState<any[]>([]);
@@ -152,6 +155,38 @@ const ShipmentRegistry: React.FC = () => {
     };
 
 
+
+    const handleEditClick = (section: string) => {
+        setEditingSection(section);
+        setEditFormData(selectedJob);
+    };
+
+    const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setEditFormData((prev: any) => ({ ...prev, [name]: value }));
+    };
+
+    const handleCancelEdit = () => {
+        setEditingSection(null);
+        setEditFormData({});
+    };
+
+    const handleSaveDetails = async () => {
+        if (!selectedJob) return;
+        try {
+            setLoading(true);
+            const response = await shipmentsAPI.update(selectedJob.id, editFormData);
+            const updated = response.data;
+            setSelectedJob(updated);
+            setJobs(prev => prev.map(j => j.id === updated.id ? updated : j));
+            setEditingSection(null);
+        } catch (error) {
+            console.error("Update failed", error);
+            alert("Failed to update details");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleScheduleSave = async (data: any) => {
         try {
@@ -417,6 +452,9 @@ const ShipmentRegistry: React.FC = () => {
 
     const renderJobDetails = () => {
         if (!selectedJob) return null;
+
+        const isEditingInvoice = editingSection === 'invoice';
+        const isEditingBL = editingSection === 'bl';
         return (
             <div className="h-full flex flex-col animate-fade-in bg-white font-sans text-gray-900">
                 {/* Header Section */}
@@ -526,30 +564,53 @@ const ShipmentRegistry: React.FC = () => {
                     </div>
 
                     {/* Shipment Invoice Card */}
-                    <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100">
+                    <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
                                 <FileText className="w-5 h-5 text-gray-400" />
                                 Shipment Invoice
                             </h3>
-                            <button className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-50 rounded-full transition-colors"><MoreVertical className="w-5 h-5" /></button>
+                            {isEditingInvoice ? (
+                                <div className="flex items-center gap-2">
+                                    <button onClick={handleSaveDetails} className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100"><Check className="w-4 h-4" /></button>
+                                    <button onClick={handleCancelEdit} className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100"><X className="w-4 h-4" /></button>
+                                </div>
+                            ) : (
+                                <button onClick={() => handleEditClick('invoice')} className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors"><Pencil className="w-4 h-4" /></button>
+                            )}
                         </div>
                         <div className="grid grid-cols-3 gap-8">
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Invoice No.</p>
-                                <p className="font-semibold text-gray-900">{selectedJob.invoice_no || '-'}</p>
+                                {isEditingInvoice ? (
+                                    <input name="invoice_no" value={editFormData.invoice_no || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900">{selectedJob.invoice_no || '-'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Cargo Type</p>
-                                <p className="font-semibold text-gray-900 uppercase">GENERAL</p>
+                                {isEditingInvoice ? (
+                                    <input name="description" value={editFormData.description || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="GENERAL" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900 uppercase">{selectedJob.description || 'GENERAL'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">No. Items</p>
-                                <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || selectedJob.invoice_items || '0'}</p>
+                                {isEditingInvoice ? (
+                                    <input name="no_of_pkgs" value={editFormData.no_of_pkgs || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="0" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || selectedJob.invoice_items || '0'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Customs Form No.</p>
-                                <p className="font-semibold text-gray-900">{selectedJob.customs_r_form || '-'}</p>
+                                {isEditingInvoice ? (
+                                    <input name="customs_r_form" value={editFormData.customs_r_form || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900">{selectedJob.customs_r_form || '-'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Registered Date</p>
@@ -559,46 +620,85 @@ const ShipmentRegistry: React.FC = () => {
                     </div>
 
                     {/* BL/AWB Details Card */}
-                    <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100">
+                    <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
                                 <FileText className="w-5 h-5 text-gray-400" />
                                 BL/AWB Details
                             </h3>
-                            <button className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-50 rounded-full transition-colors"><MoreVertical className="w-5 h-5" /></button>
+                            {isEditingBL ? (
+                                <div className="flex items-center gap-2">
+                                    <button onClick={handleSaveDetails} className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100"><Check className="w-4 h-4" /></button>
+                                    <button onClick={handleCancelEdit} className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100"><X className="w-4 h-4" /></button>
+                                </div>
+                            ) : (
+                                <button onClick={() => handleEditClick('bl')} className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors"><Pencil className="w-4 h-4" /></button>
+                            )}
                         </div>
                         <div className="grid grid-cols-3 gap-8 gap-y-8">
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Master No.</p>
-                                <p className="font-semibold text-gray-900">{selectedJob.bl_awb_no || '-'}</p>
+                                {isEditingBL ? (
+                                    <input name="bl_awb_no" value={editFormData.bl_awb_no || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900">{selectedJob.bl_awb_no || '-'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ETD</p>
-                                <p className="font-semibold text-gray-900">{selectedJob.date ? new Date(selectedJob.date).toLocaleDateString() : '-'}</p>
+                                {isEditingBL ? (
+                                    <input type="date" name="date" value={editFormData.date ? new Date(editFormData.date).toISOString().substr(0, 10) : ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900">{selectedJob.date ? new Date(selectedJob.date).toLocaleDateString() : '-'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ETA</p>
-                                <p className="font-semibold text-gray-900">{selectedJob.expected_delivery_date ? new Date(selectedJob.expected_delivery_date).toLocaleDateString() : '-'}</p>
+                                {isEditingBL ? (
+                                    <input type="date" name="expected_delivery_date" value={editFormData.expected_delivery_date ? new Date(editFormData.expected_delivery_date).toISOString().substr(0, 10) : ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900">{selectedJob.expected_delivery_date ? new Date(selectedJob.expected_delivery_date).toLocaleDateString() : '-'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">House No.</p>
-                                <p className="font-semibold text-gray-900">{selectedJob.house_bl || '-'}</p>
+                                {isEditingBL ? (
+                                    <input name="house_bl" value={editFormData.house_bl || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900">{selectedJob.house_bl || '-'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Loading Port</p>
-                                <p className="font-semibold text-gray-900 uppercase">{selectedJob.origin || '-'}</p>
+                                {isEditingBL ? (
+                                    <input name="origin" value={editFormData.origin || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900 uppercase">{selectedJob.origin || '-'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Vessel</p>
-                                <p className="font-semibold text-gray-900 uppercase">{selectedJob.vessel || '-'}</p>
+                                {isEditingBL ? (
+                                    <input name="vessel" value={editFormData.vessel || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900 uppercase">{selectedJob.vessel || '-'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Delivery Agent</p>
-                                <p className="font-semibold text-gray-900 uppercase">{selectedJob.delivery_agent || '-'}</p>
+                                {isEditingBL ? (
+                                    <input name="delivery_agent" value={editFormData.delivery_agent || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900 uppercase">{selectedJob.delivery_agent || '-'}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Packages</p>
-                                <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'} BUNDLES -</p>
+                                {isEditingBL ? (
+                                    <input name="no_of_pkgs" value={editFormData.no_of_pkgs || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                ) : (
+                                    <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'} BUNDLES -</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Package Type</p>
