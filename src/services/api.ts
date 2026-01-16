@@ -73,6 +73,8 @@ export const shipmentsAPI = {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
     deleteDocument: (shipmentId: string, docId: string) => api.delete(`/shipments/${shipmentId}/documents/${docId}`),
+    viewDocument: (shipmentId: string, docId: string) => api.get(`/shipments/${shipmentId}/documents/${docId}/view`, { responseType: 'blob' }),
+    downloadDocument: (shipmentId: string, docId: string) => api.get(`/shipments/${shipmentId}/documents/${docId}/download`, { responseType: 'blob' }),
     import: (data: FormData) => api.post('/shipments/import', data, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),

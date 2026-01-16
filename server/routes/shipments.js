@@ -577,6 +577,45 @@ router.post('/:id/documents', authenticateToken, upload.single('file'), async (r
     }
 });
 
+// View Document (Inline)
+router.get('/:id/documents/:docId/view', authenticateToken, async (req, res) => {
+    try {
+        const { id, docId } = req.params;
+        const docResult = await pool.query('SELECT * FROM shipment_documents WHERE id = $1 AND shipment_id = $2', [docId, id]);
+        if (docResult.rows.length === 0) return res.status(404).send('Document not found');
+        const doc = docResult.rows[0];
+
+        // Resolve absolute path
+        const absolutePath = path.resolve(doc.file_path);
+        if (!fs.existsSync(absolutePath)) return res.status(404).send('File not found');
+
+        res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
+        res.setHeader('Content-Disposition', `inline; filename="${doc.file_name}"`);
+        res.sendFile(absolutePath);
+    } catch (error) {
+        console.error('View document error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// Download Document (Attachment)
+router.get('/:id/documents/:docId/download', authenticateToken, async (req, res) => {
+    try {
+        const { id, docId } = req.params;
+        const docResult = await pool.query('SELECT * FROM shipment_documents WHERE id = $1 AND shipment_id = $2', [docId, id]);
+        if (docResult.rows.length === 0) return res.status(404).send('Document not found');
+        const doc = docResult.rows[0];
+
+        const absolutePath = path.resolve(doc.file_path);
+        if (!fs.existsSync(absolutePath)) return res.status(404).send('File not found');
+
+        res.download(absolutePath, doc.file_name);
+    } catch (error) {
+        console.error('Download document error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 // Delete Document from shipment
 router.delete('/:id/documents/:docId', authenticateToken, async (req, res) => {
     try {

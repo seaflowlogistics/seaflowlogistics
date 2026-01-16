@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI, FILE_BASE_URL } from '../services/api';
+import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI } from '../services/api';
 import {
     Search, Plus,
     FileText,
@@ -23,6 +23,7 @@ const ShipmentRegistry: React.FC = () => {
     const [editingSection, setEditingSection] = useState<string | null>(null);
     const [editFormData, setEditFormData] = useState<any>({});
     const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     // Dropdown Data State
     const [consigneesList, setConsigneesList] = useState<any[]>([]);
@@ -103,6 +104,36 @@ const ShipmentRegistry: React.FC = () => {
         setSelectedJob(null);
         // Ensure dropdowns are fresh
         loadDropdownData();
+    };
+
+    const handleViewDoc = async (doc: any) => {
+        try {
+            const response = await shipmentsAPI.viewDocument(selectedJob.id, doc.id);
+            const blob = new Blob([response.data], { type: doc.file_type || 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            setPreviewUrl(url);
+            setPreviewDoc(doc);
+        } catch (error) {
+            console.error(error);
+            alert("Unable to view document");
+        }
+    };
+
+    const handleDownloadDoc = async (doc: any) => {
+        try {
+            const response = await shipmentsAPI.downloadDocument(selectedJob.id, doc.id);
+            const blob = new Blob([response.data], { type: doc.file_type || 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', doc.file_name);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+        } catch (error) {
+            console.error(error);
+            alert("Unable to download document");
+        }
     };
 
     const handleJobClick = async (job: any) => {
@@ -543,20 +574,19 @@ const ShipmentRegistry: React.FC = () => {
                                     <td className="py-3 px-4 text-right">
                                         <div className="flex justify-end gap-2">
                                             <button
-                                                onClick={() => setPreviewDoc(doc)}
+                                                onClick={() => handleViewDoc(doc)}
                                                 className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
                                                 title="View"
                                             >
                                                 <Search className="w-4 h-4" />
                                             </button>
-                                            <a
-                                                href={`${FILE_BASE_URL}/${doc.file_path}`}
-                                                download
+                                            <button
+                                                onClick={() => handleDownloadDoc(doc)}
                                                 className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                                                 title="Download"
                                             >
                                                 <Download className="w-4 h-4" />
-                                            </a>
+                                            </button>
                                             <button
                                                 onClick={async () => {
                                                     if (window.confirm('Delete document?')) {
@@ -1059,16 +1089,16 @@ const ShipmentRegistry: React.FC = () => {
                                 <h3 className="font-bold text-gray-900">{previewDoc.file_name}</h3>
                                 <p className="text-xs text-gray-500 uppercase">{previewDoc.document_type || 'Document'}</p>
                             </div>
-                            <button onClick={() => setPreviewDoc(null)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors">
+                            <button onClick={() => { setPreviewDoc(null); setPreviewUrl(null); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
                         <div className="flex-1 bg-gray-100 p-1 relative">
                             {previewDoc.file_type?.startsWith('image/') ? (
-                                <img src={`${FILE_BASE_URL}/${previewDoc.file_path}`} alt="Preview" className="w-full h-full object-contain" />
+                                <img src={previewUrl || ''} alt="Preview" className="w-full h-full object-contain" />
                             ) : (
                                 <iframe
-                                    src={`${FILE_BASE_URL}/${previewDoc.file_path}`}
+                                    src={previewUrl || ''}
                                     className="w-full h-full border-none"
                                     title="Document Preview"
                                 />
