@@ -585,9 +585,16 @@ router.get('/:id/documents/:docId/view', authenticateToken, async (req, res) => 
         if (docResult.rows.length === 0) return res.status(404).send('Document not found');
         const doc = docResult.rows[0];
 
-        // Resolve absolute path
-        const absolutePath = path.resolve(doc.file_path);
-        if (!fs.existsSync(absolutePath)) return res.status(404).send('File not found');
+        // Resolve absolute path safely
+        const normalizedPath = doc.file_path.replace(/\\/g, '/');
+        const absolutePath = path.resolve(process.cwd(), normalizedPath);
+
+        console.log(`[View] Serving file: ${absolutePath} (DB: ${doc.file_path})`);
+
+        if (!fs.existsSync(absolutePath)) {
+            console.error(`[View] File missing at ${absolutePath}`);
+            return res.status(404).send('File not found on server disk');
+        }
 
         res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
         res.setHeader('Content-Disposition', `inline; filename="${doc.file_name}"`);
@@ -606,8 +613,15 @@ router.get('/:id/documents/:docId/download', authenticateToken, async (req, res)
         if (docResult.rows.length === 0) return res.status(404).send('Document not found');
         const doc = docResult.rows[0];
 
-        const absolutePath = path.resolve(doc.file_path);
-        if (!fs.existsSync(absolutePath)) return res.status(404).send('File not found');
+        const normalizedPath = doc.file_path.replace(/\\/g, '/');
+        const absolutePath = path.resolve(process.cwd(), normalizedPath);
+
+        console.log(`[Download] Serving file: ${absolutePath} (DB: ${doc.file_path})`);
+
+        if (!fs.existsSync(absolutePath)) {
+            console.error(`[Download] File missing at ${absolutePath}`);
+            return res.status(404).send('File not found on server disk');
+        }
 
         res.download(absolutePath, doc.file_name);
     } catch (error) {

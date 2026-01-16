@@ -113,9 +113,12 @@ const ShipmentRegistry: React.FC = () => {
             const url = URL.createObjectURL(blob);
             setPreviewUrl(url);
             setPreviewDoc(doc);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Unable to view document");
+            const msg = error.response && error.response.status === 404
+                ? "File not found on server. It may have been deleted."
+                : "Unable to view document. Check console for details.";
+            alert(msg);
         }
     };
 
@@ -130,9 +133,12 @@ const ShipmentRegistry: React.FC = () => {
             document.body.appendChild(link);
             link.click();
             link.parentNode?.removeChild(link);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Unable to download document");
+            const msg = error.response && error.response.status === 404
+                ? "File not found on server. It may have been deleted."
+                : "Unable to download document. Check console for details.";
+            alert(msg);
         }
     };
 
