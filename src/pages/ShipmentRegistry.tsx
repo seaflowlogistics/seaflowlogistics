@@ -344,45 +344,47 @@ const ShipmentRegistry: React.FC = () => {
             <h4 className="text-sm font-bold text-gray-900 mb-1 leading-tight">{job.customer || 'Unknown Customer'}</h4>
             <p className="text-xs text-gray-500 mb-3 truncate">{job.exporter}</p>
 
-            <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border flex items-center gap-1 ${getModeColor(job.transport_mode)}`}>
-                    {getModeIcon(job.transport_mode)}
-                    {job.transport_mode || 'SEA'}
-                </span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getPaymentColor(job.payment_status)}`}>
-                    {job.payment_status}
-                </span>
-            </div>
+            <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border flex items-center gap-1 ${getModeColor(job.transport_mode)}`}>
+                        {getModeIcon(job.transport_mode)}
+                        {job.transport_mode || 'SEA'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getPaymentColor(job.payment_status)}`}>
+                        {job.payment_status}
+                    </span>
+                </div>
 
-            <div className="flex items-center gap-1 mt-3 pt-2 border-t border-gray-50">
-                <button
-                    onClick={(e) => { e.stopPropagation(); setPopupJob(job); setPopupType('invoice'); setEditFormData(job); setEditingSection(null); }}
-                    className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                    title="Shipment Invoice"
-                >
-                    <Receipt className="w-3.5 h-3.5" />
-                </button>
-                <button
-                    onClick={(e) => { e.stopPropagation(); setPopupJob(job); setPopupType('bl'); setEditFormData(job); setEditingSection(null); }}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                    title="BL/AWB Details"
-                >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                </button>
-                <button
-                    onClick={(e) => { e.stopPropagation(); setPopupJob(job); setPopupType('payment'); setEditFormData(job); setEditingSection(null); }}
-                    className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                    title="Payment"
-                >
-                    <CreditCard className="w-3.5 h-3.5" />
-                </button>
-                <button
-                    onClick={(e) => { e.stopPropagation(); setPopupJob(job); setPopupType('upload'); setEditFormData(job); setEditingSection(null); }}
-                    className="p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
-                    title="Upload Document"
-                >
-                    <UploadCloud className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setPopupJob(job); setPopupType('invoice'); setEditFormData(job); setEditingSection(null); }}
+                        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                        title="Shipment Invoice"
+                    >
+                        <Receipt className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setPopupJob(job); setPopupType('bl'); setEditFormData(job); setEditingSection(null); }}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        title="BL/AWB Details"
+                    >
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setPopupJob(job); setPopupType('payment'); setEditFormData(job); setEditingSection(null); }}
+                        className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                        title="Payment"
+                    >
+                        <CreditCard className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setPopupJob(job); setPopupType('upload'); setEditFormData(job); setEditingSection(null); }}
+                        className="p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
+                        title="Upload Document"
+                    >
+                        <UploadCloud className="w-3.5 h-3.5" />
+                    </button>
+                </div>
             </div>
         </div>
     );
