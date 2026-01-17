@@ -579,18 +579,19 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="mt-4 animate-fade-in-down">
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Billing Contact</label>
                             <div className="relative">
-                                <select
+                                <input
+                                    list="billing-contact-list"
                                     name="billing_contact"
                                     value={formData.billing_contact}
                                     onChange={handleInputChange}
-                                    className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none appearance-none text-gray-700"
-                                >
-                                    <option value="">Select Billing Contact...</option>
-                                    <option value="Contact 1">Contact 1</option>
-                                </select>
-                                <div className="absolute right-3 top-3.5 pointer-events-none text-gray-400">
-                                    <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
-                                </div>
+                                    placeholder="Search or Select Billing Contact..."
+                                    className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-gray-700"
+                                />
+                                <datalist id="billing-contact-list">
+                                    {consigneesList.map((consignee: any) => (
+                                        <option key={consignee.id} value={consignee.name} />
+                                    ))}
+                                </datalist>
                             </div>
                         </div>
                     )}
