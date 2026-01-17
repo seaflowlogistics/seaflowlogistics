@@ -198,19 +198,12 @@ const ClearanceSchedule: React.FC = () => {
                                                 <div className="text-xs text-gray-500">{item.exporter}</div>
                                             </td>
                                             <td className="py-4 px-6 text-sm text-gray-500 font-mono">
-                                                {/* Container logic placeholder */}
-                                                {(() => {
-                                                    const match = item.remarks?.match(/Container:\s*(.*?)\s*\((.*?)\)/);
-                                                    if (match) {
-                                                        return (
-                                                            <>
-                                                                <div className="font-medium text-gray-900">{match[1]}</div>
-                                                                <div className="text-xs text-gray-500">{match[2]}</div>
-                                                            </>
-                                                        );
-                                                    }
-                                                    return '-';
-                                                })()}
+                                                {item.container_no ? (
+                                                    <>
+                                                        <div className="font-medium text-gray-900">{item.container_no}</div>
+                                                        <div className="text-xs text-gray-500">{item.container_type || '20FT'}</div>
+                                                    </>
+                                                ) : '-'}
                                             </td>
                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
                                                 {item.packages || '-'}
