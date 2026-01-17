@@ -1175,10 +1175,21 @@ const ShipmentRegistry: React.FC = () => {
 
                         {/* Containers Card */}
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all">
-                            <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg mb-6">
-                                <Package className="w-5 h-5 text-gray-400" />
-                                Containers
-                            </h3>
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
+                                    <Package className="w-5 h-5 text-gray-400" />
+                                    Containers
+                                </h3>
+                                {!isEditingContainers && (
+                                    <button
+                                        onClick={() => handleEditClick('containers')}
+                                        className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors"
+                                        title={selectedJob.container_no ? "Edit Container" : "Add Container"}
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
                             <table className="w-full text-sm text-left">
                                 <thead className="text-xs text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100">
                                     <tr>
