@@ -198,6 +198,7 @@ export const clearanceAPI = {
         api.get('/clearance', { params }),
     create: (data: any) => api.post('/clearance', data),
     update: (id: number | string, data: any) => api.put(`/clearance/${id}`, data),
+    delete: (id: number | string) => api.delete(`/clearance/${id}`),
 };
 
 export default api;

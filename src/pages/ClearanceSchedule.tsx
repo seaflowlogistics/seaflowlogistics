@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { Search, Calendar, ChevronDown, Pencil } from 'lucide-react';
+import { Search, Calendar, ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import { clearanceAPI } from '../services/api';
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 
@@ -56,6 +56,18 @@ const ClearanceSchedule: React.FC = () => {
         } catch (error) {
             console.error('Failed to update clearance', error);
             alert('Failed to update clearance');
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if (window.confirm('Are you sure you want to delete this clearance schedule?')) {
+            try {
+                await clearanceAPI.delete(id);
+                setSchedules(prev => prev.filter(s => s.id !== id));
+            } catch (error) {
+                console.error('Failed to delete clearance', error);
+                alert('Failed to delete clearance');
+            }
         }
     };
 
@@ -210,8 +222,16 @@ const ClearanceSchedule: React.FC = () => {
                                                 <button
                                                     onClick={() => handleEditClick(item)}
                                                     className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
+                                                    title="Edit"
                                                 >
                                                     <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(item.id)}
+                                                    className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors ml-2"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </td>
                                         </tr>
