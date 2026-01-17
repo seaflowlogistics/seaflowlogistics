@@ -214,7 +214,7 @@ const ClearanceSchedule: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="py-4 px-6 text-sm text-gray-600 uppercase">{item.port || '-'}</td>
-                                            <td className="py-4 px-6 text-sm text-gray-500">DHONI</td> {/* Placeholder */}
+                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.clearance_method || '-'}</td>
                                             <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.transport_mode || '-'}</td>
                                             <td className="py-4 px-6 text-sm text-gray-500">
                                                 <div className="flex items-center gap-2">

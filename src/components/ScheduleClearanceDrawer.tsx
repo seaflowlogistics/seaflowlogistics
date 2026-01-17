@@ -17,6 +17,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
         bl_awb: '',
         transport_mode: '',
         packages: '',
+        clearance_method: '',
         remarks: ''
     });
 
@@ -29,6 +30,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                 bl_awb: initialData.bl_awb || '',
                 transport_mode: initialData.transport_mode || '',
                 packages: initialData.packages || '',
+                clearance_method: initialData.clearance_method || '',
                 remarks: initialData.remarks || ''
             });
         } else {
@@ -39,6 +41,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                 bl_awb: '',
                 transport_mode: '',
                 packages: '',
+                clearance_method: '',
                 remarks: ''
             });
         }
@@ -134,6 +137,26 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                                     <option value="HULHUMALE">HULHUMALE</option>
                                     <option value="MALE AIRPORT">MALE AIRPORT</option>
                                     <option value="ADDU">ADDU</option>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+
+
+                        {/* Clearance Method */}
+                        <div className="form-group">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Clearance Method</label>
+                            <div className="relative">
+                                <select
+                                    name="clearance_method"
+                                    value={formData.clearance_method}
+                                    onChange={handleInputChange}
+                                    className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.clearance_method ? 'text-gray-400' : 'text-gray-700'}`}
+                                >
+                                    <option value="" disabled>Select an option</option>
+                                    <option value="DHONI">DHONI</option>
+                                    <option value="LORRY">LORRY</option>
+                                    <option value="OTHER">OTHER</option>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
                             </div>
