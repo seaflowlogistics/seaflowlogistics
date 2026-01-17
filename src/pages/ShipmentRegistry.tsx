@@ -1114,9 +1114,11 @@ const ShipmentRegistry: React.FC = () => {
                                     <select name="cargo_type" value={editFormData.cargo_type || 'GENERAL'} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
                                         <option value="GENERAL">GENERAL</option>
                                         <option value="PERISHABLE">PERISHABLE</option>
-                                        <option value="DANGEROUS GOODS">DANGEROUS GOODS</option>
-                                        <option value="CONSOLIDATED">CONSOLIDATED</option>
-                                        <option value="VALUABLE">VALUABLE</option>
+                                        <option value="HARDWARE">HARDWARE</option>
+                                        <option value="GARMENTS">GARMENTS</option>
+                                        <option value="ELECTRONICS">ELECTRONICS</option>
+                                        <option value="DRY FOODS">DRY FOODS</option>
+                                        <option value="FURNITURE">FURNITURE</option>
                                         <option value="OTHER">OTHER</option>
                                     </select>
                                 </div>
@@ -1132,10 +1134,15 @@ const ShipmentRegistry: React.FC = () => {
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office</label>
                                     <select name="office" value={editFormData.office || ''} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
                                         <option value="">Select Office</option>
-                                        <option value="MPL">MPL</option>
-                                        <option value="MACL">MACL</option>
-                                        <option value="MCS">MCS</option>
-                                        <option value="Head Office">Head Office</option>
+                                        <option value="00MP">00MP</option>
+                                        <option value="00AP">00AP</option>
+                                        <option value="00HA">00HA</option>
+                                        <option value="00BW">00BW</option>
+                                        <option value="00HK">00HK</option>
+                                        <option value="00HM">00HM</option>
+                                        <option value="00PO">00PO</option>
+                                        <option value="00SG">00SG</option>
+                                        <option value="00SH">00SH</option>
                                     </select>
                                 </div>
                             </div>
@@ -1150,10 +1157,6 @@ const ShipmentRegistry: React.FC = () => {
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">House No.</label>
                                     <input name="house_bl" value={editFormData.house_bl || ''} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="-" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">ETD</label>
-                                    <input type="date" name="date" value={editFormData.date ? new Date(editFormData.date).toISOString().substr(0, 10) : ''} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">ETA</label>
