@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 
+const PACKAGE_TYPES = ['PALLET', 'BUNDLES', 'CARTON', 'PKG', 'BOX', 'CASE', 'BULK', 'UNIT'];
+
 const ShipmentRegistry: React.FC = () => {
     // State
     const [jobs, setJobs] = useState<any[]>([]);
@@ -251,9 +253,76 @@ const ShipmentRegistry: React.FC = () => {
 
 
 
+    const initializePackages = (job: any) => {
+        if (job.packages && Array.isArray(job.packages) && job.packages.length > 0) {
+            return job.packages;
+        }
+        // Fallback or init from flat fields if they exist
+        if (job.no_of_pkgs || job.weight || job.package_type) {
+            return [{
+                count: job.no_of_pkgs,
+                weight: job.weight,
+                type: job.package_type || 'BUNDLES'
+            }];
+        }
+        return [{ count: '', weight: '', type: 'BUNDLES' }];
+    };
+
+    const handleOpenPopup = (type: any, job: any) => {
+        setPopupJob(job);
+        setPopupType(type);
+        const initialData = { ...job };
+        if (type === 'bl') {
+            initialData.packages = initializePackages(job);
+        }
+        setEditFormData(initialData);
+        setEditingSection(null);
+    };
+
+    const handlePackageChange = (index: number, field: string, value: any) => {
+        const newPackages = [...(editFormData.packages || [])];
+        newPackages[index] = { ...newPackages[index], [field]: value };
+
+        // Recalculate totals
+        const totalPkgs = newPackages.reduce((sum, p) => sum + (Number(p.count) || 0), 0);
+        const totalWeight = newPackages.reduce((sum, p) => sum + (Number(p.weight) || 0), 0);
+
+        setEditFormData((prev: any) => ({
+            ...prev,
+            packages: newPackages,
+            no_of_pkgs: totalPkgs,
+            weight: totalWeight,
+            package_type: newPackages.length === 1 ? newPackages[0].type : 'MIXED'
+        }));
+    };
+
+    const addPackage = () => {
+        setEditFormData((prev: any) => ({
+            ...prev,
+            packages: [...(prev.packages || []), { count: '', weight: '', type: 'BUNDLES' }]
+        }));
+    };
+
+    const removePackage = (index: number) => {
+        const newPackages = editFormData.packages.filter((_: any, i: number) => i !== index);
+        const totalPkgs = newPackages.reduce((sum: number, p: any) => sum + (Number(p.count) || 0), 0);
+        const totalWeight = newPackages.reduce((sum: number, p: any) => sum + (Number(p.weight) || 0), 0);
+
+        setEditFormData((prev: any) => ({
+            ...prev,
+            packages: newPackages,
+            no_of_pkgs: totalPkgs,
+            weight: totalWeight
+        }));
+    };
+
     const handleEditClick = (section: string) => {
         setEditingSection(section);
-        setEditFormData(selectedJob);
+        const initialData = { ...selectedJob };
+        if (section === 'bl') {
+            initialData.packages = initializePackages(selectedJob);
+        }
+        setEditFormData(initialData);
     };
 
     const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -691,28 +760,28 @@ const ShipmentRegistry: React.FC = () => {
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setPopupJob(selectedJob); setPopupType('invoice'); setEditFormData(selectedJob); setEditingSection(null); }}
+                                    onClick={(e) => { e.stopPropagation(); handleOpenPopup('invoice', selectedJob); }}
                                     className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
                                     title="Shipment Invoice"
                                 >
                                     <Receipt className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setPopupJob(selectedJob); setPopupType('bl'); setEditFormData(selectedJob); setEditingSection(null); }}
+                                    onClick={(e) => { e.stopPropagation(); handleOpenPopup('bl', selectedJob); }}
                                     className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                     title="BL/AWB Details"
                                 >
                                     <FileSpreadsheet className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setPopupJob(selectedJob); setPopupType('payment'); setEditFormData(selectedJob); setEditingSection(null); }}
+                                    onClick={(e) => { e.stopPropagation(); handleOpenPopup('payment', selectedJob); }}
                                     className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
                                     title="Payment"
                                 >
                                     <CreditCard className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setPopupJob(selectedJob); setPopupType('upload'); setEditFormData(selectedJob); setEditingSection(null); }}
+                                    onClick={(e) => { e.stopPropagation(); handleOpenPopup('upload', selectedJob); }}
                                     className="p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
                                     title="Upload Document"
                                 >
@@ -987,30 +1056,61 @@ const ShipmentRegistry: React.FC = () => {
                                         <p className="font-semibold text-gray-900 uppercase">{selectedJob.delivery_agent || '-'}</p>
                                     )}
                                 </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Packages</p>
-                                    {isEditingBL ? (
-                                        <input name="no_of_pkgs" type="number" value={editFormData.no_of_pkgs || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
-                                    ) : (
-                                        <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Weight (KG)</p>
-                                    {isEditingBL ? (
-                                        <input name="weight" type="number" value={editFormData.weight || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
-                                    ) : (
-                                        <p className="font-semibold text-gray-900">{selectedJob.weight || '0'} KG</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Package Type</p>
-                                    {isEditingBL ? (
-                                        <input name="package_type" value={editFormData.package_type || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="e.g. BUNDLES" />
-                                    ) : (
-                                        <p className="font-semibold text-gray-900 uppercase">{selectedJob.package_type || 'BUNDLES'}</p>
-                                    )}
-                                </div>
+                                {isEditingBL ? (
+                                    <div className="col-span-3">
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Packages</label>
+                                        <div className="space-y-2">
+                                            {editFormData.packages?.map((pkg: any, idx: number) => (
+                                                <div key={idx} className="flex gap-2 items-center">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Count"
+                                                        value={pkg.count}
+                                                        onChange={e => handlePackageChange(idx, 'count', e.target.value)}
+                                                        className="w-20 input-field py-1 border rounded px-2 text-sm"
+                                                    />
+                                                    <select
+                                                        value={pkg.type}
+                                                        onChange={e => handlePackageChange(idx, 'type', e.target.value)}
+                                                        className="w-32 input-field py-1 border rounded px-2 text-sm bg-white"
+                                                    >
+                                                        {PACKAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                    </select>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Weight (KG)"
+                                                        value={pkg.weight}
+                                                        onChange={e => handlePackageChange(idx, 'weight', e.target.value)}
+                                                        className="w-24 input-field py-1 border rounded px-2 text-sm"
+                                                    />
+
+                                                    <button onClick={() => removePackage(idx)} className="text-red-400 hover:text-red-600"><X className="w-4 h-4" /></button>
+                                                </div>
+                                            ))}
+                                            <button onClick={addPackage} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                                                <Plus className="w-3 h-3" /> Add Package
+                                            </button>
+                                            <div className="text-xs text-gray-500 font-medium pt-2 border-t mt-2">
+                                                Total: {editFormData.no_of_pkgs} Pkgs, {editFormData.weight} KG
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Packages</p>
+                                            <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Weight (KG)</p>
+                                            <p className="font-semibold text-gray-900">{selectedJob.weight || '0'} KG</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Package Type</p>
+                                            <p className="font-semibold text-gray-900 uppercase">{selectedJob.package_type || 'BUNDLES'}</p>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -1213,17 +1313,58 @@ const ShipmentRegistry: React.FC = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Packages</label>
-                                    <input name="no_of_pkgs" type="number" value={editFormData.no_of_pkgs || ''} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="0" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Weight (KG)</label>
-                                    <input name="weight" type="number" value={editFormData.weight || ''} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="0.0" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Package Type</label>
-                                    <input name="package_type" value={editFormData.package_type || ''} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. BUNDLES" />
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Packages</label>
+                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-3">
+                                        <div className="grid grid-cols-10 gap-2 text-xs font-bold text-gray-400 mb-1">
+                                            <div className="col-span-3">Count</div>
+                                            <div className="col-span-4">Type</div>
+                                            <div className="col-span-3">Weight (KG)</div>
+                                        </div>
+                                        {editFormData.packages?.map((pkg: any, idx: number) => (
+                                            <div key={idx} className="grid grid-cols-10 gap-2 items-center">
+                                                <div className="col-span-3">
+                                                    <input
+                                                        type="number"
+                                                        value={pkg.count}
+                                                        onChange={e => handlePackageChange(idx, 'count', e.target.value)}
+                                                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div className="col-span-4">
+                                                    <select
+                                                        value={pkg.type}
+                                                        onChange={e => handlePackageChange(idx, 'type', e.target.value)}
+                                                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                                                    >
+                                                        {PACKAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="col-span-3 flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        value={pkg.weight}
+                                                        onChange={e => handlePackageChange(idx, 'weight', e.target.value)}
+                                                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                                        placeholder="0.0"
+                                                    />
+                                                    {editFormData.packages.length > 1 && (
+                                                        <button onClick={() => removePackage(idx)} className="text-gray-400 hover:text-red-500">
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <button onClick={addPackage} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-indigo-500 hover:text-indigo-600 transition-colors text-sm font-medium flex justify-center items-center gap-2">
+                                            <Plus className="w-4 h-4" /> Add Package
+                                        </button>
+                                        <div className="flex justify-between items-center pt-2 text-sm font-bold text-gray-700">
+                                            <span>Total:</span>
+                                            <span>{editFormData.no_of_pkgs} Pkgs / {editFormData.weight} KG</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
