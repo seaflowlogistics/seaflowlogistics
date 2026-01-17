@@ -990,14 +990,26 @@ const ShipmentRegistry: React.FC = () => {
                                 <div>
                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Packages</p>
                                     {isEditingBL ? (
-                                        <input name="no_of_pkgs" value={editFormData.no_of_pkgs || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                        <input name="no_of_pkgs" type="number" value={editFormData.no_of_pkgs || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
                                     ) : (
-                                        <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'} BUNDLES -</p>
+                                        <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Weight (KG)</p>
+                                    {isEditingBL ? (
+                                        <input name="weight" type="number" value={editFormData.weight || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="-" />
+                                    ) : (
+                                        <p className="font-semibold text-gray-900">{selectedJob.weight || '0'} KG</p>
                                     )}
                                 </div>
                                 <div>
                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Package Type</p>
-                                    <p className="font-semibold text-gray-900 uppercase">BUNDLES</p>
+                                    {isEditingBL ? (
+                                        <input name="package_type" value={editFormData.package_type || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="e.g. BUNDLES" />
+                                    ) : (
+                                        <p className="font-semibold text-gray-900 uppercase">{selectedJob.package_type || 'BUNDLES'}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1200,6 +1212,18 @@ const ShipmentRegistry: React.FC = () => {
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Packages</label>
+                                    <input name="no_of_pkgs" type="number" value={editFormData.no_of_pkgs || ''} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="0" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Weight (KG)</label>
+                                    <input name="weight" type="number" value={editFormData.weight || ''} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="0.0" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Package Type</label>
+                                    <input name="package_type" value={editFormData.package_type || ''} onChange={handleEditChange} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. BUNDLES" />
                                 </div>
                             </div>
                         )}
