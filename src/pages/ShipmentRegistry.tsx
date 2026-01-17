@@ -46,7 +46,8 @@ const ShipmentRegistry: React.FC = () => {
         transport_mode: 'SEA',
         shipment_type: 'IMP',
         billing_contact_same: true,
-        billing_contact: ''
+        billing_contact: '',
+        manual_invoice_no: ''
     });
 
     useEffect(() => {
@@ -108,7 +109,8 @@ const ShipmentRegistry: React.FC = () => {
             transport_mode: 'SEA',
             shipment_type: 'IMP',
             billing_contact_same: true,
-            billing_contact: ''
+            billing_contact: '',
+            manual_invoice_no: ''
         });
         setViewMode('create');
         setSelectedJob(null);
@@ -176,7 +178,8 @@ const ShipmentRegistry: React.FC = () => {
             transport_mode: selectedJob.transport_mode || 'SEA',
             shipment_type: selectedJob.shipment_type || 'IMP',
             billing_contact: selectedJob.billing_contact || '',
-            billing_contact_same: !selectedJob.billing_contact || selectedJob.billing_contact === selectedJob.receiver_name
+            billing_contact_same: !selectedJob.billing_contact || selectedJob.billing_contact === selectedJob.receiver_name,
+            manual_invoice_no: selectedJob.invoice_no || ''
         });
         setIsEditingJob(true);
         setViewMode('create');
@@ -191,7 +194,9 @@ const ShipmentRegistry: React.FC = () => {
                 transport_mode: formData.transport_mode,
                 service: formData.service,
                 shipment_type: formData.shipment_type,
-                billing_contact: formData.billing_contact_same ? formData.consignee : formData.billing_contact
+
+                billing_contact: formData.billing_contact_same ? formData.consignee : formData.billing_contact,
+                invoice_no: formData.manual_invoice_no
             };
 
             await shipmentsAPI.update(selectedJob.id, updateData);
@@ -217,6 +222,12 @@ const ShipmentRegistry: React.FC = () => {
             // The backend expects generic fields: sender_name, receiver_name, transport_mode, etc.
             const apiData = new FormData();
 
+            if (!formData.manual_invoice_no) {
+                alert("Please enter the Job Invoice No.");
+                setLoading(false);
+                return;
+            }
+
             // Map UI 'Exporter' -> sender_name / customer
             apiData.append('sender_name', formData.exporter);
 
@@ -224,6 +235,13 @@ const ShipmentRegistry: React.FC = () => {
             apiData.append('receiver_name', formData.consignee);
 
             apiData.append('transport_mode', formData.transport_mode);
+
+            // Set Billing Contact
+            const finalBilling = formData.billing_contact_same ? formData.consignee : formData.billing_contact;
+            apiData.append('billing_contact', finalBilling);
+
+            // Manual Invoice Number (Job Invoice)
+            apiData.append('invoice_no', formData.manual_invoice_no);
 
             // Backend requires these, so we provide defaults or mapped values
             apiData.append('service', formData.service);
@@ -465,6 +483,19 @@ const ShipmentRegistry: React.FC = () => {
                             <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
                         </div>
                     </div>
+                </div>
+
+                {/* Section: Manual Job Invoice */}
+                <div className="form-group mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Job Invoice No.</label>
+                    <input
+                        type="text"
+                        name="manual_invoice_no"
+                        value={formData.manual_invoice_no || ''}
+                        onChange={handleInputChange}
+                        placeholder="Enter Job Invoice Number"
+                        className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-gray-700"
+                    />
                 </div>
 
                 {/* Section B: Consignee */}
