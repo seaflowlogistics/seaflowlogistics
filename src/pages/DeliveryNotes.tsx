@@ -7,6 +7,11 @@ import {
 import Barcode from 'react-barcode';
 import { deliveryNotesAPI } from '../services/api';
 
+import seaflowHeader from '../assets/seaflow-header.jpg';
+import seaflowFooter from '../assets/seaflow-footer.jpg';
+import seaflowLogo from '../assets/seaflow-logo.jpg';
+import seaflowDigitalSeal from '../assets/seaflow-digital-seal.jpg';
+
 interface DeliveryNoteItem {
     id: number;
     schedule_id: number;
@@ -107,100 +112,117 @@ const DeliveryNotes: React.FC = () => {
 
     // Render the Document Preview (Image 1 style)
     const renderDocument = () => (
-        <div className="bg-white p-8 shadow-sm border border-gray-200 min-h-[800px] text-sm font-mono relative">
-            <div className="flex justify-between items-start mb-8">
-                <div>
-                    <h2 className="text-2xl font-bold text-red-600 italic mb-1">Seaflow Logistics</h2>
-                    <p className="text-xs text-gray-500">H.Fusthalhaanage, 7th Floor,</p>
-                    <p className="text-xs text-gray-500">Ameer Ahmed Magu, Male', 20030,</p>
-                    <p className="text-xs text-gray-500">e: info@seaflow.mv, ph: +960 300 7633</p>
-                </div>
-                <div className="text-right">
-                    <div className="bg-gray-300 text-gray-800 font-bold px-4 py-2 mb-2 inline-block">GOODS DELIVERY NOTE</div>
-                    <div className="flex justify-end mb-2">
-                        <Barcode
-                            value={selectedNote?.id || ''}
-                            width={1.5}
-                            height={50}
-                            displayValue={false}
-                            background="transparent"
-                            margin={0}
-                        />
-                    </div>
+        <div className="bg-white shadow-sm border border-gray-200 min-h-[1100px] text-sm font-mono relative flex flex-col">
+            {/* Header Image */}
+            <div className="w-full relative">
+                <img src={seaflowHeader} alt="Header" className="w-full h-auto object-cover max-h-48" />
+                {/* Logo Overlay - Positioned as requested (Blue Zone) */}
+                <div className="absolute top-1/2 -translate-y-1/2 left-8 w-24 h-24 bg-white rounded-full p-1 shadow-sm">
+                    <img src={seaflowLogo} alt="Logo" className="w-full h-full object-contain rounded-full" />
                 </div>
             </div>
 
-            <div className="border border-gray-800 p-4 mb-6 grid grid-cols-2 gap-8">
-                <div>
-                    <p className="mb-1"><span className="font-bold">Customer:</span> {selectedNote?.consignee}</p>
+            <div className="p-8 flex-1">
+                <div className="flex justify-between items-start mb-8 mt-4">
+                    <div className="w-1/2">
+                        {/* Spacer for where address used to be, now handled by header image or just empty */}
+                    </div>
+                    <div className="text-right">
+                        <div className="bg-gray-300 text-gray-800 font-bold px-4 py-2 mb-2 inline-block">GOODS DELIVERY NOTE</div>
+                        <div className="flex justify-end mb-2">
+                            <Barcode
+                                value={selectedNote?.id || ''}
+                                width={1.5}
+                                height={50}
+                                displayValue={false}
+                                background="transparent"
+                                margin={0}
+                            />
+                        </div>
+                    </div>
                 </div>
-                <div>
+
+                <div className="border border-gray-800 p-4 mb-6 grid grid-cols-2 gap-8">
                     <div>
-                        <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
-                            <span className="font-bold">Delivery:</span> <span>{selectedNote?.id}</span>
-                        </div>
-                        <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
-                            <span className="font-bold">Loading Date:</span> <span>{selectedNote?.loading_date ? new Date(selectedNote.loading_date).toLocaleDateString() : '-'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="font-bold">Discharge Location:</span>
-                            <span>
-                                {selectedNote?.vehicles && selectedNote.vehicles.length > 0
-                                    ? selectedNote.vehicles.map(v => v.discharge_location).join(', ')
-                                    : '-'}
-                            </span>
+                        <p className="mb-1"><span className="font-bold">Customer:</span> {selectedNote?.consignee}</p>
+                    </div>
+                    <div>
+                        <div>
+                            <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
+                                <span className="font-bold">Delivery:</span> <span>{selectedNote?.id}</span>
+                            </div>
+                            <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
+                                <span className="font-bold">Loading Date:</span> <span>{selectedNote?.loading_date ? new Date(selectedNote.loading_date).toLocaleDateString() : '-'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-bold">Discharge Location:</span>
+                                <span>
+                                    {selectedNote?.vehicles && selectedNote.vehicles.length > 0
+                                        ? selectedNote.vehicles.map(v => v.discharge_location).join(', ')
+                                        : '-'}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Job Table Mock */}
-            <div className="mb-8">
-                <table className="w-full border-collapse border border-gray-300 text-xs">
-                    <thead className="bg-gray-200">
-                        <tr>
-                            <th className="border border-gray-300 p-2 text-left">Job No</th>
-                            <th className="border border-gray-300 p-2 text-left">Shipper</th>
-                            <th className="border border-gray-300 p-2 text-left">BL/AWB #</th>
-                            <th className="border border-gray-300 p-2 text-left">Qty</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {selectedNote?.items?.map((item, idx) => (
-                            <tr key={idx}>
-                                <td className="border border-gray-300 p-2">{item.job_id}</td>
-                                <td className="border border-gray-300 p-2">{item.sender_name || selectedNote.exporter}</td>
-                                <td className="border border-gray-300 p-2">{item.bl_awb_no || '-'}</td>
-                                <td className="border border-gray-300 p-2">{item.packages || '-'}</td>
+                {/* Job Table Mock */}
+                <div className="mb-8">
+                    <table className="w-full border-collapse border border-gray-300 text-xs">
+                        <thead className="bg-gray-200">
+                            <tr>
+                                <th className="border border-gray-300 p-2 text-left">Job No</th>
+                                <th className="border border-gray-300 p-2 text-left">Shipper</th>
+                                <th className="border border-gray-300 p-2 text-left">BL/AWB #</th>
+                                <th className="border border-gray-300 p-2 text-left">Qty</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {selectedNote?.items?.map((item, idx) => (
+                                <tr key={idx}>
+                                    <td className="border border-gray-300 p-2">{item.job_id}</td>
+                                    <td className="border border-gray-300 p-2">{item.sender_name || selectedNote.exporter}</td>
+                                    <td className="border border-gray-300 p-2">{item.bl_awb_no || '-'}</td>
+                                    <td className="border border-gray-300 p-2">{item.packages || '-'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-            {/* Signatures */}
-            <div className="border border-gray-800 grid grid-cols-2 mb-8">
-                <div className="p-0">
-                    <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS DELIVERED BY</div>
-                    <div className="p-4 grid grid-cols-[80px_1fr] gap-4">
-                        <span className="font-bold">Name:</span> <span>{selectedNote?.issued_by}</span>
-                        <span className="font-bold">Signature:</span> <div className="h-12 border-b border-gray-400 border-dashed"></div>
+                {/* Signatures */}
+                <div className="border border-gray-800 grid grid-cols-2 mb-8 relative">
+                    <div className="p-0 relative">
+                        <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS DELIVERED BY</div>
+                        <div className="p-4 grid grid-cols-[80px_1fr] gap-4 min-h-[100px]">
+                            <span className="font-bold">Name:</span> <span>{selectedNote?.issued_by}</span>
+                            <span className="font-bold">Signature:</span> <div className="h-12 border-b border-gray-400 border-dashed"></div>
+                        </div>
+                        {/* Digital Seal (Yellow Zone) */}
+                        <div className="absolute bottom-2 right-12 w-24 h-24 opacity-80 pointer-events-none mix-blend-multiply">
+                            <img src={seaflowDigitalSeal} alt="Seal" className="w-full h-full object-contain" />
+                        </div>
+                    </div>
+                    <div className="p-0 border-l border-gray-800">
+                        <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS RECEIVED BY</div>
+                        <div className="p-4 grid grid-cols-[80px_1fr] gap-4 min-h-[100px]">
+                            <span className="font-bold">Name:</span> <div className="border-b border-gray-400 border-dashed"></div>
+                            <span className="font-bold">Signature:</span> <div className="h-12 border-b border-gray-400 border-dashed"></div>
+                        </div>
                     </div>
                 </div>
-                <div className="p-0 border-l border-gray-800">
-                    <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS RECEIVED BY</div>
-                    <div className="p-4 grid grid-cols-[80px_1fr] gap-4">
-                        <span className="font-bold">Name:</span> <div className="border-b border-gray-400 border-dashed"></div>
-                        <span className="font-bold">Signature:</span> <div className="h-12 border-b border-gray-400 border-dashed"></div>
-                    </div>
-                </div>
+
+                <p className="text-[10px] text-center text-gray-500 mt-12">
+                    Any Shortage or damage must be notified within 72 hours of receipt of goods. <br />
+                    Should you have any enquiries concerning this delivery note, please contact us. <br />
+                    Thank you for your business!
+                </p>
             </div>
 
-            <p className="text-[10px] text-center text-gray-500 mt-12">
-                Any Shortage or damage must be notified within 72 hours of receipt of goods. <br />
-                Should you have any enquiries concerning this delivery note, please contact us. <br />
-                Thank you for your business!
-            </p>
+            {/* Footer Image */}
+            <div className="w-full mt-auto">
+                <img src={seaflowFooter} alt="Footer" className="w-full h-auto object-cover" />
+            </div>
         </div>
     );
 
