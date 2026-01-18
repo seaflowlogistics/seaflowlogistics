@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
-import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI, deliveryAgentsAPI } from '../services/api';
+import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI, deliveryAgentsAPI, vendorsAPI, paymentsAPI } from '../services/api';
 import {
     Search, Plus,
     FileText,
@@ -38,6 +38,7 @@ const ShipmentRegistry: React.FC = () => {
     const [consigneesList, setConsigneesList] = useState<any[]>([]);
     const [exportersList, setExportersList] = useState<any[]>([]);
     const [deliveryAgentsList, setDeliveryAgentsList] = useState<any[]>([]);
+    const [vendorsList, setVendorsList] = useState<any[]>([]);
 
     // Form State (for Register New Job)
     const [isEditingJob, setIsEditingJob] = useState(false);
@@ -70,14 +71,16 @@ const ShipmentRegistry: React.FC = () => {
 
     const loadDropdownData = async () => {
         try {
-            const [consigneesRes, exportersRes, deliveryAgentsRes] = await Promise.all([
+            const [consigneesRes, exportersRes, deliveryAgentsRes, vendorsRes] = await Promise.all([
                 consigneesAPI.getAll(),
                 exportersAPI.getAll(),
-                deliveryAgentsAPI.getAll()
+                deliveryAgentsAPI.getAll(),
+                vendorsAPI.getAll()
             ]);
             setConsigneesList(consigneesRes.data || []);
             setExportersList(exportersRes.data || []);
             setDeliveryAgentsList(deliveryAgentsRes.data || []);
+            setVendorsList(vendorsRes.data || []);
         } catch (error) {
             console.error("Failed to load dropdown data", error);
         }
@@ -1369,6 +1372,12 @@ const ShipmentRegistry: React.FC = () => {
                     setSelectedJob(updated);
                 }
                 alert("Clearance Scheduled Successfully");
+            } else if (popupType === 'payment') {
+                await paymentsAPI.create({
+                    job_id: popupJob.id,
+                    ...editFormData
+                });
+                alert('Payment Details Added Successfully');
             } else {
                 const response = await shipmentsAPI.update(popupJob.id, editFormData);
                 const updated = response.data;
@@ -1552,8 +1561,44 @@ const ShipmentRegistry: React.FC = () => {
                         )}
 
                         {popupType === 'payment' && (
-                            <div className="text-center py-8 text-gray-500 italic">
-                                Payments module coming soon...
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Payment Type *</label>
+                                    <select name="payment_type" value={editFormData.payment_type || ''} onChange={handleEditChange} className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                        <option value="">Select Type</option>
+                                        <option value="MCS Processing">MCS Processing</option>
+                                        <option value="MCS Import Duty">MCS Import Duty</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Vendor *</label>
+                                    <select name="vendor" value={editFormData.vendor || ''} onChange={handleEditChange} className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                        <option value="">Select Vendor</option>
+                                        {vendorsList.map((v: any) => (
+                                            <option key={v.id} value={v.name}>{v.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Amount *</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">MVR</span>
+                                        <input type="number" name="amount" value={editFormData.amount || ''} onChange={handleEditChange} className="w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="0.00" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Bill Ref. No.</label>
+                                    <input type="text" name="bill_ref_no" value={editFormData.bill_ref_no || ''} onChange={handleEditChange} className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Reference Number" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Paid By *</label>
+                                    <select name="paid_by" value={editFormData.paid_by || ''} onChange={handleEditChange} className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                        <option value="">Select Payer</option>
+                                        <option value="Company">Company</option>
+                                        <option value="Customer">Customer</option>
+                                    </select>
+                                </div>
                             </div>
                         )}
 
@@ -1616,7 +1661,7 @@ const ShipmentRegistry: React.FC = () => {
                             }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm">
                                 Upload Document
                             </button>
-                        ) : popupType !== 'payment' && (
+                        ) : (
                             <button onClick={handlePopupSave} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm">
                                 Save Details
                             </button>

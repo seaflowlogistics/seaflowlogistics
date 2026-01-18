@@ -201,4 +201,11 @@ export const clearanceAPI = {
     delete: (id: number | string) => api.delete(`/clearance/${id}`),
 };
 
+// Payments API
+export const paymentsAPI = {
+    getAll: (jobId: string) => api.get(`/payments/job/${jobId}`),
+    create: (data: any) => api.post('/payments', data),
+    delete: (id: number | string) => api.delete(`/payments/${id}`),
+};
+
 export default api;
