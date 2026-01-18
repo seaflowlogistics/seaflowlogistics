@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import { Search, Calendar, ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import { clearanceAPI } from '../services/api';
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
+import ClearanceDetailsDrawer from '../components/ClearanceDetailsDrawer';
 
 const ClearanceSchedule: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -13,6 +14,7 @@ const ClearanceSchedule: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [editingSchedule, setEditingSchedule] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
 
     useEffect(() => {
         const fetchSchedules = async () => {
@@ -188,7 +190,11 @@ const ClearanceSchedule: React.FC = () => {
                                     </tr>
                                 ) : schedules.length > 0 ? (
                                     schedules.map((item) => (
-                                        <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                                        <tr
+                                            key={item.id}
+                                            className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                            onClick={() => setSelectedSchedule(item)}
+                                        >
                                             <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
                                                 {item.job_id}
                                                 <div className="text-[10px] text-gray-400 font-normal">{new Date(item.created_at).toLocaleDateString()}</div>
@@ -224,14 +230,14 @@ const ClearanceSchedule: React.FC = () => {
                                             </td>
                                             <td className="py-4 px-6 text-center">
                                                 <button
-                                                    onClick={() => handleEditClick(item)}
+                                                    onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
                                                     className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
                                                     title="Edit"
                                                 >
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(item.id)}
+                                                    onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
                                                     className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors ml-2"
                                                     title="Delete"
                                                 >
@@ -252,6 +258,7 @@ const ClearanceSchedule: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Drawer for Editing/Creating */}
                 {isDrawerOpen && (
                     <ScheduleClearanceDrawer
                         isOpen={isDrawerOpen}
@@ -259,6 +266,24 @@ const ClearanceSchedule: React.FC = () => {
                         onSave={handleSave}
                         initialData={editingSchedule}
                         job={editingSchedule}
+                    />
+                )}
+
+                {/* Drawer for Viewing Details */}
+                {selectedSchedule && (
+                    <ClearanceDetailsDrawer
+                        isOpen={!!selectedSchedule}
+                        onClose={() => setSelectedSchedule(null)}
+                        schedule={selectedSchedule}
+                        onReschedule={(schedule) => {
+                            setSelectedSchedule(null);
+                            handleEditClick(schedule);
+                        }}
+                        onViewJob={(jobId) => {
+                            // Placeholder for navigation
+                            console.log('Navigate to job', jobId);
+                            alert(`Navigate to Job Details for ${jobId} (Coming Soon)`);
+                        }}
                     />
                 )}
             </div>
