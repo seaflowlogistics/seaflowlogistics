@@ -30,6 +30,9 @@ async function runMigrations() {
             .filter(file => file.endsWith('.sql'))
             .sort();
 
+        console.log('Migration directory:', __dirname);
+        console.log('Found migration files:', files);
+
         let migrationCount = 0;
 
         for (const file of files) {
