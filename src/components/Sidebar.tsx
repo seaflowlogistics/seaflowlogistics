@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard,
-    Package,
+
     X,
     PackageCheck,
     Users,
@@ -31,10 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     ];
 
-    // Shared Access
-    if (isAdministrator || isClearance) {
-        menuItems.push({ icon: Package, label: 'Shipments', path: '/shipments' });
-    }
+
 
     // Registry Access
     if (isClearance || isAdministrator) {
