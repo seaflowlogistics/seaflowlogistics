@@ -4,7 +4,7 @@ import {
     Search, Eye, Printer, ChevronDown,
     X, Download, Upload
 } from 'lucide-react';
-import Barcode from 'react-barcode';
+
 import { deliveryNotesAPI } from '../services/api';
 
 import seaflowHeader from '../assets/seaflow-header.jpg';
@@ -136,17 +136,7 @@ const DeliveryNotes: React.FC = () => {
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="bg-gray-300 text-gray-800 font-bold px-4 py-2 mb-2 inline-block text-xs">GOODS DELIVERY NOTE</div>
-                        <div className="flex justify-end mb-2">
-                            <Barcode
-                                value={selectedNote?.id || ''}
-                                width={1.2}
-                                height={40}
-                                displayValue={false}
-                                background="transparent"
-                                margin={0}
-                            />
-                        </div>
+                        <div className="bg-gray-300 text-gray-800 font-bold px-4 py-2 mb-2 inline-block text-m">GOODS DELIVERY NOTE</div>
                     </div>
                 </div>
 
@@ -211,9 +201,6 @@ const DeliveryNotes: React.FC = () => {
                         <div className="p-4 grid grid-cols-[80px_1fr] gap-4 min-h-[100px]">
                             <span className="font-bold">Name:</span> <span>{selectedNote?.issued_by}</span>
                             <span className="font-bold">Signature:</span>
-                        </div>
-                        {/* Digital Seal (Yellow Zone) */}
-                        <div className="absolute bottom-2 right-12 w-24 h-24 opacity-80 pointer-events-none mix-blend-multiply">
                             <img src={seaflowDigitalSeal} alt="Seal" className="w-full h-full object-contain" />
                         </div>
                     </div>
@@ -221,7 +208,7 @@ const DeliveryNotes: React.FC = () => {
                     <div className="p-0 border-l border-gray-800">
                         <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS RECEIVED BY</div>
                         <div className="p-4 grid grid-cols-[80px_1fr] gap-4 min-h-[100px]">
-                            <span className="font-bold">Name:</span>
+                            <span className="font-bold">Name:</span> <span></span>
                             <span className="font-bold">Signature:</span>
                         </div>
                     </div>
