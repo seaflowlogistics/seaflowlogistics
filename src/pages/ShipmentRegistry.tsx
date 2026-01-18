@@ -1395,11 +1395,11 @@ const ShipmentRegistry: React.FC = () => {
                         <thead className="text-xs text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100">
                             <tr>
                                 <th className="py-4 px-6 font-bold">Description</th>
-                                <th className="py-4 px-6 font-bold">Amount</th>
                                 <th className="py-4 px-6 font-bold">Vendor</th>
                                 <th className="py-4 px-6 font-bold">Paid By</th>
                                 <th className="py-4 px-6 font-bold">Requested By</th>
                                 <th className="py-4 px-6 font-bold">Requested Date</th>
+                                <th className="py-4 px-6 font-bold">Amount</th>
                                 <th className="py-4 px-6 font-bold text-center">Status</th>
                                 <th className="py-4 px-6 font-bold text-center">Actions</th>
                             </tr>
@@ -1413,7 +1413,6 @@ const ShipmentRegistry: React.FC = () => {
                                 jobPayments.map((payment) => (
                                     <tr key={payment.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                                         <td className="py-4 px-6 font-medium text-gray-900">{payment.payment_type}</td>
-                                        <td className="py-4 px-6">{parseFloat(payment.amount).toFixed(2)}</td>
                                         <td className="py-4 px-6">{payment.vendor}</td>
                                         <td className="py-4 px-6">
                                             <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${payment.paid_by === 'Company' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
@@ -1422,6 +1421,7 @@ const ShipmentRegistry: React.FC = () => {
                                         </td>
                                         <td className="py-4 px-6">{payment.requested_by_name || '-'}</td>
                                         <td className="py-4 px-6 text-gray-500">{new Date(payment.created_at).toLocaleDateString()}</td>
+                                        <td className="py-4 px-6">{parseFloat(payment.amount).toFixed(2)}</td>
                                         <td className="py-4 px-6 text-center">
                                             <div className="flex justify-center">
                                                 {payment.status === 'Approved' ? (
