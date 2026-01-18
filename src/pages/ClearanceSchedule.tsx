@@ -4,6 +4,7 @@ import { Search, Calendar, ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import { clearanceAPI } from '../services/api';
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 import ClearanceDetailsDrawer from '../components/ClearanceDetailsDrawer';
+import DeliveryNoteDrawer from '../components/DeliveryNoteDrawer';
 
 const ClearanceSchedule: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -15,6 +16,11 @@ const ClearanceSchedule: React.FC = () => {
     const [editingSchedule, setEditingSchedule] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
+
+    // Delivery Note Mode State
+    const [isDeliveryNoteMode, setIsDeliveryNoteMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [isDeliveryDrawerOpen, setIsDeliveryDrawerOpen] = useState(false);
 
     useEffect(() => {
         const fetchSchedules = async () => {
@@ -73,6 +79,29 @@ const ClearanceSchedule: React.FC = () => {
         }
     };
 
+    const toggleDeliveryNoteMode = () => {
+        setIsDeliveryNoteMode(!isDeliveryNoteMode);
+        setSelectedIds([]); // Reset selection when toggling
+    };
+
+    const handleSelectSchedule = (id: number) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const handleDeliveryNoteSave = (data: any) => {
+        console.log('Delivery Note Data:', data);
+        alert('Delivery Note Saved! (Check console for data)');
+        setIsDeliveryDrawerOpen(false);
+        setSelectedIds([]);
+        setIsDeliveryNoteMode(false);
+    };
+
+    const getSelectedSchedules = () => {
+        return schedules.filter(s => selectedIds.includes(s.id));
+    };
+
     return (
         <Layout>
             <div className="space-y-6 animate-fade-in font-sans">
@@ -90,9 +119,22 @@ const ClearanceSchedule: React.FC = () => {
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                         </button>
-                        <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
-                            Delivery Note Mode
-                        </button>
+
+                        {isDeliveryNoteMode && selectedIds.length > 0 ? (
+                            <button
+                                onClick={() => setIsDeliveryDrawerOpen(true)}
+                                className="px-4 py-2 bg-indigo-600 border border-transparent text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2"
+                            >
+                                <span>Create Note ({selectedIds.length})</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={toggleDeliveryNoteMode}
+                                className={`px-4 py-2 border font-medium rounded-lg transition-colors shadow-sm ${isDeliveryNoteMode ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                            >
+                                {isDeliveryNoteMode ? 'Hide Delivery Note Picker' : 'Delivery Note Mode'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -180,6 +222,9 @@ const ClearanceSchedule: React.FC = () => {
                         <table className="w-full min-w-[1000px]">
                             <thead>
                                 <tr className="bg-black text-white">
+                                    {isDeliveryNoteMode && (
+                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[50px]">Select</th>
+                                    )}
                                     <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">Job</th>
                                     <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[240px]">Consignee</th>
                                     <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Container</th>
@@ -195,15 +240,32 @@ const ClearanceSchedule: React.FC = () => {
                             <tbody className="divide-y divide-gray-100">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={10} className="py-12 text-center text-gray-500">Loading...</td>
+                                        <td colSpan={isDeliveryNoteMode ? 11 : 10} className="py-12 text-center text-gray-500">Loading...</td>
                                     </tr>
                                 ) : schedules.length > 0 ? (
                                     schedules.map((item) => (
                                         <tr
                                             key={item.id}
-                                            className="hover:bg-gray-50 transition-colors cursor-pointer"
-                                            onClick={() => setSelectedSchedule(item)}
+                                            className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedIds.includes(item.id) ? 'bg-indigo-50/50' : ''}`}
+                                            onClick={() => {
+                                                if (isDeliveryNoteMode) {
+                                                    handleSelectSchedule(item.id);
+                                                } else {
+                                                    setSelectedSchedule(item);
+                                                }
+                                            }}
                                         >
+                                            {isDeliveryNoteMode && (
+                                                <td className="py-4 px-6 text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedIds.includes(item.id)}
+                                                        onChange={() => handleSelectSchedule(item.id)}
+                                                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                </td>
+                                            )}
                                             <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
                                                 {item.job_id}
                                                 <div className="text-[10px] text-gray-400 font-normal">{new Date(item.created_at).toLocaleDateString()}</div>
@@ -257,7 +319,7 @@ const ClearanceSchedule: React.FC = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={10} className="py-12 text-center text-gray-500 text-sm">
+                                        <td colSpan={isDeliveryNoteMode ? 11 : 10} className="py-12 text-center text-gray-500 text-sm">
                                             No scheduled clearances found.
                                         </td>
                                     </tr>
@@ -290,6 +352,14 @@ const ClearanceSchedule: React.FC = () => {
                         }}
                     />
                 )}
+
+                {/* Drawer for Delivery Note */}
+                <DeliveryNoteDrawer
+                    isOpen={isDeliveryDrawerOpen}
+                    onClose={() => setIsDeliveryDrawerOpen(false)}
+                    selectedSchedules={getSelectedSchedules()}
+                    onSave={handleDeliveryNoteSave}
+                />
             </div>
         </Layout>
     );
