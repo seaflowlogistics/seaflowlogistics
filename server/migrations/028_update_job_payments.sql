@@ -1,0 +1,3 @@
+ALTER TABLE job_payments
+ADD COLUMN IF NOT EXISTS requested_by UUID REFERENCES users(id),
+ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Pending';

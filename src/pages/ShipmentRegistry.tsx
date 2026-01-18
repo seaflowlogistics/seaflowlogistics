@@ -21,6 +21,7 @@ const ShipmentRegistry: React.FC = () => {
     const { user } = useAuth();
     const [jobs, setJobs] = useState<any[]>([]);
     const [selectedJob, setSelectedJob] = useState<any | null>(null);
+    const [jobPayments, setJobPayments] = useState<any[]>([]);
     const [viewMode, setViewMode] = useState<'empty' | 'details' | 'create'>('empty');
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -68,6 +69,21 @@ const ShipmentRegistry: React.FC = () => {
 
         return () => clearInterval(intervalId);
     }, [searchTerm]);
+
+    useEffect(() => {
+        if (selectedJob && activeTab === 'Payments') {
+            loadPayments(selectedJob.id);
+        }
+    }, [selectedJob?.id, activeTab]);
+
+    const loadPayments = async (jobId: string) => {
+        try {
+            const res = await paymentsAPI.getAll(jobId);
+            setJobPayments(res.data || []);
+        } catch (e) {
+            console.error("Failed to load payments", e);
+        }
+    };
 
     const loadDropdownData = async () => {
         try {
@@ -1345,12 +1361,114 @@ const ShipmentRegistry: React.FC = () => {
                     </>)}
 
                     {activeTab === 'Documents' && renderDocumentsTab()}
-
-                    {activeTab === 'Payments' && <div className="p-12 text-center text-gray-400 italic">Payments module coming soon...</div>}
+                    {activeTab === 'Payments' && renderPaymentsTab()}
                     {activeTab === 'History' && <div className="p-12 text-center text-gray-400 italic">History module coming soon...</div>}
 
                 </div>
             </div >
+        );
+    };
+
+    const renderPaymentsTab = () => {
+        const totalCompany = jobPayments.filter(p => p.paid_by === 'Company').reduce((sum, p) => sum + parseFloat(p.amount), 0);
+        const totalCustomer = jobPayments.filter(p => p.paid_by === 'Customer').reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+        return (
+            <div className="p-8 font-sans">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold text-gray-900">Payments</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Paid By Company</span>
+                        <span className="text-3xl font-bold text-gray-900">{totalCompany.toFixed(2)}</span>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Paid By Client</span>
+                        <span className="text-3xl font-bold text-gray-900">{totalCustomer.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <table className="w-full text-sm text-left">
+                        <thead className="text-xs text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100">
+                            <tr>
+                                <th className="py-4 px-6 font-bold">Description</th>
+                                <th className="py-4 px-6 font-bold">Amount</th>
+                                <th className="py-4 px-6 font-bold">Vendor</th>
+                                <th className="py-4 px-6 font-bold">Paid By</th>
+                                <th className="py-4 px-6 font-bold">Requested By</th>
+                                <th className="py-4 px-6 font-bold">Requested Date</th>
+                                <th className="py-4 px-6 font-bold text-center">Status</th>
+                                <th className="py-4 px-6 font-bold text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {jobPayments.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="py-12 text-center text-gray-400 italic">No payments recorded</td>
+                                </tr>
+                            ) : (
+                                jobPayments.map((payment) => (
+                                    <tr key={payment.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                        <td className="py-4 px-6 font-medium text-gray-900">{payment.payment_type}</td>
+                                        <td className="py-4 px-6">{parseFloat(payment.amount).toFixed(2)}</td>
+                                        <td className="py-4 px-6">{payment.vendor}</td>
+                                        <td className="py-4 px-6">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${payment.paid_by === 'Company' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                {payment.paid_by}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6">{payment.requested_by_name || '-'}</td>
+                                        <td className="py-4 px-6 text-gray-500">{new Date(payment.created_at).toLocaleDateString()}</td>
+                                        <td className="py-4 px-6 text-center">
+                                            <div className="flex justify-center">
+                                                {payment.status === 'Approved' ? (
+                                                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                                        <Check className="w-3.5 h-3.5" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600" title="Pending">
+                                                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-6 text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        alert('Approve logic coming soon');
+                                                    }}
+                                                    className="w-8 h-8 rounded-full hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors flex items-center justify-center"
+                                                    title="Approve"
+                                                >
+                                                    <Check className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (window.confirm('Delete payment?')) {
+                                                            try {
+                                                                await paymentsAPI.delete(payment.id);
+                                                                loadPayments(selectedJob.id);
+                                                            } catch (e) { console.error(e); }
+                                                        }
+                                                    }}
+                                                    className="w-8 h-8 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors flex items-center justify-center"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         );
     };
 
@@ -1378,6 +1496,7 @@ const ShipmentRegistry: React.FC = () => {
                     ...editFormData
                 });
                 alert('Payment Details Added Successfully');
+                loadPayments(popupJob.id);
             } else {
                 const response = await shipmentsAPI.update(popupJob.id, editFormData);
                 const updated = response.data;

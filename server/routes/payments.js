@@ -9,7 +9,11 @@ router.get('/job/:jobId', authenticateToken, async (req, res) => {
     try {
         const { jobId } = req.params;
         const result = await pool.query(
-            'SELECT * FROM job_payments WHERE job_id = $1 ORDER BY created_at DESC',
+            `SELECT jp.*, u.username as requested_by_name 
+             FROM job_payments jp
+             LEFT JOIN users u ON jp.requested_by = u.id
+             WHERE jp.job_id = $1 
+             ORDER BY jp.created_at DESC`,
             [jobId]
         );
         res.json(result.rows);
@@ -23,16 +27,17 @@ router.get('/job/:jobId', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, async (req, res) => {
     try {
         const { job_id, payment_type, vendor, amount, bill_ref_no, paid_by } = req.body;
+        const requested_by = req.user.id;
 
         if (!job_id || !payment_type || !amount || !paid_by) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const result = await pool.query(
-            `INSERT INTO job_payments (job_id, payment_type, vendor, amount, bill_ref_no, paid_by)
-             VALUES ($1, $2, $3, $4, $5, $6)
+            `INSERT INTO job_payments (job_id, payment_type, vendor, amount, bill_ref_no, paid_by, requested_by, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 'Pending')
              RETURNING *`,
-            [job_id, payment_type, vendor, amount, bill_ref_no, paid_by]
+            [job_id, payment_type, vendor, amount, bill_ref_no, paid_by, requested_by]
         );
 
         // Optional: Create audit log
