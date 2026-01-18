@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
 import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI, deliveryAgentsAPI } from '../services/api';
 import {
@@ -17,6 +18,7 @@ const PACKAGE_TYPES = ['PALLET', 'BUNDLES', 'CARTON', 'PKG', 'BOX', 'CASE', 'BUL
 
 const ShipmentRegistry: React.FC = () => {
     // State
+    const { user } = useAuth();
     const [jobs, setJobs] = useState<any[]>([]);
     const [selectedJob, setSelectedJob] = useState<any | null>(null);
     const [viewMode, setViewMode] = useState<'empty' | 'details' | 'create'>('empty');
@@ -474,13 +476,15 @@ const ShipmentRegistry: React.FC = () => {
                     <span className="text-xs font-medium text-gray-400">
                         {new Date(job.created_at || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
-                    <button
-                        onClick={(e) => handleDeleteJob(job.id, e)}
-                        className="p-1 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
-                        title="Delete Job"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {user?.role === 'Administrator' && (
+                        <button
+                            onClick={(e) => handleDeleteJob(job.id, e)}
+                            className="p-1 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Delete Job"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                    )}
                 </div>
             </div>
 
