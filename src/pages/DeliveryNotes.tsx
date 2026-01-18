@@ -156,15 +156,23 @@ const DeliveryNotes: React.FC = () => {
     // Render the Document Preview (Image 1 style)
     // Render the Document Preview (Image 1 style)
     const renderDocument = () => (
-        <div className="shadow-sm border border-gray-200 w-full mb-8">
+        <div className="flex justify-center w-full bg-gray-100/50 py-8 text-black">
             <div
                 ref={printRef}
                 id="printable-content"
-                className="bg-white min-h-[1100px] text-sm font-mono relative flex flex-col"
+                className="bg-white text-sm font-mono relative flex flex-col shadow-lg mx-auto"
+                style={{
+                    width: '210mm',
+                    minHeight: '297mm',
+                    height: '297mm', // Fixed A4 height
+                    padding: '0',
+                    margin: '0',
+                    boxSizing: 'border-box'
+                }}
             >
                 {/* Header Image */}
                 <div className="w-full">
-                    <img src={seaflowHeader} alt="Header" className="w-full h-auto object-cover max-h-48" crossOrigin="anonymous" />
+                    <img src={seaflowHeader} alt="Header" className="w-full h-auto" crossOrigin="anonymous" />
                 </div>
 
                 <div className="p-8 flex-1">
@@ -241,7 +249,6 @@ const DeliveryNotes: React.FC = () => {
                     </div>
 
                     {/* Signatures */}
-                    {/* Signatures */}
                     <div className="border border-gray-800 flex mb-8 text-xs">
                         {/* GOODS DELIVERED BY (Takes up 2/3 of width) */}
                         <div className="w-2/3 border-r border-gray-800 flex flex-col">
@@ -277,6 +284,7 @@ const DeliveryNotes: React.FC = () => {
                                     <div className="space-y-2">
                                         <div className="grid grid-cols-[60px_1fr] gap-2">
                                             <span className="font-bold">Signature:</span>
+                                            <div className="border-b border-gray-400 h-8"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -288,10 +296,13 @@ const DeliveryNotes: React.FC = () => {
                             <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS RECEIVED BY</div>
                             <div className="p-2 flex-grow flex flex-col h-32">
                                 <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
-                                    <span className="font-bold">Name:</span></div>
+                                    <span className="font-bold">Name:</span>
+                                    <div className="border-b border-gray-400 h-4"></div>
+                                </div>
                                 <div className="space-y-2">
                                     <div className="grid grid-cols-[60px_1fr] gap-2">
                                         <span className="font-bold">Signature:</span>
+                                        <div className="border-b border-gray-400 h-8"></div>
                                     </div>
                                 </div>
                             </div>
@@ -307,7 +318,7 @@ const DeliveryNotes: React.FC = () => {
 
                 {/* Footer Image */}
                 <div className="w-full mt-auto">
-                    <img src={seaflowFooter} alt="Footer" className="w-full h-auto object-cover" crossOrigin="anonymous" />
+                    <img src={seaflowFooter} alt="Footer" className="w-full h-auto" crossOrigin="anonymous" />
                 </div>
             </div>
         </div>
