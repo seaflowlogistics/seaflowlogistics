@@ -1289,9 +1289,21 @@ const ShipmentRegistry: React.FC = () => {
                                             placeholder="Port Name"
                                         />
                                     ) : (
-                                        <p className="font-semibold text-gray-900 uppercase">
-                                            {selectedJob.loading_port || '-'}
-                                        </p>
+                                        <p className="font-semibold text-gray-900 uppercase">{selectedJob.loading_port || '-'}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Loading Port</p>
+                                    {isEditingBL ? (
+                                        <input
+                                            name="loading_port"
+                                            value={editFormData.loading_port || ''}
+                                            onChange={handleEditChange}
+                                            className="input-field py-1.5 border rounded-lg px-3 w-full text-sm bg-gray-50 focus:bg-white transition-colors"
+                                            placeholder="Vessel Name"
+                                        />
+                                    ) : (
+                                        <p className="font-semibold text-gray-900 uppercase">{selectedJob.vessel || '-'}</p>
                                     )}
                                 </div>
                                 <div>
