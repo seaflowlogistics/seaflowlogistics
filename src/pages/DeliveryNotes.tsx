@@ -273,7 +273,7 @@ const DeliveryNotes: React.FC = () => {
                                             <div className="border-b border-gray-400 h-8"></div>
                                         </div>
                                     </div>
-                                    <div className="absolute bottom-1 right-2 w-20 h-20 opacity-80 pointer-events-none mix-blend-multiply">
+                                    <div className="absolute bottom-1 right-2 w-15 h-15 opacity-80 pointer-events-none mix-blend-multiply">
                                         <img src={seaflowDigitalSeal} alt="Seal" className="w-full h-full object-contain" crossOrigin="anonymous" />
                                     </div>
                                 </div>
@@ -324,8 +324,9 @@ const DeliveryNotes: React.FC = () => {
                 </div>
 
                 {/* Contact Info */}
-                <div className="px-12 mb-2 text-[10px] text-gray-600 font-medium">
-                    <div className="flex flex-wrap gap-x-8 gap-y-2 items-center mb-1">
+                {/* Contact Info */}
+                <div className="px-12 mb-4 text-[10px] text-gray-600 font-medium flex flex-col items-center">
+                    <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 items-center mb-1">
                         <div className="flex items-center gap-2">
                             <Mail className="w-4 h-4 text-black" />
                             <span>info@seaflowlogistic.com</span>
@@ -339,8 +340,8 @@ const DeliveryNotes: React.FC = () => {
                             <span>www.seaflowlogistic.com</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h- text-black" />
+                    <div className="flex items-center justify-center gap-2">
+                        <MapPin className="w-4 h-4 text-black" />
                         <span>Hulhumale' Lot 11393, Saima Hingun, Rep of Maldives, 23000</span>
                     </div>
                 </div>
