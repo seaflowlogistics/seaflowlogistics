@@ -393,16 +393,18 @@ const ShipmentRegistry: React.FC = () => {
 
             // Sanitize data before sending
             const updatedData = { ...editFormData };
-            if (updatedData.unloaded_date === '') {
-                updatedData.unloaded_date = null;
+
+            // Sync Loading Port fields (backend likely uses 'origin' but UI uses 'loading_port')
+            if (updatedData.loading_port) {
+                updatedData.origin = updatedData.loading_port;
+            } else if (updatedData.origin) {
+                updatedData.loading_port = updatedData.origin;
             }
-            // Sanitize other date fields just in case
-            if (updatedData.expected_delivery_date === '') {
-                updatedData.expected_delivery_date = null;
-            }
-            if (updatedData.date === '') {
-                updatedData.date = null;
-            }
+
+            // Sync null dates
+            if (updatedData.unloaded_date === '') updatedData.unloaded_date = null;
+            if (updatedData.expected_delivery_date === '') updatedData.expected_delivery_date = null;
+            if (updatedData.date === '') updatedData.date = null;
 
             const response = await shipmentsAPI.update(selectedJob.id, updatedData);
             const updated = response.data;
