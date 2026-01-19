@@ -191,9 +191,9 @@ const DeliveryNotes: React.FC = () => {
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-sky-900 italic leading-tight">Seaflow Logistics</h2>
-                                <p className="text-[10px] text-gray-600 leading-snug">H.Fusthalhaanage, 7th Floor,</p>
-                                <p className="text-[10px] text-gray-600 leading-snug">Ameer Ahmed Magu, Male', 20030,</p>
-                                <p className="text-[10px] text-gray-600 leading-snug">e: info@seaflow.mv, ph: +960 300 7633</p>
+                                <p className="text-[10px] text-gray-600 leading-snug">Hulhumale' Lot 11393, </p>
+                                <p className="text-[10px] text-gray-600 leading-snug">Saima Hingun, Rep of Maldives, 23000 </p>
+                                <p className="text-[10px] text-gray-600 leading-snug">e: info@seaflowlogistic.com, ph: +960 9990371/+960 9995768 </p>
                             </div>
                         </div>
                         <div className="text-right">
@@ -327,20 +327,20 @@ const DeliveryNotes: React.FC = () => {
                 <div className="px-12 mb-2 text-[10px] text-gray-600 font-medium">
                     <div className="flex flex-wrap gap-x-8 gap-y-2 items-center mb-1">
                         <div className="flex items-center gap-2">
-                            <Mail className="w-3 h-3 text-black" />
+                            <Mail className="w-4 h-4 text-black" />
                             <span>info@seaflowlogistic.com</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Phone className="w-3 h-3 text-black" />
+                            <Phone className="w-4 h-4 text-black" />
                             <span>+960 9990371/+960 9995768</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Globe className="w-3 h-3 text-black" />
+                            <Globe className="w-4 h-4 text-black" />
                             <span>www.seaflowlogistic.com</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <MapPin className="w-3 h-3 text-black" />
+                        <MapPin className="w-4 h- text-black" />
                         <span>Hulhumale' Lot 11393, Saima Hingun, Rep of Maldives, 23000</span>
                     </div>
                 </div>
