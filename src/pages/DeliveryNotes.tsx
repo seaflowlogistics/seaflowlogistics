@@ -292,46 +292,47 @@ const DeliveryNotes: React.FC = () => {
                         </table>
                     </div>
 
-                    {/* Signatures */}
+                    {/* Goods Delivered / Received Section */}
                     <div className="border border-gray-800 flex mb-8 text-xs">
-                        {/* GOODS DELIVERED BY (Takes up 2/3 of width) */}
+                        {/* GOODS DELIVERED BY (66.66%) */}
                         <div className="w-2/3 border-r border-gray-800 flex flex-col">
                             <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS DELIVERED BY</div>
-                            <div className="grid grid-cols-2 flex-grow h-32">
-                                {/* Column 1: Issued By + Seal */}
-                                <div className="p-2 border-r border-gray-800 relative flex flex-col justify-between">
-                                    <div>
-                                        <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
-                                            <span className="font-bold">Name:</span>
-                                            <span className="uppercase">{selectedNote?.issued_by}</span>
-                                        </div>
-                                        <div className="grid grid-cols-[60px_1fr] gap-2">
-                                            <span className="font-bold">Signature:</span>
-                                            <div className="border-b border-gray-400 h-8"></div>
-                                        </div>
+                            <div className="grid grid-cols-2 flex-grow min-h-[140px]">
+                                {/* Column 1: Issued By */}
+                                <div className="p-2 border-r border-gray-800 relative flex flex-col">
+                                    <div className="grid grid-cols-[60px_1fr] gap-2 mb-4">
+                                        <span className="font-bold">Name:</span>
+                                        <span className="uppercase font-medium">{selectedNote?.issued_by}</span>
                                     </div>
-                                    <div className="absolute bottom-1 right-2 w-15 h-15 opacity-80 pointer-events-none mix-blend-multiply">
-                                        <img src={seaflowDigitalSeal} alt="Seal" className="w-full h-full object-contain" crossOrigin="anonymous" />
+                                    <div className="mt-auto">
+                                        <div className="grid grid-cols-[60px_1fr] gap-2 mb-2 relative z-10">
+                                            <span className="font-bold">Signature:</span>
+                                            <div className="h-8"></div> {/* Space for signature */}
+                                        </div>
+                                        {/* Digital Seal centered/placed below signature area */}
+                                        <div className="flex justify-center mt-2">
+                                            <div className="w-20 h-20 opacity-90 mix-blend-multiply">
+                                                <img src={seaflowDigitalSeal} alt="Seal" className="w-full h-full object-contain" crossOrigin="anonymous" />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Column 2: Driver */}
-                                <div className="p-2 relative flex flex-col">
-                                    <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
+                                {/* Column 2: Driver Details */}
+                                <div className="p-2 flex flex-col">
+                                    <div className="grid grid-cols-[60px_1fr] gap-2 mb-4">
                                         <span className="font-bold">Name:</span>
-                                        <div className="flex flex-col text-[10px] leading-tight uppercase font-medium">
+                                        <div className="uppercase font-medium break-words">
                                             {selectedNote?.vehicles && selectedNote.vehicles.length > 0 ? (
-                                                <>
-                                                    <span>{selectedNote.vehicles[0].driver}</span>
-                                                    <span>{selectedNote.vehicles[0].driverContact}</span>
-                                                    <span>{selectedNote.vehicles[0].vehicleName || selectedNote.vehicles[0].vehicleId || '-'}</span>
-                                                </>
+                                                <span>
+                                                    {selectedNote.vehicles[0].vehicleName || selectedNote.vehicles[0].vehicleId || '-'} / {selectedNote.vehicles[0].driver} / {selectedNote.vehicles[0].driverContact}
+                                                </span>
                                             ) : (
                                                 <span>-</span>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="space-y-2 mt-auto">
+                                    <div className="mt-auto mb-8">
                                         <div className="grid grid-cols-[60px_1fr] gap-2">
                                             <span className="font-bold">Signature:</span>
                                             <div className="border-b border-gray-400 h-8"></div>
@@ -341,15 +342,15 @@ const DeliveryNotes: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* GOODS RECEIVED BY (Takes up 1/3 of width) */}
+                        {/* GOODS RECEIVED BY (33.33%) */}
                         <div className="w-1/3 flex flex-col">
                             <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS RECEIVED BY</div>
-                            <div className="p-2 flex-grow flex flex-col h-32">
-                                <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
+                            <div className="p-2 flex-grow flex flex-col min-h-[140px]">
+                                <div className="grid grid-cols-[60px_1fr] gap-2 mb-4">
                                     <span className="font-bold">Name:</span>
-                                    <div className="border-b border-gray-400 h-4"></div>
+                                    <div className="border-b border-gray-400 h-5 mt-1"></div>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="mt-auto mb-8">
                                     <div className="grid grid-cols-[60px_1fr] gap-2">
                                         <span className="font-bold">Signature:</span>
                                         <div className="border-b border-gray-400 h-8"></div>
