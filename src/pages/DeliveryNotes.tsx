@@ -249,7 +249,7 @@ const DeliveryNotes: React.FC = () => {
                                     <span className="font-bold">Discharge Location:</span>
                                     <span>
                                         {selectedNote?.vehicles && selectedNote.vehicles.length > 0
-                                            ? selectedNote.vehicles.map(v => v.dischargeLocation).join(', ')
+                                            ? selectedNote.vehicles.map(v => v.dischargeLocation).filter(Boolean).join(', ')
                                             : '-'}
                                     </span>
                                 </div>
@@ -314,7 +314,7 @@ const DeliveryNotes: React.FC = () => {
                                                 <>
                                                     <span>{selectedNote.vehicles[0].driver}</span>
                                                     <span>{selectedNote.vehicles[0].driverContact}</span>
-                                                    <span>{selectedNote.vehicles[0].vehicleId || selectedNote.vehicles[0].vehicleId || '-'}</span>
+                                                    <span>{selectedNote.vehicles[0].vehicleName || selectedNote.vehicles[0].vehicleId || '-'}</span>
                                                 </>
                                             ) : (
                                                 <span>-</span>
