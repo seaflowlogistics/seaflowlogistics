@@ -196,10 +196,10 @@ const DeliveryNotes: React.FC = () => {
                 style={{
                     width: '210mm',
                     minHeight: '297mm',
-                    height: '297mm', // Fixed A4 height
+                    height: 'auto', // Fixed A4 height
                     padding: '0',
                     margin: '0',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
                 }}
             >
                 {/* Header Image */}
@@ -213,7 +213,7 @@ const DeliveryNotes: React.FC = () => {
                     />
                 </div>
 
-                <div className="px-12 py-6 flex-1">
+                <div className="px-12 py-6">
                     <div className="flex justify-between items-start mb-6 mt-2">
                         <div className="w-1/2 flex items-center gap-4">
                             {/* Logo and Address */}
