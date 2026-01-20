@@ -307,13 +307,19 @@ const DeliveryNotes: React.FC = () => {
                                 <div className="p-2 relative flex flex-col">
                                     <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
                                         <span className="font-bold">Name:</span>
-                                        <span className="uppercase">
-                                            {selectedNote?.vehicles && selectedNote.vehicles.length > 0
-                                                ? `${selectedNote.vehicles[0].driver_name} / ${selectedNote.vehicles[0].driver_contact}`
-                                                : ''}
-                                        </span>
+                                        <div className="flex flex-col text-[10px] leading-tight uppercase font-medium">
+                                            {selectedNote?.vehicles && selectedNote.vehicles.length > 0 ? (
+                                                <>
+                                                    <span>{selectedNote.vehicles[0].driver_name}</span>
+                                                    <span>{selectedNote.vehicles[0].driver_contact}</span>
+                                                    <span>{selectedNote.vehicles[0].vehicle_id}</span>
+                                                </>
+                                            ) : (
+                                                <span>-</span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 mt-auto">
                                         <div className="grid grid-cols-[60px_1fr] gap-2">
                                             <span className="font-bold">Signature:</span>
                                             <div className="border-b border-gray-400 h-8"></div>
