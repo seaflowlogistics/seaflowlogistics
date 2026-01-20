@@ -192,7 +192,7 @@ const DeliveryNotes: React.FC = () => {
             <div
                 ref={printRef}
                 id="printable-content"
-                className="bg-white text-sm font-mono relative flex flex-col shadow-lg mx-auto"
+                className="bg-white text-[11px] font-mono relative flex flex-col shadow-lg mx-auto"
                 style={{
                     width: '210mm',
                     minHeight: '297mm',
@@ -213,26 +213,26 @@ const DeliveryNotes: React.FC = () => {
                     />
                 </div>
 
-                <div className="px-12 py-8 flex-1">
-                    <div className="flex justify-between items-start mb-8 mt-2">
+                <div className="px-12 py-6 flex-1">
+                    <div className="flex justify-between items-start mb-6 mt-2">
                         <div className="w-1/2 flex items-center gap-4">
                             {/* Logo and Address */}
-                            <div className="w-20 h-20 flex-shrink-0">
+                            <div className="w-16 h-16 flex-shrink-0">
                                 <img src={seaflowLogo} alt="Logo" className="w-full h-full object-contain" crossOrigin="anonymous" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-sky-900 italic leading-tight">Seaflow Logistics</h2>
-                                <p className="text-[10px] text-gray-600 leading-snug">Hulhumale' Lot 11393, </p>
-                                <p className="text-[10px] text-gray-600 leading-snug">Saima Hingun, Rep of Maldives, 23000 </p>
-                                <p className="text-[10px] text-gray-600 leading-snug">e: info@seaflowlogistic.com, ph: +960 9990371/+960 9995768 </p>
+                                <h2 className="text-lg font-bold text-sky-900 italic leading-tight">Seaflow Logistics</h2>
+                                <p className="text-[9px] text-gray-600 leading-snug">Hulhumale' Lot 11393, </p>
+                                <p className="text-[9px] text-gray-600 leading-snug">Saima Hingun, Rep of Maldives, 23000 </p>
+                                <p className="text-[9px] text-gray-600 leading-snug">e: info@seaflowlogistic.com, ph: +960 9990371/+960 9995768 </p>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="bg-gray-300 text-gray-800 font-bold px-4 py-2 mb-2 inline-block text-m">GOODS DELIVERY NOTE</div>
+                            <div className="bg-gray-300 text-gray-800 font-bold px-3 py-1.5 mb-2 inline-block text-xs">GOODS DELIVERY NOTE</div>
                         </div>
                     </div>
 
-                    <div className="border border-gray-800 p-4 mb-6 grid grid-cols-2 gap-8">
+                    <div className="border border-gray-800 p-3 mb-4 grid grid-cols-2 gap-8">
                         <div>
                             <p className="mb-1"><span className="font-bold">Customer:</span> {selectedNote?.consignee}</p>
                             <p className="mb-1"><span className="font-bold">Phone:</span> {consignees.find(c => c.name === selectedNote?.consignee)?.phone || selectedNote?.consignee_phone || '-'}</p>
@@ -268,8 +268,8 @@ const DeliveryNotes: React.FC = () => {
                     </div>
 
                     {/* Job Table */}
-                    <div className="mb-8">
-                        <table className="w-full border-collapse text-xs">
+                    <div className="mb-6">
+                        <table className="w-full border-collapse text-[10px]">
                             <thead className="bg-gray-200 font-bold border-y border-gray-400">
                                 <tr>
                                     <th className="py-1 px-2 text-left w-1/5">Job No</th>
@@ -293,25 +293,25 @@ const DeliveryNotes: React.FC = () => {
                     </div>
 
                     {/* Goods Delivered / Received Section */}
-                    <div className="border border-gray-800 flex mb-8 text-xs">
+                    <div className="border border-gray-800 flex mb-6 text-[10px]">
                         {/* GOODS DELIVERED BY (66.66%) */}
                         <div className="w-2/3 border-r border-gray-800 flex flex-col">
-                            <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS DELIVERED BY</div>
-                            <div className="grid grid-cols-2 flex-grow min-h-[140px]">
+                            <div className="bg-gray-200 p-1.5 font-bold border-b border-gray-800">GOODS DELIVERED BY</div>
+                            <div className="grid grid-cols-2 flex-grow min-h-[100px]">
                                 {/* Column 1: Issued By */}
                                 <div className="p-2 border-r border-gray-800 relative flex flex-col">
-                                    <div className="grid grid-cols-[60px_1fr] gap-2 mb-4">
+                                    <div className="grid grid-cols-[40px_1fr] gap-1 mb-2">
                                         <span className="font-bold">Name:</span>
                                         <span className="uppercase font-medium">{selectedNote?.issued_by}</span>
                                     </div>
                                     <div className="mt-auto">
-                                        <div className="grid grid-cols-[60px_1fr] gap-2 mb-2 relative z-10">
+                                        <div className="grid grid-cols-[50px_1fr] gap-1 mb-1 relative z-10">
                                             <span className="font-bold">Signature:</span>
-                                            <div className="h-8"></div> {/* Space for signature */}
+                                            <div className="h-6"></div> {/* Space for signature */}
                                         </div>
                                         {/* Digital Seal centered/placed below signature area */}
-                                        <div className="flex justify-center mt-2">
-                                            <div className="w-20 h-20 opacity-90 mix-blend-multiply">
+                                        <div className="flex justify-center mt-1">
+                                            <div className="w-16 h-16 opacity-90 mix-blend-multiply">
                                                 <img src={seaflowDigitalSeal} alt="Seal" className="w-full h-full object-contain" crossOrigin="anonymous" />
                                             </div>
                                         </div>
@@ -320,9 +320,9 @@ const DeliveryNotes: React.FC = () => {
 
                                 {/* Column 2: Driver Details */}
                                 <div className="p-2 flex flex-col">
-                                    <div className="grid grid-cols-[60px_1fr] gap-2 mb-4">
+                                    <div className="grid grid-cols-[40px_1fr] gap-1 mb-2">
                                         <span className="font-bold">Name:</span>
-                                        <div className="uppercase font-medium break-words">
+                                        <div className="uppercase font-medium whitespace-nowrap overflow-hidden">
                                             {selectedNote?.vehicles && selectedNote.vehicles.length > 0 ? (
                                                 <span>
                                                     {[
@@ -336,10 +336,10 @@ const DeliveryNotes: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="mt-auto mb-8">
-                                        <div className="grid grid-cols-[60px_1fr] gap-2">
+                                    <div className="mt-auto mb-4">
+                                        <div className="grid grid-cols-[50px_1fr] gap-1">
                                             <span className="font-bold">Signature:</span>
-                                            <div className="border-b border-gray-400 h-8"></div>
+                                            <div className="border-b border-gray-400 h-6"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -348,23 +348,23 @@ const DeliveryNotes: React.FC = () => {
 
                         {/* GOODS RECEIVED BY (33.33%) */}
                         <div className="w-1/3 flex flex-col">
-                            <div className="bg-gray-200 p-2 font-bold border-b border-gray-800">GOODS RECEIVED BY</div>
-                            <div className="p-2 flex-grow flex flex-col min-h-[140px]">
-                                <div className="grid grid-cols-[60px_1fr] gap-2 mb-4">
+                            <div className="bg-gray-200 p-1.5 font-bold border-b border-gray-800">GOODS RECEIVED BY</div>
+                            <div className="p-2 flex-grow flex flex-col min-h-[100px]">
+                                <div className="grid grid-cols-[40px_1fr] gap-1 mb-2">
                                     <span className="font-bold">Name:</span>
-                                    <div className="border-b border-gray-400 h-5 mt-1"></div>
+                                    <div className="border-b border-gray-400 h-4 mt-1"></div>
                                 </div>
-                                <div className="mt-auto mb-8">
-                                    <div className="grid grid-cols-[60px_1fr] gap-2">
+                                <div className="mt-auto mb-4">
+                                    <div className="grid grid-cols-[50px_1fr] gap-1">
                                         <span className="font-bold">Signature:</span>
-                                        <div className="border-b border-gray-400 h-8"></div>
+                                        <div className="border-b border-gray-400 h-6"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <p className="text-[10px] text-center text-gray-500 mt-12">
+                    <p className="text-[9px] text-center text-gray-500 mt-6">
                         Any Shortage or damage must be notified within 72 hours of receipt of goods. <br />
                         Should you have any enquiries concerning this delivery note, please contact us. <br />
                         Thank you for your business!
