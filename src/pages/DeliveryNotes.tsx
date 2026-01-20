@@ -195,11 +195,12 @@ const DeliveryNotes: React.FC = () => {
                 className="bg-white text-[11px] font-mono relative flex flex-col shadow-lg mx-auto"
                 style={{
                     width: '210mm',
-                    minHeight: '297mm',
-                    height: 'auto', // Fixed A4 height
-                    padding: '0',
-                    margin: '0',
-                    boxSizing: 'border-box'
+                    height: '297mm',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    margin: '0 auto',
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white'
                 }}
             >
                 {/* Header Image */}
@@ -208,7 +209,7 @@ const DeliveryNotes: React.FC = () => {
                         src={seaflowHeader}
                         alt="Header"
                         className="w-full h-auto block"
-                        style={{ width: '100%', height: '80%', display: 'block' }}
+                        style={{ width: '100%', height: 'auto', display: 'block' }}
                         crossOrigin="anonymous"
                     />
                 </div>
@@ -393,7 +394,7 @@ const DeliveryNotes: React.FC = () => {
                 </div>
 
                 {/* Footer Image */}
-                <div className="w-full mt-auto flex-shrink-0 font-none leading-none">
+                <div className="w-full absolute bottom-0 left-0 flex-shrink-0 font-none leading-none">
                     <img
                         src={seaflowFooter}
                         alt="Footer"
