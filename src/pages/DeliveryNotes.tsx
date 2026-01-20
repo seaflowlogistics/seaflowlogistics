@@ -209,7 +209,7 @@ const DeliveryNotes: React.FC = () => {
                         src={seaflowHeader}
                         alt="Header"
                         className="w-full h-auto block"
-                        style={{ maxWidth: '100%', maxHeight: '25mm' }} // Strictly limited height
+                        style={{ maxWidth: '100%', maxHeight: '20mm' }} // Strictly limited height
                         crossOrigin="anonymous"
                     />
                 </div>
@@ -236,36 +236,36 @@ const DeliveryNotes: React.FC = () => {
                                 <div className="bg-gray-300 text-gray-800 font-bold px-3 py-1.5 inline-block text-xs">GOODS DELIVERY NOTE</div>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Customer & Delivery Details Row */}
-                        <div className="border border-gray-800 p-2 mb-4 grid grid-cols-2 gap-8">
-                            <div>
-                                <p className="mb-1"><span className="font-bold">Customer:</span> {selectedNote?.consignee}</p>
-                                <p className="mb-1"><span className="font-bold">Phone:</span> {consignees.find(c => c.name === selectedNote?.consignee)?.phone || selectedNote?.consignee_phone || '-'}</p>
-                                <p className="mb-1"><span className="font-bold">Email:</span> {consignees.find(c => c.name === selectedNote?.consignee)?.email || selectedNote?.consignee_email || '-'}</p>
+                    {/* Customer & Delivery Details Row */}
+                    <div className="border border-gray-800 p-2 mb-4 grid grid-cols-2 gap-8">
+                        <div>
+                            <p className="mb-1"><span className="font-bold">Customer:</span> {selectedNote?.consignee}</p>
+                            <p className="mb-1"><span className="font-bold">Phone:</span> {consignees.find(c => c.name === selectedNote?.consignee)?.phone || selectedNote?.consignee_phone || '-'}</p>
+                            <p className="mb-1"><span className="font-bold">Email:</span> {consignees.find(c => c.name === selectedNote?.consignee)?.email || selectedNote?.consignee_email || '-'}</p>
+                        </div>
+                        <div>
+                            <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
+                                <span className="font-bold">Delivery:</span> <span>{selectedNote?.id}</span>
                             </div>
-                            <div>
-                                <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
-                                    <span className="font-bold">Delivery:</span> <span>{selectedNote?.id}</span>
-                                </div>
-                                <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
-                                    <span className="font-bold">Loading Date:</span> <span>{selectedNote?.loading_date ? new Date(selectedNote.loading_date).toLocaleDateString() : '-'}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="font-bold">Discharge Location:</span>
-                                    <span>
-                                        {(() => {
-                                            const vehicleLocs = selectedNote?.vehicles
-                                                ? selectedNote.vehicles.map(v => v.dischargeLocation).filter(Boolean)
-                                                : [];
+                            <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
+                                <span className="font-bold">Loading Date:</span> <span>{selectedNote?.loading_date ? new Date(selectedNote.loading_date).toLocaleDateString() : '-'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-bold">Discharge Location:</span>
+                                <span>
+                                    {(() => {
+                                        const vehicleLocs = selectedNote?.vehicles
+                                            ? selectedNote.vehicles.map(v => v.dischargeLocation).filter(Boolean)
+                                            : [];
 
-                                            if (vehicleLocs.length > 0) {
-                                                return vehicleLocs.join(', ');
-                                            }
-                                            return selectedNote?.items?.[0]?.schedule_port || '-';
-                                        })()}
-                                    </span>
-                                </div>
+                                        if (vehicleLocs.length > 0) {
+                                            return vehicleLocs.join(', ');
+                                        }
+                                        return selectedNote?.items?.[0]?.schedule_port || '-';
+                                    })()}
+                                </span>
                             </div>
                         </div>
                     </div>
