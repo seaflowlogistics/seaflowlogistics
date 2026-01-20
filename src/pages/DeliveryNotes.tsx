@@ -209,20 +209,20 @@ const DeliveryNotes: React.FC = () => {
                         src={seaflowHeader}
                         alt="Header"
                         className="w-full h-auto block"
-                        style={{ maxWidth: '100%', maxHeight: '40mm' }} // Limit height to ensure padding works
+                        style={{ maxWidth: '100%', maxHeight: '25mm' }} // Strictly limited height
                         crossOrigin="anonymous"
                     />
                 </div>
 
                 {/* Main Content Wrapper - Defines the Safe Area between Header and Footer */}
-                <div className="absolute inset-0 z-10 flex flex-col px-12 pt-32 pb-24 h-full">
+                <div className="absolute inset-0 z-10 flex flex-col px-12 pt-24 pb-28 h-full">
 
                     {/* 2. Top Static Section (Logo/Title & Customer Info) */}
                     <div className="flex-none">
                         {/* Logo & Title Row */}
                         <div className="flex justify-between items-start mb-4">
                             <div className="w-1/2 flex items-center gap-4">
-                                <div className="w-16 h-16 flex-shrink-0">
+                                <div className="w-15 h-15 flex-shrink-0">
                                     <img src={seaflowLogo} alt="Logo" className="w-full h-full object-contain" crossOrigin="anonymous" />
                                 </div>
                                 <div>
@@ -393,7 +393,7 @@ const DeliveryNotes: React.FC = () => {
                         src={seaflowFooter}
                         alt="Footer"
                         className="w-full h-auto block"
-                        style={{ maxWidth: '100%', maxHeight: '30mm' }}
+                        style={{ maxWidth: '100%', maxHeight: '25mm' }}
                         crossOrigin="anonymous"
                     />
                 </div>
