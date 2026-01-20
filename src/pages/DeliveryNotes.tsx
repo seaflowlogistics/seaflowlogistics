@@ -489,7 +489,7 @@ const DeliveryNotes: React.FC = () => {
                     <button className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline">
                         <Upload className="w-4 h-4" /> Choose File
                     </button>
-                    <input type="file" placeholder="upload your file">Choose File</input>
+
                     <p className="text-xs text-gray-400 mt-1">No file chosen</p>
                 </div>
 
