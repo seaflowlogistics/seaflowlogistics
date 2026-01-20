@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Plus, Trash2, Search, X, Edit2, FileUp } from 'lucide-react';
+import { Trash2, Search, X, Edit2, FileUp } from 'lucide-react';
 import { paymentItemsAPI, vendorsAPI } from '../../services/api';
 
 const PaymentItemsSettings: React.FC = () => {
