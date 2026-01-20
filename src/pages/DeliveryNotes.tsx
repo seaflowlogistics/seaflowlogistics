@@ -325,7 +325,11 @@ const DeliveryNotes: React.FC = () => {
                                         <div className="uppercase font-medium break-words">
                                             {selectedNote?.vehicles && selectedNote.vehicles.length > 0 ? (
                                                 <span>
-                                                    {selectedNote.vehicles[0].vehicleName || selectedNote.vehicles[0].vehicleId || '-'} / {selectedNote.vehicles[0].driver} / {selectedNote.vehicles[0].driverContact}
+                                                    {[
+                                                        selectedNote.vehicles[0].vehicleName || selectedNote.vehicles[0].vehicleId,
+                                                        selectedNote.vehicles[0].driver,
+                                                        selectedNote.vehicles[0].driverContact
+                                                    ].filter(Boolean).join(' / ')}
                                                 </span>
                                             ) : (
                                                 <span>-</span>
