@@ -363,29 +363,29 @@ const DeliveryNotes: React.FC = () => {
                             Thank you for your business!
                         </p>
                     </div>
-
-                    {/* Address / Footer Info (Pinned to bottom of content area) */}
-                    <div className="mt-auto pt-2 text-[10px] text-gray-600 font-medium flex flex-col items-center flex-none">
-                        <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 items-center mb-1">
-                            <div className="flex items-center gap-2">
-                                <Mail className="w-3 h-3 text-black" />
-                                <span>info@seaflowlogistic.com</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Phone className="w-3 h-3 text-black" />
-                                <span>+960 9990371/+960 9995768</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Globe className="w-3 h-3 text-black" />
-                                <span>www.seaflowlogistic.com</span>
-                            </div>
+                </div>
+                {/* Address / Footer Info (Pinned to bottom of content area) */}
+                <div className="mt-auto pt-2 text-[10px] text-gray-600 font-medium flex flex-col items-center flex-none">
+                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 items-center mb-1">
+                        <div className="flex items-center gap-2">
+                            <Mail className="w-3 h-3 text-black" />
+                            <span>info@seaflowlogistic.com</span>
                         </div>
-                        <div className="flex items-center justify-center gap-2">
-                            <MapPin className="w-3 h-3 text-black" />
-                            <span>Hulhumale' Lot 11393, Saima Hingun, Rep of Maldives, 23000</span>
+                        <div className="flex items-center gap-2">
+                            <Phone className="w-3 h-3 text-black" />
+                            <span>+960 9990371/+960 9995768</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Globe className="w-3 h-3 text-black" />
+                            <span>www.seaflowlogistic.com</span>
                         </div>
                     </div>
+                    <div className="flex items-center justify-center gap-2">
+                        <MapPin className="w-3 h-3 text-black" />
+                        <span>Hulhumale' Lot 11393, Saima Hingun, Rep of Maldives, 23000</span>
+                    </div>
                 </div>
+
 
                 {/* 4. Footer Image (Fixed Bottom Red Box) */}
                 <div className="absolute bottom-0 left-0 w-full z-20 font-none leading-none pointer-events-none">
