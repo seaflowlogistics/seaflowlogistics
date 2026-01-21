@@ -651,9 +651,7 @@ const DeliveryNotes: React.FC = () => {
                                             </td>
                                             <td className="py-4 px-6 text-right">
                                                 <div className="flex items-center justify-end gap-2 text-gray-400">
-                                                    <button className="p-1 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors" onClick={(e) => { e.stopPropagation(); setSelectedNote(note); setActiveTab('document'); }}>
-                                                        <Printer className="w-4 h-4" />
-                                                    </button>
+
                                                     <button
                                                         className="p-1 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                                         onClick={(e) => { e.stopPropagation(); handleDeleteNote(note.id); }}
