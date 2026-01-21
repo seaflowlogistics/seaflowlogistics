@@ -741,7 +741,7 @@ const DeliveryNotes: React.FC = () => {
                     height: 297mm !important;
                     margin: 0 !important;
                     padding: 0 !important;
-                    overflow: hidden !important;
+                    overflow: auto !important;
                     -webkit-print-color-adjust: exact;
                 }
 
