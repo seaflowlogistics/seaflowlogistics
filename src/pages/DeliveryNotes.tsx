@@ -726,7 +726,7 @@ const DeliveryNotes: React.FC = () => {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/50">
+                            <div className="flex-1 overflow-y-auto custom-scrollbar">
                                 {activeTab === 'document' ? renderDocument() : renderManage()}
                             </div>
                         </div>
@@ -738,7 +738,12 @@ const DeliveryNotes: React.FC = () => {
             @media print {
                 @page {
                     size: A4 portrait;
-                    margin: 0;
+                    margin: auto;
+                    margin-top: 0;
+                    margin-bottom: 0;
+                    margin-left: 0;
+                    margin-right: 0;
+                    padding: 0;
                 }
                 body {
                     margin: 0;
@@ -755,7 +760,7 @@ const DeliveryNotes: React.FC = () => {
                 }
                 /* Position the content to fill the page */
                 #printable-content {
-                    position: absolute;
+                    position: relative;
                     left: 0;
                     top: 0;
                     width: 210mm !important;
