@@ -728,7 +728,7 @@ const DeliveryNotes: React.FC = () => {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 p-8 bg-gray-50/50 h-full overflow-hidden">
+                            <div className="flex-1 p-4 bg-gray-50/50">
                                 {activeTab === 'document' ? renderDocument() : renderManage()}
                             </div>
                         </div>
