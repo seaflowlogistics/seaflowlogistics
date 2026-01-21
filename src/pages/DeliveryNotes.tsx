@@ -5,9 +5,6 @@ import {
     X, Download, Upload,
     Mail, Phone, Globe, MapPin, Trash2
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-
 import { deliveryNotesAPI, consigneesAPI } from '../services/api';
 
 import seaflowHeader from '../assets/seaflow-header.jpg';
@@ -138,36 +135,9 @@ const DeliveryNotes: React.FC = () => {
     };
 
     const handleDownloadPDF = async () => {
-        if (!printRef.current) return;
-
-        try {
-            const element = printRef.current;
-            if (!element) return;
-
-            const canvas = await html2canvas(element, {
-                scale: 2,
-                useCORS: true,
-                logging: true,
-                windowWidth: element.scrollWidth,
-                windowHeight: element.scrollHeight
-            });
-
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            const imgWidth = 210; // A4 Width in mm
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            pdf.save(`DeliveryNote_${selectedNote?.id || 'doc'}.pdf`);
-        } catch (error) {
-            console.error('PDF Generation Failed', error);
-            alert(`Failed to generate PDF: ${error instanceof Error ? error.message : String(error)}. Please try printing to PDF instead.`);
-        }
+        // Since client-side PDF generation is unreliable with modern CSS/layouts,
+        // we trigger the native print dialog which allows "Save as PDF".
+        window.print();
     };
 
     const handleDeleteNote = async (id: string) => {
