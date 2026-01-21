@@ -4,7 +4,10 @@ import {
     Search, Printer, ChevronDown,
     X, Download, Upload,
     Mail, Phone, Globe, MapPin, Trash2
+
 } from 'lucide-react';
+
+
 import { deliveryNotesAPI, consigneesAPI } from '../services/api';
 
 import seaflowHeader from '../assets/seaflow-header.jpg';
@@ -317,7 +320,7 @@ const DeliveryNotes: React.FC = () => {
                                         <div className="mt-auto mb-4">
                                             <div className="grid grid-cols-[50px_1fr] gap-1">
                                                 <span className="font-bold">Signature:</span>
-                                                <div className="border-b border-gray-400 h-6"></div>
+                                                <div className="h-6"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -330,12 +333,12 @@ const DeliveryNotes: React.FC = () => {
                                 <div className="p-2 flex-grow flex flex-col min-h-[100px]">
                                     <div className="grid grid-cols-[40px_1fr] gap-1 mb-2">
                                         <span className="font-bold">Name:</span>
-                                        <div className="border-b border-gray-400 h-4 mt-1"></div>
+                                        <div className="h-4 mt-1"></div>
                                     </div>
                                     <div className="mt-auto mb-4">
                                         <div className="grid grid-cols-[50px_1fr] gap-1">
                                             <span className="font-bold">Signature:</span>
-                                            <div className="border-b border-gray-400 h-6"></div>
+                                            <div className="h-6"></div>
                                         </div>
                                     </div>
                                 </div>
