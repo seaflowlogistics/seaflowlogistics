@@ -19,8 +19,7 @@ router.get('/', authenticateToken, async (req, res) => {
                 s.container_no,
                 s.receiver_name as consignee,
                 s.sender_name as exporter,
-                cs.status as clearance_status,
-                cs.completion_date as clearance_date,
+                cs.clearance_date,
                 dn.id as delivery_note_id,
                 dn.status as delivery_note_status
             FROM shipments s

@@ -10,7 +10,6 @@ interface ContainerRecord {
     container_no: string;
     consignee: string;
     exporter: string;
-    clearance_status: string; // 'Cleared', 'Pending', etc.
     clearance_date: string | null;
     delivery_note_id: string | null;
     delivery_note_status: string | null;
@@ -198,7 +197,7 @@ const Containers: React.FC = () => {
 
                                             {/* Clearance */}
                                             <td className="py-5 px-6 align-middle">
-                                                {item.clearance_status === 'Completed' || item.clearance_date ? (
+                                                {item.clearance_date ? (
                                                     <div className="inline-flex items-center gap-1.5 text-green-600 font-medium text-xs">
                                                         <CheckCircle2 className="w-4 h-4" />
                                                         <span>{formatDate(item.clearance_date!)}</span>
