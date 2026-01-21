@@ -726,7 +726,7 @@ const DeliveryNotes: React.FC = () => {
                             </div>
 
                             {/* Content */}
-                            <div className="bg-gray-50/50 custom-scrollbar h-[calc(100vh-200px)] overflow-y-auto">
+                            <div className="flex-1 overflow-hidden p-4 bg-gray-50/50">
                                 {activeTab === 'document' ? renderDocument() : renderManage()}
                             </div>
                         </div>
