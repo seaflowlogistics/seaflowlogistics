@@ -225,4 +225,9 @@ export const paymentItemsAPI = {
     }),
 };
 
+// Containers API
+export const containersAPI = {
+    getAll: (params?: { search?: string; page?: number; limit?: number }) => api.get('/containers', { params }),
+};
+
 export default api;
