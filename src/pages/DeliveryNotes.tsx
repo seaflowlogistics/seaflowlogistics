@@ -196,8 +196,8 @@ const DeliveryNotes: React.FC = () => {
                 style={{
                     width: '210mm',
                     height: '297mm', // Enforce full A4 height to prevent browser vertical centering/margins
-                    position: 'relative',
-                    overflow: 'hidden',
+                    position: 'absolute',
+                    overflow: 'auto',
                     margin: '0 auto',
                     boxSizing: 'border-box',
                     backgroundColor: 'white'
@@ -209,7 +209,7 @@ const DeliveryNotes: React.FC = () => {
                         src={seaflowHeader}
                         alt="Header"
                         className="w-full h-auto block"
-                        style={{ width: '100%', height: 'auto', display: 'block' }}
+                        style={{ width: '100%', height: '80%', display: 'block' }}
                         crossOrigin="anonymous"
                     />
                 </div>
@@ -726,7 +726,7 @@ const DeliveryNotes: React.FC = () => {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 overflow-hidden p-4 bg-gray-50/50">
+                            <div className="flex-1 overflow-auto p-4 bg-gray-50/50">
                                 {activeTab === 'document' ? renderDocument() : renderManage()}
                             </div>
                         </div>
