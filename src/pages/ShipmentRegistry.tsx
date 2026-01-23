@@ -144,14 +144,14 @@ const ShipmentRegistry: React.FC = () => {
 
             let updatedJobPackages = selectedJob.packages || [];
 
-            if (data.packages && data.packages.length > 0) {
+            if (data.packages) {
                 const newPackages = data.packages.map((i: any) => ({
                     count: i.pkg_count,
                     type: i.pkg_type,
                     weight: i.weight || 0
                 }));
 
-                updatedJobPackages = [...updatedJobPackages, ...newPackages];
+                updatedJobPackages = newPackages; // Replace existing packages to prevent duplication
                 // Update Job with new packages
                 await shipmentsAPI.update(selectedJob.id, { packages: updatedJobPackages });
             }
@@ -1397,7 +1397,45 @@ const ShipmentRegistry: React.FC = () => {
                                     <div className="text-center py-6 text-gray-400 italic">No BL/AWB details listed</div>
                                 )}
                             </div>
-
+                            {/* Packages List within BL/AWB Card */}
+                            <div className="mt-6 pt-6 border-t border-gray-100">
+                                <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Package className="w-4 h-4 text-gray-400" />
+                                    Package Details
+                                </h4>
+                                {selectedJob.packages && selectedJob.packages.length > 0 ? (
+                                    <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="text-xs text-gray-500 uppercase bg-gray-100/50 border-b border-gray-200">
+                                                <tr>
+                                                    <th className="py-2 px-4 font-bold">Count</th>
+                                                    <th className="py-2 px-4 font-bold">Type</th>
+                                                    <th className="py-2 px-4 font-bold">Weight (KG)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {selectedJob.packages.map((p: any, idx: number) => (
+                                                    <tr key={idx} className="border-b border-gray-100 last:border-0 hover:bg-white transition-colors">
+                                                        <td className="py-2 px-4 font-medium">{p.count}</td>
+                                                        <td className="py-2 px-4">{p.type}</td>
+                                                        <td className="py-2 px-4 text-gray-600">{p.weight || '-'}</td>
+                                                    </tr>
+                                                ))}
+                                                {/* Total Row */}
+                                                <tr className="bg-gray-100/50 font-bold text-gray-900 border-t border-gray-200">
+                                                    <td className="py-2 px-4">Total: {selectedJob.packages.reduce((acc: number, p: any) => acc + (parseInt(p.count) || 0), 0)}</td>
+                                                    <td className="py-2 px-4"></td>
+                                                    <td className="py-2 px-4">{selectedJob.packages.reduce((acc: number, p: any) => acc + (parseFloat(p.weight) || 0), 0).toFixed(2)} KG</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4 text-gray-400 text-sm italic border border-dashed border-gray-200 rounded-lg">
+                                        No packages added. Click 'Add' or 'Edit' on BL to add packages.
+                                    </div>
+                                )}
+                            </div>
 
                         </div>
 
@@ -2065,7 +2103,14 @@ const ShipmentRegistry: React.FC = () => {
                 isOpen={isBLDrawerOpen}
                 onClose={() => { setIsBLDrawerOpen(false); setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' }); }}
                 onSave={handleBLDrawerSave}
-                initialData={newBL.id ? newBL : undefined}
+                initialData={{
+                    ...(newBL.id ? newBL : {}),
+                    packages: selectedJob?.packages?.map((p: any) => ({
+                        pkg_count: p.count,
+                        pkg_type: p.type,
+                        weight: p.weight
+                    })) || []
+                }}
                 deliveryAgents={deliveryAgentsList}
                 job={selectedJob}
             />
