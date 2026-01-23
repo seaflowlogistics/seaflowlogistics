@@ -1377,109 +1377,99 @@ const ShipmentRegistry: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* Divider */}
-                            <div className="border-t border-gray-100 my-8"></div>
+                        </div>
 
-                            {/* Packages / Cargo Details - Now Inside BL/AWB Card */}
-                            <div>
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
-                                        <Package className="w-5 h-5 text-gray-400" />
-                                        Packages / Cargo Details
-                                    </h3>
-                                    {isEditingBL ? ( // Re-using isEditingBL state for editing packages as per original logic
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={handleSaveDetails} className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100" title="Save">
-                                                <Check className="w-4 h-4" />
-                                            </button>
-                                            <button onClick={handleCancelEdit} className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100" title="Cancel">
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button onClick={() => handleEditClick('bl')} className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors" title="Edit Packages">
-                                            <Pencil className="w-4 h-4" />
+                        {/* Shared Packages Section - Integrated into BL/AWB Card Logic */}
+                        {/* We display this ONCE at the bottom of the BL list, formatted to look like part of the list */}
+                        <div className="border border-t-0 border-gray-200 rounded-b-lg p-5 bg-gray-50/10 -mt-2">
+                            {isEditingBL ? (
+                                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 relative">
+                                    <div className="absolute top-2 right-2 flex gap-2">
+                                        <button onClick={handleSaveDetails} className="p-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100" title="Save Packages">
+                                            <Check className="w-4 h-4" />
                                         </button>
-                                    )}
+                                        <button onClick={handleCancelEdit} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100" title="Cancel">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Edit Packages</p>
+                                    <div className="space-y-3">
+                                        {editFormData.packages?.map((pkg: any, idx: number) => (
+                                            <div key={idx} className="flex gap-3 items-center">
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Count"
+                                                        value={pkg.count}
+                                                        onChange={e => handlePackageChange(idx, 'count', e.target.value)}
+                                                        className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <select
+                                                        value={pkg.type}
+                                                        onChange={e => handlePackageChange(idx, 'type', e.target.value)}
+                                                        className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
+                                                    >
+                                                        <option value="" disabled>Type</option>
+                                                        {PACKAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Weight (KG)"
+                                                        value={pkg.weight}
+                                                        onChange={e => handlePackageChange(idx, 'weight', e.target.value)}
+                                                        className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
+                                                    />
+                                                </div>
+                                                <button onClick={() => removePackage(idx)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"><X className="w-4 h-4" /></button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-3">
+                                        <button onClick={addPackage} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100 transition-colors"><Plus className="w-3 h-3" /> Add Package</button>
+                                    </div>
                                 </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative group/pkg">
+                                    {/* Edit Button for Packages */}
+                                    <button
+                                        onClick={() => handleEditClick('bl')}
+                                        className="absolute -top-2 -right-2 text-gray-300 hover:text-indigo-600 p-1.5 rounded-full hover:bg-indigo-50 transition-colors opacity-0 group-hover/pkg:opacity-100"
+                                        title="Edit Packages"
+                                    >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                    </button>
 
-                                {/* Reuse existing Packages Form Logic */}
-                                <div>
-                                    {isEditingBL ? (
-                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                                            <div className="space-y-3">
-                                                {editFormData.packages?.map((pkg: any, idx: number) => (
-                                                    <div key={idx} className="flex gap-3 items-center">
-                                                        <div className="flex-1">
-                                                            <input
-                                                                type="number"
-                                                                placeholder="Count"
-                                                                value={pkg.count}
-                                                                onChange={e => handlePackageChange(idx, 'count', e.target.value)}
-                                                                className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
-                                                            />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <select
-                                                                value={pkg.type}
-                                                                onChange={e => handlePackageChange(idx, 'type', e.target.value)}
-                                                                className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
-                                                            >
-                                                                <option value="" disabled>Type</option>
-                                                                {PACKAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                                            </select>
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <input
-                                                                type="number"
-                                                                placeholder="Weight (KG)"
-                                                                value={pkg.weight}
-                                                                onChange={e => handlePackageChange(idx, 'weight', e.target.value)}
-                                                                className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
-                                                            />
-                                                        </div>
-                                                        <button
-                                                            onClick={() => removePackage(idx)}
-                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                                                            title="Remove"
-                                                        >
-                                                            <X className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Packages</p>
+                                        {selectedJob.packages && selectedJob.packages.length > 0 ? (
+                                            <div className="space-y-1">
+                                                {selectedJob.packages.map((p: any, i: number) => (
+                                                    <p key={i} className="font-semibold text-gray-900 text-sm">
+                                                        {p.count} {p.type} {p.weight ? `- ${p.weight} KG` : ''}
+                                                    </p>
                                                 ))}
                                             </div>
-                                            <div className="mt-3 flex justify-between items-center pt-3 border-t border-gray-200">
-                                                <button
-                                                    onClick={addPackage}
-                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100 transition-colors"
-                                                >
-                                                    <Plus className="w-3 h-3" /> Add Package
-                                                </button>
-                                                <div className="text-xs font-medium text-gray-500">
-                                                    Summary: <span className="text-gray-900 font-bold">{editFormData.no_of_pkgs || 0}</span> Pkgs,
-                                                    <span className="text-gray-900 font-bold ml-1">{editFormData.weight || 0}</span> KG
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-3 gap-4">
-                                            <div>
-                                                <p className="text-[10px] text-gray-400 mb-0.5">Total Count</p>
-                                                <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-gray-400 mb-0.5">Total Weight</p>
-                                                <p className="font-semibold text-gray-900">{selectedJob.weight || '0'} KG</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-gray-400 mb-0.5">Type</p>
-                                                <p className="font-semibold text-gray-900 uppercase">{selectedJob.package_type || selectedJob.pkg_type || '-'}</p>
-                                            </div>
-                                        </div>
-                                    )}
+                                        ) : (
+                                            <p className="font-semibold text-gray-900 text-sm">{selectedJob.no_of_pkgs || '0'}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Weight</p>
+                                        <p className="font-semibold text-gray-900">{selectedJob.weight || '0'} KG</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Package Type</p>
+                                        <p className="font-semibold text-gray-900 uppercase">{selectedJob.package_type || selectedJob.pkg_type || '-'}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
+
+
 
 
                         {selectedJob.transport_mode === 'SEA' && (
