@@ -72,17 +72,25 @@ const ShipmentRegistry: React.FC = () => {
     const handleSaveNewContainer = async () => {
         if (!newContainer.container_no) return alert('Container number is required');
         try {
-            const added = await shipmentsAPI.addContainer(selectedJob.id, newContainer);
-            // Update local state
-            const updatedContainers = [...(selectedJob.containers || []), added.data];
-            const updatedJob = { ...selectedJob, containers: updatedContainers };
+            let updatedList;
+            if (newContainer.id) {
+                // Update
+                const updated = await shipmentsAPI.updateContainer(selectedJob.id, newContainer.id, newContainer);
+                updatedList = selectedJob.containers.map((c: any) => c.id === newContainer.id ? updated.data : c);
+            } else {
+                // Create
+                const added = await shipmentsAPI.addContainer(selectedJob.id, newContainer);
+                updatedList = [...(selectedJob.containers || []), added.data];
+            }
+
+            const updatedJob = { ...selectedJob, containers: updatedList };
             setSelectedJob(updatedJob);
             setJobs(prev => prev.map(j => j.id === selectedJob.id ? updatedJob : j));
             setAddingContainer(false);
             setNewContainer({ container_no: '', container_type: 'FCL 20', unloaded_date: '' });
         } catch (e) {
             console.error(e);
-            alert('Failed to add container');
+            alert('Failed to save container');
         }
     };
 
@@ -102,18 +110,26 @@ const ShipmentRegistry: React.FC = () => {
     const handleSaveNewBL = async () => {
         if (!newBL.master_bl && !newBL.house_bl) return alert('Master No or House No is required');
         try {
-            const added = await shipmentsAPI.addBL(selectedJob.id, newBL);
-            const updatedBLs = [...(selectedJob.bls || []), added.data];
-            const updatedJob = { ...selectedJob, bls: updatedBLs };
+            let updatedList;
+            if (newBL.id) {
+                const updated = await shipmentsAPI.updateBL(selectedJob.id, newBL.id, newBL);
+                updatedList = selectedJob.bls.map((b: any) => b.id === newBL.id ? updated.data : b);
+            } else {
+                const added = await shipmentsAPI.addBL(selectedJob.id, newBL);
+                updatedList = [...(selectedJob.bls || []), added.data];
+            }
+
+            const updatedJob = { ...selectedJob, bls: updatedList };
             setSelectedJob(updatedJob);
             setJobs(prev => prev.map(j => j.id === selectedJob.id ? updatedJob : j));
             setAddingBL(false);
             setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
         } catch (e) {
             console.error(e);
-            alert('Failed to add BL');
+            alert('Failed to save BL');
         }
     };
+
 
     const handleDeleteBLItem = async (blId: string) => {
         if (!window.confirm('Are you sure?')) return;
@@ -1299,8 +1315,8 @@ const ShipmentRegistry: React.FC = () => {
                                             </select>
                                         </div>
                                         <div className="flex justify-end gap-2">
-                                            <button onClick={() => setAddingBL(false)} className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded text-sm font-medium">Cancel</button>
-                                            <button onClick={handleSaveNewBL} className="px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded text-sm font-medium">Save BL</button>
+                                            <button onClick={() => { setAddingBL(false); setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' }); }} className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded text-sm font-medium">Cancel</button>
+                                            <button onClick={handleSaveNewBL} className="px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded text-sm font-medium">{newBL.id ? 'Update BL' : 'Save BL'}</button>
                                         </div>
                                     </div>
                                 )}
@@ -1309,9 +1325,21 @@ const ShipmentRegistry: React.FC = () => {
                                 {selectedJob.bls && selectedJob.bls.length > 0 ? (
                                     selectedJob.bls.map((bl: any) => (
                                         <div key={bl.id} className="border border-gray-200 rounded-lg p-5 hover:border-indigo-100 transition-colors relative group">
-                                            <button onClick={() => handleDeleteBLItem(bl.id)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            <div className="absolute top-4 right-4 flex gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setNewBL(bl);
+                                                        setAddingBL(true);
+                                                    }}
+                                                    className="text-gray-300 hover:text-indigo-600 transition-colors"
+                                                    title="Edit BL"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => handleDeleteBLItem(bl.id)} className="text-gray-300 hover:text-red-500 transition-colors" title="Delete BL">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                 <div>
                                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Master No</p>
@@ -1348,110 +1376,114 @@ const ShipmentRegistry: React.FC = () => {
                                     !addingBL && <div className="text-center py-6 text-gray-400 italic">No BL/AWB details listed</div>
                                 )}
                             </div>
-                        </div>
 
-                        {/* Separate Cargo/Packages Card */}
-                        <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
-                                    <Package className="w-5 h-5 text-gray-400" />
-                                    Packages / Cargo Details
-                                </h3>
-                                {isEditingBL ? ( // Re-using isEditingBL state for editing packages as per original logic
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={handleSaveDetails} className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100" title="Save">
-                                            <Check className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={handleCancelEdit} className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100" title="Cancel">
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <button onClick={() => handleEditClick('bl')} className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors" title="Edit Packages">
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
+                            {/* Divider */}
+                            <div className="border-t border-gray-100 my-8"></div>
 
-                            {/* Reuse existing Packages Form Logic */}
+                            {/* Packages / Cargo Details - Now Inside BL/AWB Card */}
                             <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Packages</p>
-                                {isEditingBL ? (
-                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                                        <div className="space-y-3">
-                                            {editFormData.packages?.map((pkg: any, idx: number) => (
-                                                <div key={idx} className="flex gap-3 items-center">
-                                                    <div className="flex-1">
-                                                        <input
-                                                            type="number"
-                                                            placeholder="Count"
-                                                            value={pkg.count}
-                                                            onChange={e => handlePackageChange(idx, 'count', e.target.value)}
-                                                            className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
-                                                        />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <select
-                                                            value={pkg.type}
-                                                            onChange={e => handlePackageChange(idx, 'type', e.target.value)}
-                                                            className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
-                                                        >
-                                                            <option value="" disabled>Type</option>
-                                                            {PACKAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                                        </select>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <input
-                                                            type="number"
-                                                            placeholder="Weight (KG)"
-                                                            value={pkg.weight}
-                                                            onChange={e => handlePackageChange(idx, 'weight', e.target.value)}
-                                                            className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
-                                                        />
-                                                    </div>
-                                                    <button
-                                                        onClick={() => removePackage(idx)}
-                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                                                        title="Remove"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="mt-3 flex justify-between items-center pt-3 border-t border-gray-200">
-                                            <button
-                                                onClick={addPackage}
-                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100 transition-colors"
-                                            >
-                                                <Plus className="w-3 h-3" /> Add Package
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
+                                        <Package className="w-5 h-5 text-gray-400" />
+                                        Packages / Cargo Details
+                                    </h3>
+                                    {isEditingBL ? ( // Re-using isEditingBL state for editing packages as per original logic
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={handleSaveDetails} className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100" title="Save">
+                                                <Check className="w-4 h-4" />
                                             </button>
-                                            <div className="text-xs font-medium text-gray-500">
-                                                Summary: <span className="text-gray-900 font-bold">{editFormData.no_of_pkgs || 0}</span> Pkgs,
-                                                <span className="text-gray-900 font-bold ml-1">{editFormData.weight || 0}</span> KG
+                                            <button onClick={handleCancelEdit} className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100" title="Cancel">
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button onClick={() => handleEditClick('bl')} className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors" title="Edit Packages">
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Reuse existing Packages Form Logic */}
+                                <div>
+                                    {isEditingBL ? (
+                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                            <div className="space-y-3">
+                                                {editFormData.packages?.map((pkg: any, idx: number) => (
+                                                    <div key={idx} className="flex gap-3 items-center">
+                                                        <div className="flex-1">
+                                                            <input
+                                                                type="number"
+                                                                placeholder="Count"
+                                                                value={pkg.count}
+                                                                onChange={e => handlePackageChange(idx, 'count', e.target.value)}
+                                                                className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <select
+                                                                value={pkg.type}
+                                                                onChange={e => handlePackageChange(idx, 'type', e.target.value)}
+                                                                className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
+                                                            >
+                                                                <option value="" disabled>Type</option>
+                                                                {PACKAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                            </select>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <input
+                                                                type="number"
+                                                                placeholder="Weight (KG)"
+                                                                value={pkg.weight}
+                                                                onChange={e => handlePackageChange(idx, 'weight', e.target.value)}
+                                                                className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            onClick={() => removePackage(idx)}
+                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                            title="Remove"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="mt-3 flex justify-between items-center pt-3 border-t border-gray-200">
+                                                <button
+                                                    onClick={addPackage}
+                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100 transition-colors"
+                                                >
+                                                    <Plus className="w-3 h-3" /> Add Package
+                                                </button>
+                                                <div className="text-xs font-medium text-gray-500">
+                                                    Summary: <span className="text-gray-900 font-bold">{editFormData.no_of_pkgs || 0}</span> Pkgs,
+                                                    <span className="text-gray-900 font-bold ml-1">{editFormData.weight || 0}</span> KG
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div>
-                                            <p className="text-[10px] text-gray-400 mb-0.5">Total Count</p>
-                                            <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'}</p>
+                                    ) : (
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <p className="text-[10px] text-gray-400 mb-0.5">Total Count</p>
+                                                <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-gray-400 mb-0.5">Total Weight</p>
+                                                <p className="font-semibold text-gray-900">{selectedJob.weight || '0'} KG</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-gray-400 mb-0.5">Type</p>
+                                                <p className="font-semibold text-gray-900 uppercase">{selectedJob.package_type || selectedJob.pkg_type || '-'}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] text-gray-400 mb-0.5">Total Weight</p>
-                                            <p className="font-semibold text-gray-900">{selectedJob.weight || '0'} KG</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-gray-400 mb-0.5">Type</p>
-                                            <p className="font-semibold text-gray-900 uppercase">{selectedJob.package_type || selectedJob.pkg_type || '-'}</p>
-                                        </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
 
+
                         {selectedJob.transport_mode === 'SEA' && (
+
                             <>
                                 {/* Containers Card - Multi-Container Support */}
                                 <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all">
@@ -1523,8 +1555,8 @@ const ShipmentRegistry: React.FC = () => {
                                                         />
                                                     </td>
                                                     <td className="py-3 px-4 text-center flex items-center justify-center gap-2">
-                                                        <button onClick={handleSaveNewContainer} className="bg-green-100 text-green-700 p-1.5 rounded hover:bg-green-200"><Check className="w-4 h-4" /></button>
-                                                        <button onClick={() => setAddingContainer(false)} className="bg-gray-100 text-gray-600 p-1.5 rounded hover:bg-gray-200"><X className="w-4 h-4" /></button>
+                                                        <button onClick={handleSaveNewContainer} className="bg-green-100 text-green-700 p-1.5 rounded hover:bg-green-200" title={newContainer.id ? 'Update' : 'Save'}><Check className="w-4 h-4" /></button>
+                                                        <button onClick={() => { setAddingContainer(false); setNewContainer({ container_no: '', container_type: 'FCL 20', unloaded_date: '' }); }} className="bg-gray-100 text-gray-600 p-1.5 rounded hover:bg-gray-200" title="Cancel"><X className="w-4 h-4" /></button>
                                                     </td>
                                                 </tr>
                                             )}
@@ -1536,7 +1568,17 @@ const ShipmentRegistry: React.FC = () => {
                                                         <td className="py-4 px-4 font-medium text-gray-900">{c.container_no}</td>
                                                         <td className="py-4 px-4 text-gray-600">{c.container_type}</td>
                                                         <td className="py-4 px-4 text-gray-600">{c.unloaded_date ? new Date(c.unloaded_date).toLocaleDateString() : '-'}</td>
-                                                        <td className="py-4 px-4 text-center">
+                                                        <td className="py-4 px-4 text-center flex justify-center gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setNewContainer(c);
+                                                                    setAddingContainer(true);
+                                                                }}
+                                                                className="text-gray-400 hover:text-indigo-600 p-1.5 rounded-full hover:bg-indigo-50 transition-colors"
+                                                                title="Edit"
+                                                            >
+                                                                <Pencil className="w-4 h-4" />
+                                                            </button>
                                                             <button
                                                                 onClick={() => handleDeleteContainerItem(c.id)}
                                                                 className="text-gray-400 hover:text-red-600 p-1.5 rounded-full hover:bg-red-50 transition-colors"

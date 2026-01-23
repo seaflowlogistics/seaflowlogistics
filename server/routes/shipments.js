@@ -344,6 +344,21 @@ router.delete('/:id/containers/:containerId', authenticateToken, async (req, res
     }
 });
 
+router.put('/:id/containers/:containerId', authenticateToken, async (req, res) => {
+    try {
+        const { containerId } = req.params;
+        const { container_no, container_type, unloaded_date } = req.body;
+        const result = await pool.query(
+            'UPDATE shipment_containers SET container_no = $1, container_type = $2, unloaded_date = $3 WHERE id = $4 RETURNING *',
+            [container_no, container_type, unloaded_date, containerId]
+        );
+        res.json(result.rows[0]);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // --- SUB-RESOURCES: BL/AWB ---
 router.post('/:id/bls', authenticateToken, async (req, res) => {
     try {
@@ -353,6 +368,21 @@ router.post('/:id/bls', authenticateToken, async (req, res) => {
         const result = await pool.query(
             'INSERT INTO shipment_bls (shipment_id, master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
             [id, master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent]
+        );
+        res.json(result.rows[0]);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.put('/:id/bls/:blId', authenticateToken, async (req, res) => {
+    try {
+        const { blId } = req.params;
+        const { master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent } = req.body;
+        const result = await pool.query(
+            'UPDATE shipment_bls SET master_bl = $1, house_bl = $2, loading_port = $3, vessel = $4, etd = $5, eta = $6, delivery_agent = $7 WHERE id = $8 RETURNING *',
+            [master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent, blId]
         );
         res.json(result.rows[0]);
     } catch (e) {
