@@ -295,17 +295,80 @@ router.get('/:id', authenticateToken, async (req, res) => {
         const invoiceResult = await pool.query('SELECT * FROM invoices WHERE shipment_id = $1', [id]);
         const clearanceResult = await pool.query('SELECT * FROM clearance_schedules WHERE job_id = $1', [id]);
 
+        // Fetch Multi-BLs and Multi-Containers
+        const containersResult = await pool.query('SELECT * FROM shipment_containers WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
+        const blsResult = await pool.query('SELECT * FROM shipment_bls WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
+
         res.json({
             ...shipmentResult.rows[0],
             documents: documentsResult.rows,
             invoice: invoiceResult.rows[0] || null,
             payment_status: invoiceResult.rows[0]?.status || 'Pending',
             invoice_id: invoiceResult.rows[0]?.id || null,
-            clearance_schedule: clearanceResult.rows[0] || null
+            clearance_schedule: clearanceResult.rows[0] || null,
+            containers: containersResult.rows,
+            bls: blsResult.rows
         });
+
     } catch (error) {
         console.error('Get shipment error:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// --- SUB-RESOURCES: CONTAINERS ---
+router.post('/:id/containers', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { container_no, container_type, unloaded_date } = req.body;
+
+        const result = await pool.query(
+            'INSERT INTO shipment_containers (shipment_id, container_no, container_type, unloaded_date) VALUES ($1, $2, $3, $4) RETURNING *',
+            [id, container_no, container_type, unloaded_date]
+        );
+        res.json(result.rows[0]);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.delete('/:id/containers/:containerId', authenticateToken, async (req, res) => {
+    try {
+        const { containerId } = req.params;
+        await pool.query('DELETE FROM shipment_containers WHERE id = $1', [containerId]);
+        res.json({ message: 'Deleted' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- SUB-RESOURCES: BL/AWB ---
+router.post('/:id/bls', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent } = req.body;
+
+        const result = await pool.query(
+            'INSERT INTO shipment_bls (shipment_id, master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+            [id, master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent]
+        );
+        res.json(result.rows[0]);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.delete('/:id/bls/:blId', authenticateToken, async (req, res) => {
+    try {
+        const { blId } = req.params;
+        await pool.query('DELETE FROM shipment_bls WHERE id = $1', [blId]);
+        res.json({ message: 'Deleted' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
     }
 });
 

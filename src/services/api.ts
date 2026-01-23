@@ -78,6 +78,10 @@ export const shipmentsAPI = {
     import: (data: FormData) => api.post('/shipments/import', data, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
+    addContainer: (id: string, data: any) => api.post(`/shipments/${id}/containers`, data),
+    deleteContainer: (id: string, containerId: string) => api.delete(`/shipments/${id}/containers/${containerId}`),
+    addBL: (id: string, data: any) => api.post(`/shipments/${id}/bls`, data),
+    deleteBL: (id: string, blId: string) => api.delete(`/shipments/${id}/bls/${blId}`),
 };
 
 // Fleet API

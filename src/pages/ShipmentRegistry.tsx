@@ -62,6 +62,72 @@ const ShipmentRegistry: React.FC = () => {
     const [popupJob, setPopupJob] = useState<any | null>(null);
     const [popupType, setPopupType] = useState<'invoice' | 'bl' | 'payment' | 'upload' | 'schedule' | null>(null);
 
+    // Multi-Container / Multi-BL State
+    const [addingContainer, setAddingContainer] = useState(false);
+    const [newContainer, setNewContainer] = useState<any>({ container_no: '', container_type: 'FCL 20', unloaded_date: '' });
+
+    const [addingBL, setAddingBL] = useState(false);
+    const [newBL, setNewBL] = useState<any>({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
+
+    const handleSaveNewContainer = async () => {
+        if (!newContainer.container_no) return alert('Container number is required');
+        try {
+            const added = await shipmentsAPI.addContainer(selectedJob.id, newContainer);
+            // Update local state
+            const updatedContainers = [...(selectedJob.containers || []), added.data];
+            const updatedJob = { ...selectedJob, containers: updatedContainers };
+            setSelectedJob(updatedJob);
+            setJobs(prev => prev.map(j => j.id === selectedJob.id ? updatedJob : j));
+            setAddingContainer(false);
+            setNewContainer({ container_no: '', container_type: 'FCL 20', unloaded_date: '' });
+        } catch (e) {
+            console.error(e);
+            alert('Failed to add container');
+        }
+    };
+
+    const handleDeleteContainerItem = async (containerId: string) => {
+        if (!window.confirm('Are you sure?')) return;
+        try {
+            await shipmentsAPI.deleteContainer(selectedJob.id, containerId);
+            const updatedContainers = selectedJob.containers.filter((c: any) => c.id !== containerId);
+            const updatedJob = { ...selectedJob, containers: updatedContainers };
+            setSelectedJob(updatedJob);
+            setJobs(prev => prev.map(j => j.id === selectedJob.id ? updatedJob : j));
+        } catch (e) {
+            console.error(e); // alert('Failed to delete');
+        }
+    };
+
+    const handleSaveNewBL = async () => {
+        if (!newBL.master_bl && !newBL.house_bl) return alert('Master No or House No is required');
+        try {
+            const added = await shipmentsAPI.addBL(selectedJob.id, newBL);
+            const updatedBLs = [...(selectedJob.bls || []), added.data];
+            const updatedJob = { ...selectedJob, bls: updatedBLs };
+            setSelectedJob(updatedJob);
+            setJobs(prev => prev.map(j => j.id === selectedJob.id ? updatedJob : j));
+            setAddingBL(false);
+            setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
+        } catch (e) {
+            console.error(e);
+            alert('Failed to add BL');
+        }
+    };
+
+    const handleDeleteBLItem = async (blId: string) => {
+        if (!window.confirm('Are you sure?')) return;
+        try {
+            await shipmentsAPI.deleteBL(selectedJob.id, blId);
+            const updatedBLs = selectedJob.bls.filter((b: any) => b.id !== blId);
+            const updatedJob = { ...selectedJob, bls: updatedBLs };
+            setSelectedJob(updatedJob);
+            setJobs(prev => prev.map(j => j.id === selectedJob.id ? updatedJob : j));
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
 
     // Dropdown Data State
     const [consigneesList, setConsigneesList] = useState<any[]>([]);
@@ -960,7 +1026,7 @@ const ShipmentRegistry: React.FC = () => {
 
         const isEditingInvoice = editingSection === 'invoice';
         const isEditingBL = editingSection === 'bl';
-        const isEditingContainers = editingSection === 'containers';
+
         return (
             <div className="h-full flex flex-col animate-fade-in bg-white font-sans text-gray-900">
                 {/* Header Section */}
@@ -1196,14 +1262,102 @@ const ShipmentRegistry: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* BL/AWB Details Card */}
+                        {/* BL/AWB Details Card - Multi-BL Support */}
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
                                     <FileText className="w-5 h-5 text-gray-400" />
                                     BL/AWB Details
                                 </h3>
-                                {isEditingBL ? (
+                                <div className="flex gap-2">
+                                    {!addingBL && (
+                                        <button
+                                            onClick={() => setAddingBL(true)}
+                                            className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-full transition-colors flex items-center gap-2 text-sm font-bold"
+                                            title="Add BL"
+                                        >
+                                            <Plus className="w-4 h-4" /> Add
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Add New BL Form */}
+                                {addingBL && (
+                                    <div className="bg-indigo-50/30 border border-indigo-100 rounded-xl p-6 animate-fadeIn">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                            <input className="input-field py-1.5 border rounded px-3 w-full text-sm bg-white" placeholder="Master No" value={newBL.master_bl} onChange={e => setNewBL({ ...newBL, master_bl: e.target.value })} />
+                                            <input type="date" className="input-field py-1.5 border rounded px-3 w-full text-sm bg-white" placeholder="ETD" value={newBL.etd} onChange={e => setNewBL({ ...newBL, etd: e.target.value })} />
+                                            <input type="date" className="input-field py-1.5 border rounded px-3 w-full text-sm bg-white" placeholder="ETA" value={newBL.eta} onChange={e => setNewBL({ ...newBL, eta: e.target.value })} />
+                                            <input className="input-field py-1.5 border rounded px-3 w-full text-sm bg-white" placeholder="House No" value={newBL.house_bl} onChange={e => setNewBL({ ...newBL, house_bl: e.target.value })} />
+                                            <input className="input-field py-1.5 border rounded px-3 w-full text-sm bg-white" placeholder="Loading Port" value={newBL.loading_port} onChange={e => setNewBL({ ...newBL, loading_port: e.target.value })} />
+                                            <input className="input-field py-1.5 border rounded px-3 w-full text-sm bg-white" placeholder="Vessel" value={newBL.vessel} onChange={e => setNewBL({ ...newBL, vessel: e.target.value })} />
+                                            <select className="input-field py-1.5 border rounded px-3 w-full text-sm bg-white" value={newBL.delivery_agent} onChange={e => setNewBL({ ...newBL, delivery_agent: e.target.value })}>
+                                                <option value="">Select Agent</option>
+                                                {deliveryAgentsList.map((a: any) => <option key={a.id} value={a.name}>{a.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="flex justify-end gap-2">
+                                            <button onClick={() => setAddingBL(false)} className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded text-sm font-medium">Cancel</button>
+                                            <button onClick={handleSaveNewBL} className="px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded text-sm font-medium">Save BL</button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* List of BLs */}
+                                {selectedJob.bls && selectedJob.bls.length > 0 ? (
+                                    selectedJob.bls.map((bl: any) => (
+                                        <div key={bl.id} className="border border-gray-200 rounded-lg p-5 hover:border-indigo-100 transition-colors relative group">
+                                            <button onClick={() => handleDeleteBLItem(bl.id)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Master No</p>
+                                                    <p className="font-semibold text-gray-900">{bl.master_bl || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ETD</p>
+                                                    <p className="font-semibold text-gray-900">{bl.etd ? new Date(bl.etd).toLocaleDateString() : '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ETA</p>
+                                                    <p className="font-semibold text-gray-900">{bl.eta ? new Date(bl.eta).toLocaleDateString() : '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">House No</p>
+                                                    <p className="font-semibold text-gray-900">{bl.house_bl || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Loading Port</p>
+                                                    <p className="font-semibold text-gray-900">{bl.loading_port || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Vessel</p>
+                                                    <p className="font-semibold text-gray-900">{bl.vessel || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Delivery Agent</p>
+                                                    <p className="font-semibold text-gray-900">{bl.delivery_agent || '-'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    !addingBL && <div className="text-center py-6 text-gray-400 italic">No BL/AWB details listed</div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Separate Cargo/Packages Card */}
+                        <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
+                                    <Package className="w-5 h-5 text-gray-400" />
+                                    Packages / Cargo Details
+                                </h3>
+                                {isEditingBL ? ( // Re-using isEditingBL state for editing packages as per original logic
                                     <div className="flex items-center gap-2">
                                         <button onClick={handleSaveDetails} className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100" title="Save">
                                             <Check className="w-4 h-4" />
@@ -1213,220 +1367,110 @@ const ShipmentRegistry: React.FC = () => {
                                         </button>
                                     </div>
                                 ) : (
-                                    <button onClick={() => handleEditClick('bl')} className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors" title="Edit">
+                                    <button onClick={() => handleEditClick('bl')} className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors" title="Edit Packages">
                                         <Pencil className="w-4 h-4" />
                                     </button>
                                 )}
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 gap-y-8">
-                                {/* Row 1 */}
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Master No.</p>
-                                    {isEditingBL ? (
-                                        <input
-                                            name="bl_awb_no"
-                                            value={editFormData.bl_awb_no || ''}
-                                            onChange={handleEditChange}
-                                            className="input-field py-1.5 border rounded-lg px-3 w-full text-sm bg-gray-50 focus:bg-white transition-colors"
-                                            placeholder="Enter Master No"
-                                        />
-                                    ) : (
-                                        <p className="font-semibold text-gray-900">{selectedJob.bl_awb_no || '-'}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">ETD</p>
-                                    {isEditingBL ? (
-                                        <input
-                                            type="date"
-                                            name="date"
-                                            value={editFormData.date ? new Date(editFormData.date).toISOString().substr(0, 10) : ''}
-                                            onChange={handleEditChange}
-                                            className="input-field py-1.5 border rounded-lg px-3 w-full text-sm bg-gray-50 focus:bg-white transition-colors"
-                                        />
-                                    ) : (
-                                        <p className="font-semibold text-gray-900">{selectedJob.date ? new Date(selectedJob.date).toLocaleDateString() : '-'}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">ETA</p>
-                                    {isEditingBL ? (
-                                        <input
-                                            type="date"
-                                            name="expected_delivery_date"
-                                            value={editFormData.expected_delivery_date ? new Date(editFormData.expected_delivery_date).toISOString().substr(0, 10) : ''}
-                                            onChange={handleEditChange}
-                                            className="input-field py-1.5 border rounded-lg px-3 w-full text-sm bg-gray-50 focus:bg-white transition-colors"
-                                        />
-                                    ) : (
-                                        <p className="font-semibold text-gray-900">{selectedJob.expected_delivery_date ? new Date(selectedJob.expected_delivery_date).toLocaleDateString() : '-'}</p>
-                                    )}
-                                </div>
 
-                                {/* Row 2 */}
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">House No.</p>
-                                    {isEditingBL ? (
-                                        <input
-                                            name="house_bl"
-                                            value={editFormData.house_bl || ''}
-                                            onChange={handleEditChange}
-                                            className="input-field py-1.5 border rounded-lg px-3 w-full text-sm bg-gray-50 focus:bg-white transition-colors"
-                                            placeholder="Enter House No"
-                                        />
-                                    ) : (
-                                        <p className="font-semibold text-gray-900">{selectedJob.house_bl || '-'}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Loading Port</p>
-                                    {isEditingBL ? (
-                                        <input
-                                            name="loading_port"
-                                            value={editFormData.loading_port || ''}
-                                            onChange={handleEditChange}
-                                            className="input-field py-1.5 border rounded-lg px-3 w-full text-sm bg-gray-50 focus:bg-white transition-colors"
-                                            placeholder="Port Name"
-                                        />
-                                    ) : (
-                                        <p className="font-semibold text-gray-900 uppercase">{selectedJob.loading_port || '-'}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Vessel</p>
-                                    {isEditingBL ? (
-                                        <input
-                                            name="vessel"
-                                            value={editFormData.vessel || ''}
-                                            onChange={handleEditChange}
-                                            className="input-field py-1.5 border rounded-lg px-3 w-full text-sm bg-gray-50 focus:bg-white transition-colors"
-                                            placeholder="Vessel Name"
-                                        />
-                                    ) : (
-                                        <p className="font-semibold text-gray-900 uppercase">{selectedJob.vessel || '-'}</p>
-                                    )}
-                                </div>
-
-                                {/* Row 3 */}
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Delivery Agent</p>
-                                    {isEditingBL ? (
-                                        <select
-                                            name="delivery_agent"
-                                            value={editFormData.delivery_agent || ''}
-                                            onChange={handleEditChange}
-                                            className="input-field py-1.5 border rounded-lg px-3 w-full text-sm bg-white"
-                                        >
-                                            <option value="">Select Delivery Agent</option>
-                                            {deliveryAgentsList.map((agent: any) => (
-                                                <option key={agent.id} value={agent.name}>
-                                                    {agent.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    ) : (
-                                        <p className="font-semibold text-gray-900 uppercase">{selectedJob.delivery_agent || '-'}</p>
-                                    )}
-                                </div>
-
-                                {/* Packages Section */}
-                                <div className="col-span-2">
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Packages</p>
-                                    {isEditingBL ? (
-                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                                            <div className="space-y-3">
-                                                {editFormData.packages?.map((pkg: any, idx: number) => (
-                                                    <div key={idx} className="flex gap-3 items-center">
-                                                        <div className="flex-1">
-                                                            <input
-                                                                type="number"
-                                                                placeholder="Count"
-                                                                value={pkg.count}
-                                                                onChange={e => handlePackageChange(idx, 'count', e.target.value)}
-                                                                className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
-                                                            />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <select
-                                                                value={pkg.type}
-                                                                onChange={e => handlePackageChange(idx, 'type', e.target.value)}
-                                                                className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
-                                                            >
-                                                                <option value="" disabled>Type</option>
-                                                                {PACKAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                                            </select>
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <input
-                                                                type="number"
-                                                                placeholder="Weight (KG)"
-                                                                value={pkg.weight}
-                                                                onChange={e => handlePackageChange(idx, 'weight', e.target.value)}
-                                                                className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
-                                                            />
-                                                        </div>
-                                                        <button
-                                                            onClick={() => removePackage(idx)}
-                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                                                            title="Remove"
-                                                        >
-                                                            <X className="w-4 h-4" />
-                                                        </button>
+                            {/* Reuse existing Packages Form Logic */}
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Packages</p>
+                                {isEditingBL ? (
+                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                        <div className="space-y-3">
+                                            {editFormData.packages?.map((pkg: any, idx: number) => (
+                                                <div key={idx} className="flex gap-3 items-center">
+                                                    <div className="flex-1">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Count"
+                                                            value={pkg.count}
+                                                            onChange={e => handlePackageChange(idx, 'count', e.target.value)}
+                                                            className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
+                                                        />
                                                     </div>
-                                                ))}
-                                            </div>
-                                            <div className="mt-3 flex justify-between items-center pt-3 border-t border-gray-200">
-                                                <button
-                                                    onClick={addPackage}
-                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100 transition-colors"
-                                                >
-                                                    <Plus className="w-3 h-3" /> Add Package
-                                                </button>
-                                                <div className="text-xs font-medium text-gray-500">
-                                                    Summary: <span className="text-gray-900 font-bold">{editFormData.no_of_pkgs || 0}</span> Pkgs,
-                                                    <span className="text-gray-900 font-bold ml-1">{editFormData.weight || 0}</span> KG
+                                                    <div className="flex-1">
+                                                        <select
+                                                            value={pkg.type}
+                                                            onChange={e => handlePackageChange(idx, 'type', e.target.value)}
+                                                            className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
+                                                        >
+                                                            <option value="" disabled>Type</option>
+                                                            {PACKAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                        </select>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Weight (KG)"
+                                                            value={pkg.weight}
+                                                            onChange={e => handlePackageChange(idx, 'weight', e.target.value)}
+                                                            className="w-full input-field py-1.5 border rounded px-3 text-sm bg-white"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        onClick={() => removePackage(idx)}
+                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                        title="Remove"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
                                                 </div>
+                                            ))}
+                                        </div>
+                                        <div className="mt-3 flex justify-between items-center pt-3 border-t border-gray-200">
+                                            <button
+                                                onClick={addPackage}
+                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100 transition-colors"
+                                            >
+                                                <Plus className="w-3 h-3" /> Add Package
+                                            </button>
+                                            <div className="text-xs font-medium text-gray-500">
+                                                Summary: <span className="text-gray-900 font-bold">{editFormData.no_of_pkgs || 0}</span> Pkgs,
+                                                <span className="text-gray-900 font-bold ml-1">{editFormData.weight || 0}</span> KG
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className="grid grid-cols-3 gap-4">
-                                            <div>
-                                                <p className="text-[10px] text-gray-400 mb-0.5">Total Count</p>
-                                                <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-gray-400 mb-0.5">Total Weight</p>
-                                                <p className="font-semibold text-gray-900">{selectedJob.weight || '0'} KG</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-gray-400 mb-0.5">Type</p>
-                                                <p className="font-semibold text-gray-900 uppercase">{selectedJob.package_type || selectedJob.pkg_type || '-'}</p>
-                                            </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 mb-0.5">Total Count</p>
+                                            <p className="font-semibold text-gray-900">{selectedJob.no_of_pkgs || '0'}</p>
                                         </div>
-                                    )}
-                                </div>
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 mb-0.5">Total Weight</p>
+                                            <p className="font-semibold text-gray-900">{selectedJob.weight || '0'} KG</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 mb-0.5">Type</p>
+                                            <p className="font-semibold text-gray-900 uppercase">{selectedJob.package_type || selectedJob.pkg_type || '-'}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         {selectedJob.transport_mode === 'SEA' && (
                             <>
-                                {/* Containers Card */}
+                                {/* Containers Card - Multi-Container Support */}
                                 <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all">
                                     <div className="flex justify-between items-center mb-6">
                                         <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
                                             <Package className="w-5 h-5 text-gray-400" />
                                             Containers
                                         </h3>
-                                        {!isEditingContainers && (
-                                            <button
-                                                onClick={() => handleEditClick('containers')}
-                                                className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors"
-                                                title={selectedJob.container_no ? "Edit Container" : "Add Container"}
-                                            >
-                                                <Pencil className="w-4 h-4" />
-                                            </button>
-                                        )}
+                                        <div className="flex gap-2">
+                                            {!addingContainer && (
+                                                <button
+                                                    onClick={() => setAddingContainer(true)}
+                                                    className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-full transition-colors flex items-center gap-2 text-sm font-bold"
+                                                    title="Add Container"
+                                                >
+                                                    <Plus className="w-4 h-4" /> Add
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                     <table className="w-full text-sm text-left">
                                         <thead className="text-xs text-gray-500 uppercase bg-gray-50/50 border-b border-gray-100">
@@ -1438,79 +1482,77 @@ const ShipmentRegistry: React.FC = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {selectedJob.container_no || isEditingContainers ? (
-                                                <tr className="border-b border-gray-50 hover:bg-gray-50">
-                                                    <td className="py-4 px-4 font-medium text-gray-900">
-                                                        {isEditingContainers ? (
-                                                            <input name="container_no" value={editFormData.container_no || ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" placeholder="Container No" />
-                                                        ) : selectedJob.container_no}
+                                            {/* Add New Container Row */}
+                                            {addingContainer && (
+                                                <tr className="bg-indigo-50/30 border-b border-indigo-100 animate-fadeIn">
+                                                    <td className="py-3 px-4">
+                                                        <input
+                                                            autoFocus
+                                                            className="input-field py-1 border rounded px-2 w-full text-sm"
+                                                            placeholder="Container No"
+                                                            value={newContainer.container_no}
+                                                            onChange={e => setNewContainer({ ...newContainer, container_no: e.target.value })}
+                                                        />
                                                     </td>
-                                                    <td className="py-4 px-4">
-                                                        {isEditingContainers ? (
-                                                            <select name="container_type" value={editFormData.container_type || 'FCL 20'} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm bg-white">
-                                                                <option value="FCL 20">FCL 20</option>
-                                                                <option value="FCL 40">FCL 40</option>
-                                                                <option value="LCL 20">LCL 20</option>
-                                                                <option value="LCL 40">LCL 40</option>
-                                                                <option value="OT 20">OT 20</option>
-                                                                <option value="OT 40">OT 40</option>
-                                                                <option value="FR 20">FR 20</option>
-                                                                <option value="FR 40">FR 40</option>
-                                                                <option value="D/R">D/R</option>
-                                                                <option value="Reefer">Reefer 20ft</option>
-                                                                <option value="Reefer">Reefer 40ft</option>
-                                                                <option value="Loose cargo">Loose cargo</option>
-                                                            </select>
-                                                        ) : (selectedJob.container_type || 'FCL 20')}
+                                                    <td className="py-3 px-4">
+                                                        <select
+                                                            className="input-field py-1 border rounded px-2 w-full text-sm bg-white"
+                                                            value={newContainer.container_type}
+                                                            onChange={e => setNewContainer({ ...newContainer, container_type: e.target.value })}
+                                                        >
+                                                            <option value="FCL 20">FCL 20</option>
+                                                            <option value="FCL 40">FCL 40</option>
+                                                            <option value="LCL 20">LCL 20</option>
+                                                            <option value="LCL 40">LCL 40</option>
+                                                            <option value="OT 20">OT 20</option>
+                                                            <option value="OT 40">OT 40</option>
+                                                            <option value="FR 20">FR 20</option>
+                                                            <option value="FR 40">FR 40</option>
+                                                            <option value="D/R">D/R</option>
+                                                            <option value="Reefer 20">Reefer 20ft</option>
+                                                            <option value="Reefer 40">Reefer 40ft</option>
+                                                            <option value="Loose cargo">Loose cargo</option>
+                                                        </select>
                                                     </td>
-                                                    <td className="py-4 px-4">
-                                                        {isEditingContainers ? (
-                                                            <input type="date" name="unloaded_date" value={editFormData.unloaded_date ? new Date(editFormData.unloaded_date).toISOString().substr(0, 10) : ''} onChange={handleEditChange} className="input-field py-1 border rounded px-2 w-full text-sm" />
-                                                        ) : (selectedJob.unloaded_date ? new Date(selectedJob.unloaded_date).toLocaleDateString() : '-')}
+                                                    <td className="py-3 px-4">
+                                                        <input
+                                                            type="date"
+                                                            className="input-field py-1 border rounded px-2 w-full text-sm"
+                                                            value={newContainer.unloaded_date}
+                                                            onChange={e => setNewContainer({ ...newContainer, unloaded_date: e.target.value })}
+                                                        />
                                                     </td>
-                                                    <td className="py-4 px-4 text-center">
-                                                        {isEditingContainers ? (
-                                                            <div className="flex items-center justify-center gap-3">
-                                                                <button onClick={handleSaveDetails} className="bg-green-50 text-green-600 p-1.5 rounded hover:bg-green-100 transition-colors" title="Save">
-                                                                    <Check className="w-4 h-4" />
-                                                                </button>
-                                                                <button onClick={handleCancelEdit} className="bg-red-50 text-red-600 p-1.5 rounded hover:bg-red-100 transition-colors" title="Cancel">
-                                                                    <X className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex items-center justify-center gap-4">
-                                                                <button onClick={() => handleEditClick('containers')} className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-full transition-all" title="Edit">
-                                                                    <Pencil className="w-5 h-5" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        if (window.confirm('Are you sure you want to remove this container?')) {
-                                                                            try {
-                                                                                const updatedData = { ...selectedJob, container_no: null, container_type: null, unloaded_date: null };
-                                                                                await shipmentsAPI.update(selectedJob.id, updatedData);
-                                                                                // Refresh locally
-                                                                                setSelectedJob(updatedData);
-                                                                                setJobs(prev => prev.map(j => j.id === updatedData.id ? updatedData : j));
-                                                                            } catch (e) {
-                                                                                console.error("Failed to delete container", e);
-                                                                                alert("Failed to delete container");
-                                                                            }
-                                                                        }
-                                                                    }}
-                                                                    className="text-indigo-600 hover:bg-red-50 hover:text-red-600 p-2 rounded-full transition-all"
-                                                                    title="Delete"
-                                                                >
-                                                                    <Trash2 className="w-5 h-5" />
-                                                                </button>
-                                                            </div>
-                                                        )}
+                                                    <td className="py-3 px-4 text-center flex items-center justify-center gap-2">
+                                                        <button onClick={handleSaveNewContainer} className="bg-green-100 text-green-700 p-1.5 rounded hover:bg-green-200"><Check className="w-4 h-4" /></button>
+                                                        <button onClick={() => setAddingContainer(false)} className="bg-gray-100 text-gray-600 p-1.5 rounded hover:bg-gray-200"><X className="w-4 h-4" /></button>
                                                     </td>
                                                 </tr>
+                                            )}
+
+                                            {/* Existing Containers */}
+                                            {selectedJob.containers && selectedJob.containers.length > 0 ? (
+                                                selectedJob.containers.map((c: any) => (
+                                                    <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
+                                                        <td className="py-4 px-4 font-medium text-gray-900">{c.container_no}</td>
+                                                        <td className="py-4 px-4 text-gray-600">{c.container_type}</td>
+                                                        <td className="py-4 px-4 text-gray-600">{c.unloaded_date ? new Date(c.unloaded_date).toLocaleDateString() : '-'}</td>
+                                                        <td className="py-4 px-4 text-center">
+                                                            <button
+                                                                onClick={() => handleDeleteContainerItem(c.id)}
+                                                                className="text-gray-400 hover:text-red-600 p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
                                             ) : (
-                                                <tr>
-                                                    <td colSpan={4} className="py-8 text-center text-gray-400 italic">No containers listed</td>
-                                                </tr>
+                                                !addingContainer && (
+                                                    <tr>
+                                                        <td colSpan={4} className="py-8 text-center text-gray-400 italic">No containers listed</td>
+                                                    </tr>
+                                                )
                                             )}
                                         </tbody>
                                     </table>
