@@ -183,18 +183,7 @@ const ShipmentRegistry: React.FC = () => {
     };
 
 
-    const handleDeleteBLItem = async (blId: string) => {
-        if (!window.confirm('Are you sure?')) return;
-        try {
-            await shipmentsAPI.deleteBL(selectedJob.id, blId);
-            const updatedBLs = selectedJob.bls.filter((b: any) => b.id !== blId);
-            const updatedJob = { ...selectedJob, bls: updatedBLs };
-            setSelectedJob(updatedJob);
-            setJobs(prev => prev.map(j => j.id === selectedJob.id ? updatedJob : j));
-        } catch (e) {
-            console.error(e);
-        }
-    };
+
 
 
     // Dropdown Data State
@@ -1330,118 +1319,7 @@ const ShipmentRegistry: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* BL/AWB Details Card - Multi-BL Support */}
-                        <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
-                                    <FileText className="w-5 h-5 text-gray-400" />
-                                    BL/AWB Details
-                                </h3>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
-                                            setIsBLDrawerOpen(true);
-                                        }}
-                                        className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-full transition-colors flex items-center gap-2 text-sm font-bold"
-                                        title="Add BL"
-                                    >
-                                        <Plus className="w-4 h-4" /> Add
-                                    </button>
-                                </div>
-                            </div>
 
-                            <div className="space-y-6">
-                                {/* List of BLs */}
-                                {selectedJob.bls && selectedJob.bls.length > 0 ? (
-                                    selectedJob.bls.map((bl: any) => (
-                                        <div key={bl.id} className="border border-gray-200 rounded-lg p-5 hover:border-indigo-100 transition-colors relative group">
-                                            <div className="absolute top-4 right-4 flex gap-2">
-                                                <button
-
-                                                    className="text-gray-300 hover:text-indigo-600 transition-colors"
-                                                    title="Edit BL"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button onClick={() => handleDeleteBLItem(bl.id)} className="text-gray-300 hover:text-red-500 transition-colors" title="Delete BL">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Master No</p>
-                                                    <p className="font-semibold text-gray-900">{bl.master_bl || '-'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ETD</p>
-                                                    <p className="font-semibold text-gray-900">{bl.etd ? new Date(bl.etd).toLocaleDateString() : '-'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ETA</p>
-                                                    <p className="font-semibold text-gray-900">{bl.eta ? new Date(bl.eta).toLocaleDateString() : '-'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">House No</p>
-                                                    <p className="font-semibold text-gray-900">{bl.house_bl || '-'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Loading Port</p>
-                                                    <p className="font-semibold text-gray-900">{bl.loading_port || '-'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Vessel</p>
-                                                    <p className="font-semibold text-gray-900">{bl.vessel || '-'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Delivery Agent</p>
-                                                    <p className="font-semibold text-gray-900">{bl.delivery_agent || '-'}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="text-center py-6 text-gray-400 italic">No BL/AWB details listed</div>
-                                )}
-                            </div>
-                            {/* Packages List within BL/AWB Card */}
-                            <div className="mt-4">
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Packages</label>
-                                {selectedJob.packages && selectedJob.packages.length > 0 ? (
-                                    <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
-                                        <table className="w-full text-sm text-left">
-                                            <thead className="text-xs text-gray-500 uppercase bg-gray-100/50 border-b border-gray-200">
-                                                <tr>
-                                                    <th className="py-2 px-4 font-bold">Count</th>
-                                                    <th className="py-2 px-4 font-bold">Type</th>
-                                                    <th className="py-2 px-4 font-bold">Weight (KG)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {selectedJob.packages.map((p: any, idx: number) => (
-                                                    <tr key={idx} className="border-b border-gray-100 last:border-0 hover:bg-white transition-colors">
-                                                        <td className="py-2 px-4 font-medium">{p.count}</td>
-                                                        <td className="py-2 px-4">{p.type}</td>
-                                                        <td className="py-2 px-4 text-gray-600">{p.weight || '-'}</td>
-                                                    </tr>
-                                                ))}
-                                                {/* Total Row */}
-                                                <tr className="bg-gray-100/50 font-bold text-gray-900 border-t border-gray-200">
-                                                    <td className="py-2 px-4">Total: {selectedJob.packages.reduce((acc: number, p: any) => acc + (parseInt(p.count) || 0), 0)}</td>
-                                                    <td className="py-2 px-4"></td>
-                                                    <td className="py-2 px-4">{selectedJob.packages.reduce((acc: number, p: any) => acc + (parseFloat(p.weight) || 0), 0).toFixed(2)} KG</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="text-gray-400 text-sm italic">
-                                        No packages added.
-                                    </div>
-                                )}
-                            </div>
-
-                        </div>
 
 
 
