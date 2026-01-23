@@ -39,11 +39,14 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
             });
         } else {
             // New Schedule Defaults
+            // Prioritize Master BL from first BL entry if available
+            const defaultBL = (job?.bls && job.bls.length > 0) ? job.bls[0].master_bl : (job?.bl_awb_no || job?.bl_awb || '');
+
             setFormData({
                 date: new Date().toISOString().split('T')[0],
                 type: '',
                 port: '',
-                bl_awb: job?.bl_awb_no || job?.bl_awb || '',
+                bl_awb: defaultBL,
                 transport_mode: job?.transport_mode ? (job.transport_mode.charAt(0).toUpperCase() + job.transport_mode.slice(1).toLowerCase()) : '',
                 packages: job?.packages || '',
                 clearance_method: '',
@@ -54,8 +57,10 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
     }, [initialData, isOpen, job, isReschedule]);
 
     // Derived options from job
-    // Assuming job has properties master_bl and house_bl
-    const blOptions = [job?.bl_awb_no, job?.house_bl].filter((opt) => opt && opt !== '-');
+    // Extract Master BL numbers from BLs list if available, otherwise fallback to top-level fields
+    const blOptions = (job?.bls && job.bls.length > 0)
+        ? job.bls.map((b: any) => b.master_bl).filter(Boolean)
+        : [job?.bl_awb_no].filter((opt) => opt && opt !== '-');
 
     if (!isOpen) return null;
 
@@ -203,7 +208,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                                 >
                                     <option value="" disabled>Select an option</option>
                                     {blOptions.length > 0 ? (
-                                        blOptions.map((opt, idx) => (
+                                        blOptions.map((opt: string, idx: number) => (
                                             <option key={idx} value={opt}>{opt}</option>
                                         ))
                                     ) : (
