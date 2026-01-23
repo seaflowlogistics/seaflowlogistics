@@ -15,6 +15,7 @@ import {
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 import BLDrawer from '../components/BLDrawer';
 import SearchableSelect from '../components/SearchableSelect';
+import ShipmentInvoiceDrawer from '../components/ShipmentInvoiceDrawer';
 
 const PACKAGE_TYPES = ['PALLET', 'BUNDLES', 'CARTON', 'PKG', 'BOX', 'CASE', 'BULK', 'UNIT'];
 
@@ -73,6 +74,32 @@ const ShipmentRegistry: React.FC = () => {
 
     const [newBL, setNewBL] = useState<any>({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
     const [activeMenuBL, setActiveMenuBL] = useState<string | null>(null);
+
+    // Invoice Drawer State
+    const [isInvoiceDrawerOpen, setIsInvoiceDrawerOpen] = useState(false);
+
+    const handleInvoiceDrawerSave = async (data: any) => {
+        try {
+            // Include unloaded_date null handling if empty
+            const payload = {
+                ...data,
+                unloaded_date: data.unloaded_date || null
+            };
+
+            await shipmentsAPI.update(selectedJob.id, payload);
+
+            // Instant Refresh
+            const freshJobRes = await shipmentsAPI.getById(selectedJob.id);
+            const freshJob = freshJobRes.data;
+            setSelectedJob(freshJob);
+            setJobs(prev => prev.map(j => j.id === freshJob.id ? freshJob : j));
+
+            setIsInvoiceDrawerOpen(false);
+        } catch (error) {
+            console.error("Update failed", error);
+            alert("Failed to update invoice details");
+        }
+    };
 
     const handleSaveNewContainer = async () => {
         if (!newContainer.container_no) return alert('Container number is required');
@@ -609,55 +636,11 @@ const ShipmentRegistry: React.FC = () => {
         }));
     };
 
-    const handleEditClick = (section: string) => {
-        setEditingSection(section);
-        const initialData = { ...selectedJob };
-        if (section === 'bl') {
-            initialData.packages = initializePackages(selectedJob);
-        }
-        setEditFormData(initialData);
-    };
-
+    // Inline editing handlers removed as they are replaced by Drawers
+    // Restoring handleEditChange as it is used by other legacy popups
     const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setEditFormData((prev: any) => ({ ...prev, [name]: value }));
-    };
-
-    const handleCancelEdit = () => {
-        setEditingSection(null);
-        setEditFormData({});
-    };
-
-    const handleSaveDetails = async () => {
-        if (!selectedJob) return;
-        try {
-            setLoading(true);
-
-            // Sanitize data before sending
-            const updatedData = { ...editFormData };
-
-
-
-            // Sync null dates
-            if (updatedData.unloaded_date === '') updatedData.unloaded_date = null;
-            if (updatedData.expected_delivery_date === '') updatedData.expected_delivery_date = null;
-            if (updatedData.date === '') updatedData.date = null;
-
-            await shipmentsAPI.update(selectedJob.id, updatedData);
-
-            // Force fetch fresh data to confirm what was actually saved
-            const freshJobRes = await shipmentsAPI.getById(selectedJob.id);
-            const freshJob = freshJobRes.data;
-
-            setSelectedJob(freshJob);
-            setJobs(prev => prev.map(j => j.id === freshJob.id ? freshJob : j));
-            setEditingSection(null);
-        } catch (error) {
-            console.error("Update failed", error);
-            alert("Failed to update details");
-        } finally {
-            setLoading(false);
-        }
     };
 
     const handleScheduleSave = async (data: any) => {
@@ -1259,22 +1242,17 @@ const ShipmentRegistry: React.FC = () => {
 
                         {/* Shipment Invoice Card */}
                         <div
-                            onClick={() => !isEditingInvoice && handleEditClick('invoice')}
-                            className={`bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all ${!isEditingInvoice ? 'cursor-pointer hover:border-indigo-300' : ''}`}
+                            onClick={() => setIsInvoiceDrawerOpen(true)}
+                            className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100 transition-all cursor-pointer hover:border-indigo-300"
                         >
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-gray-900 flex items-center gap-3 text-lg">
                                     <FileText className="w-5 h-5 text-gray-400" />
                                     Shipment Invoice
                                 </h3>
-                                {isEditingInvoice ? (
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={handleSaveDetails} className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100"><Check className="w-4 h-4" /></button>
-                                        <button onClick={handleCancelEdit} className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100"><X className="w-4 h-4" /></button>
-                                    </div>
-                                ) : (
-                                    <button onClick={() => handleEditClick('invoice')} className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors"><Pencil className="w-4 h-4" /></button>
-                                )}
+                                <button className="text-gray-400 hover:text-indigo-600 p-2 hover:bg-indigo-50 rounded-full transition-colors">
+                                    <Pencil className="w-4 h-4" />
+                                </button>
                             </div>
                             <div className="grid grid-cols-3 gap-8">
                                 <div>
@@ -2132,6 +2110,12 @@ const ShipmentRegistry: React.FC = () => {
 
             {renderPopup()}
 
+            <ShipmentInvoiceDrawer
+                isOpen={isInvoiceDrawerOpen}
+                onClose={() => setIsInvoiceDrawerOpen(false)}
+                onSave={handleInvoiceDrawerSave}
+                initialData={selectedJob}
+            />
             <BLDrawer
                 isOpen={isBLDrawerOpen}
                 onClose={() => { setIsBLDrawerOpen(false); setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' }); }}
