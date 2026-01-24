@@ -48,7 +48,7 @@ const Payments = () => {
             <div className="flex-1 flex flex-col h-full bg-white font-sans overflow-hidden">
                 {/* Header */}
                 <div className="px-8 py-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">Payments Request</h1>
                     <p className="text-gray-500 mt-1">Manage and track all payment requests.</p>
                 </div>
 
