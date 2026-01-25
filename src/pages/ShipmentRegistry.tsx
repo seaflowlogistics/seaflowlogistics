@@ -139,6 +139,20 @@ const ShipmentRegistry: React.FC = () => {
 
 
 
+    const handleDeleteBLItem = async (blId: string) => {
+        if (!window.confirm('Are you sure you want to delete this BL?')) return;
+        try {
+            await shipmentsAPI.deleteBL(selectedJob.id, blId);
+            // Refresh logic
+            const refreshed = await shipmentsAPI.getById(selectedJob.id);
+            setSelectedJob(refreshed.data);
+            setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...refreshed.data } : j));
+        } catch (e) {
+            console.error(e);
+            alert('Failed to delete BL');
+        }
+    };
+
     const handleBLDrawerSave = async (data: any) => {
         try {
             // 1. Save or Update BL
@@ -1269,13 +1283,20 @@ const ShipmentRegistry: React.FC = () => {
                                 selectedJob.bls.map((bl: any, index: number) => (
                                     <div key={index} className={index > 0 ? "mt-8 pt-8 border-t-2 border-dashed border-gray-100 relative" : "relative"}>
                                         {/* Edit Action per BL for convenience */}
-                                        <div className="absolute top-0 right-0">
+                                        <div className="absolute top-0 right-0 flex gap-1">
                                             <button
                                                 onClick={() => { setNewBL(bl); setIsBLDrawerOpen(true); }}
                                                 className="text-gray-300 hover:text-indigo-600 p-1"
                                                 title="Edit this BL"
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteBLItem(bl.id)}
+                                                className="text-gray-300 hover:text-red-600 p-1"
+                                                title="Delete this BL"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
 
