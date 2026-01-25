@@ -512,23 +512,20 @@ const ShipmentRegistry: React.FC = () => {
     // initializePackages removed as it was unused
 
     const handleOpenPopup = (type: any, job: any) => {
+        // Redirect to new Drawers for specific types
+        if (type === 'invoice') {
+            if (selectedJob?.id !== job.id) setSelectedJob(job);
+            setIsInvoiceDrawerOpen(true);
+            return;
+        }
         if (type === 'bl') {
-            // Use the new BL Drawer
-            if (job.bls && job.bls.length > 0) {
-                setNewBL(job.bls[0]); // Open the first BL for editing
-            } else {
-                setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
-            }
+            if (selectedJob?.id !== job.id) setSelectedJob(job);
+            setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
             setIsBLDrawerOpen(true);
             return;
         }
 
-        if (type === 'invoice') {
-            // Use the new Invoice Drawer
-            setIsInvoiceDrawerOpen(true);
-            return;
-        }
-
+        // Logic for legacy popups (schedule, payment, upload)
         setPopupJob(job);
         setPopupType(type);
         const initialData = { ...job };
@@ -538,7 +535,6 @@ const ShipmentRegistry: React.FC = () => {
             initialData.type = '';
             initialData.port = '';
             initialData.bl_awb = job.bl_awb_no || '';
-
         }
         setEditFormData(initialData);
 
@@ -801,9 +797,6 @@ const ShipmentRegistry: React.FC = () => {
                         </div>
                     </div>
                 </div>
-
-
-                {/* BL/AWB Details Section Removed as per request */}
 
 
                 {/* Section F: Billing Contact */}
