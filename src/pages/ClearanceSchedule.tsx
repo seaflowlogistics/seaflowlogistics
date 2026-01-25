@@ -278,6 +278,7 @@ const ClearanceSchedule: React.FC = () => {
                                             <td className="py-4 px-6 text-sm text-gray-900">
                                                 <div className="font-medium">{item.consignee || 'Unknown'}</div>
                                                 <div className="text-xs text-gray-500">{item.exporter}</div>
+                                                <div className="text-xs text-gray-500">{item.bl_awb}</div>
                                             </td>
                                             <td className="py-4 px-6 text-sm text-gray-500 font-mono">
                                                 {item.container_no ? (
