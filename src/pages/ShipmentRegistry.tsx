@@ -6,9 +6,9 @@ import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI, deliveryAgents
 import {
     Search, Plus,
     FileText,
-    Pencil, Check,
+    Check,
     Anchor, Plane, Truck, Package, X, Download, Trash2,
-    CreditCard, UploadCloud, FileSpreadsheet, Receipt, Calendar, MoreHorizontal
+    CreditCard, UploadCloud, FileSpreadsheet, Calendar, MoreHorizontal
 
 
 } from 'lucide-react';
@@ -57,7 +57,6 @@ const ShipmentRegistry: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const [activeTab, setActiveTab] = useState('Details');
-    const [editingSection, setEditingSection] = useState<string | null>(null);
     const [editFormData, setEditFormData] = useState<any>({});
     const [previewDoc, setPreviewDoc] = useState<any | null>(null);
 
@@ -71,9 +70,7 @@ const ShipmentRegistry: React.FC = () => {
     const [addingContainer, setAddingContainer] = useState(false);
     const [newContainer, setNewContainer] = useState<any>({ container_no: '', container_type: 'FCL 20', unloaded_date: '' });
 
-
     const [newBL, setNewBL] = useState<any>({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
-    const [activeMenuBL, setActiveMenuBL] = useState<string | null>(null);
 
     // Invoice Drawer State
     const [isInvoiceDrawerOpen, setIsInvoiceDrawerOpen] = useState(false);
@@ -139,26 +136,7 @@ const ShipmentRegistry: React.FC = () => {
         }
     };
 
-    const handleDeleteBLItem = async (blId: string) => {
-        if (!window.confirm('Are you sure you want to delete this BL?')) return;
-        try {
-            await shipmentsAPI.deleteBL(selectedJob.id, blId);
-            // Refresh logic - either filter local or refetch
-            try {
-                const refreshed = await shipmentsAPI.getById(selectedJob.id);
-                setSelectedJob(refreshed.data);
-                setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...refreshed.data } : j));
-            } catch (err) {
-                // Fallback
-                const updatedBLs = selectedJob.bls.filter((b: any) => b.id !== blId);
-                const updatedJob = { ...selectedJob, bls: updatedBLs };
-                setSelectedJob(updatedJob);
-                setJobs(prev => prev.map(j => j.id === selectedJob.id ? updatedJob : j));
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    };
+
 
     const handleBLDrawerSave = async (data: any) => {
         try {
@@ -418,33 +396,7 @@ const ShipmentRegistry: React.FC = () => {
 
 
 
-    const handleEditJobClick = () => {
-        setFormData({
-            service: selectedJob.description || 'Form Filling & Clearance',
-            consignee: selectedJob.receiver_name || '',
-            exporter: selectedJob.sender_name || '',
-            transport_mode: selectedJob.transport_mode || 'SEA',
-            shipment_type: selectedJob.shipment_type || 'IMP',
-            billing_contact: selectedJob.billing_contact || '',
-            billing_contact_same: !selectedJob.billing_contact || selectedJob.billing_contact === selectedJob.receiver_name,
-            manual_invoice_no: selectedJob.invoice_id || selectedJob.invoice?.id || '',
-            // BL/AWB Details
-            bl_awb_no: selectedJob.bl_awb_no || '',
-            house_bl: selectedJob.house_bl || '',
-            date: selectedJob.date || '',
-            expected_delivery_date: selectedJob.expected_delivery_date || '',
-            loading_port: selectedJob.loading_port || selectedJob.origin || '',
-            vessel: selectedJob.vessel || '',
-            delivery_agent: selectedJob.delivery_agent || '',
-            packages: selectedJob.packages && selectedJob.packages.length > 0 ? selectedJob.packages : [{
-                count: selectedJob.no_of_pkgs || '',
-                weight: selectedJob.weight || '',
-                type: selectedJob.package_type || ''
-            }]
-        });
-        setIsEditingJob(true);
-        setViewMode('create');
-    };
+
 
     const handleUpdateJob = async () => {
         try {
@@ -589,7 +541,7 @@ const ShipmentRegistry: React.FC = () => {
 
         }
         setEditFormData(initialData);
-        setEditingSection(null);
+
     };
 
 
