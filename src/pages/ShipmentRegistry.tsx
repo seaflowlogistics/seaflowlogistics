@@ -1339,14 +1339,14 @@ const ShipmentRegistry: React.FC = () => {
                                                     {/* Header Row */}
                                                     <div className="grid grid-cols-3 gap-4 pb-2 border-b border-gray-200">
                                                         <div className="text-xs font-bold text-gray-500 uppercase">Count</div>
-                                                        <div className="text-xs font-bold text-gray-500 uppercase">Weight</div>
+                                                        <div className="text-xs font-bold text-gray-500 uppercase">CBM</div>
                                                         <div className="text-xs font-bold text-gray-500 uppercase">Type</div>
                                                     </div>
                                                     {/* Items */}
                                                     {bl.packages.map((pkg: any, idx: number) => (
                                                         <div key={idx} className="grid grid-cols-3 gap-4 items-center">
                                                             <div className="font-bold text-gray-900 text-sm">{pkg.pkg_count || 0}</div>
-                                                            <div className="font-medium text-gray-700 text-sm">{pkg.weight || '-'} <span className="text-xs text-gray-400 font-normal">kg</span></div>
+                                                            <div className="font-medium text-gray-700 text-sm">{pkg.cbm || '-'}</div>
                                                             <div className="font-bold text-gray-900 text-sm uppercase">{pkg.pkg_type || '-'}</div>
                                                         </div>
                                                     ))}
@@ -1857,7 +1857,7 @@ const ShipmentRegistry: React.FC = () => {
                         : (selectedJob?.packages?.map((p: any) => ({
                             pkg_count: p.count,
                             pkg_type: p.type,
-                            weight: p.weight
+                            cbm: p.cbm
                         })) || [])
                 }}
                 deliveryAgents={deliveryAgentsList}
