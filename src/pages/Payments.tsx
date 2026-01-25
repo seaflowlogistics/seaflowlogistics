@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, FileText, CheckCircle } from 'lucide-react';
+import { Search, X, FileText, CheckCircle, Pencil } from 'lucide-react';
 import Layout from '../components/Layout';
 import { paymentsAPI } from '../services/api';
 import PaymentDetailsDrawer from '../components/PaymentDetailsDrawer';
@@ -251,19 +251,30 @@ const Payments = () => {
                                                         <span className="text-sm font-bold text-gray-900">{formatCurrency(item.amount)}</span>
                                                     </td>
                                                     <td className="py-4 px-2 align-top">
-                                                        {item.status === 'Approved' ? (
-                                                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full">
-                                                                <CheckCircle className="w-3 h-3" />
-                                                                Approved
-                                                            </span>
-                                                        ) : (
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleApprove(item.id); }}
-                                                                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
-                                                            >
-                                                                Approve
-                                                            </button>
-                                                        )}
+                                                        <div className="flex items-center gap-3">
+                                                            {item.status !== 'Approved' && (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleRowClick(item); }}
+                                                                    className="text-gray-400 hover:text-indigo-600 transition-colors"
+                                                                    title="Edit Details"
+                                                                >
+                                                                    <Pencil className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                            {item.status === 'Approved' ? (
+                                                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                                                                    <CheckCircle className="w-3 h-3" />
+                                                                    Approved
+                                                                </span>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleApprove(item.id); }}
+                                                                    className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                                                                >
+                                                                    Approve
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </>
                                             ) : (
