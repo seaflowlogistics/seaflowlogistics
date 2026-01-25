@@ -103,8 +103,6 @@ router.get('/', async (req, res) => {
                    s.sender_name as exporter, 
                    s.receiver_name as consignee,
                    s.description,
-                   s.container_no,
-                   s.container_type,
                    s.transport_mode as shipment_transport_mode,
                    s.bl_awb_no
             FROM clearance_schedules cs
