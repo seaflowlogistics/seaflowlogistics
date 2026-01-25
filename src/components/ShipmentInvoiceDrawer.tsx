@@ -50,7 +50,7 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
 
                     {/* Header */}
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-gray-900">Shipment Invoice Details</h2>
+                        <h2 className="text-xl font-bold text-gray-900">Shipment invoice</h2>
                         <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600">
                             <X className="w-5 h-5" />
                         </button>
@@ -60,55 +60,68 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Invoice No.</label>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Shipment Invoice Number*</label>
                             <input
                                 name="invoice_no"
                                 value={formData.invoice_no}
                                 onChange={handleInputChange}
                                 className="input-field w-full py-2 px-3 border rounded text-sm"
-                                placeholder="Enter Invoice Number"
+                                placeholder=""
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cargo Type</label>
-                            <div className="relative">
-                                <select
-                                    name="cargo_type"
-                                    value={formData.cargo_type}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">No. Items*</label>
+                                <input
+                                    type="number"
+                                    name="no_of_items"
+                                    value={formData.no_of_items}
                                     onChange={handleInputChange}
-                                    className="input-field w-full py-2 px-3 border rounded text-sm appearance-none bg-white"
-                                >
-                                    {CARGO_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    className="input-field w-full py-2 px-3 border rounded text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cargo Type*</label>
+                                <div className="relative">
+                                    <select
+                                        name="cargo_type"
+                                        value={formData.cargo_type}
+                                        onChange={handleInputChange}
+                                        className="input-field w-full py-2 px-3 border rounded text-sm appearance-none bg-white"
+                                    >
+                                        {CARGO_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Unloaded Date</label>
-                            <input
-                                type="date"
-                                name="unloaded_date"
-                                value={formData.unloaded_date}
-                                onChange={handleInputChange}
-                                className="input-field w-full py-2 px-3 border rounded text-sm"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office</label>
-                            <div className="relative">
-                                <select
-                                    name="office"
-                                    value={formData.office}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Customs R No.</label>
+                                <input
+                                    name="customs_r_form"
+                                    value={formData.customs_r_form || ''}
                                     onChange={handleInputChange}
-                                    className="input-field w-full py-2 px-3 border rounded text-sm appearance-none bg-white"
-                                >
-                                    <option value="">Select Office</option>
-                                    {OFFICES.map(o => <option key={o} value={o}>{o}</option>)}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    className="input-field w-full py-2 px-3 border rounded text-sm"
+                                    placeholder=""
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office</label>
+                                <div className="relative">
+                                    <select
+                                        name="office"
+                                        value={formData.office}
+                                        onChange={handleInputChange}
+                                        className="input-field w-full py-2 px-3 border rounded text-sm appearance-none bg-white"
+                                    >
+                                        <option value="">Select Office</option>
+                                        {OFFICES.map(o => <option key={o} value={o}>{o}</option>)}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
                         </div>
 

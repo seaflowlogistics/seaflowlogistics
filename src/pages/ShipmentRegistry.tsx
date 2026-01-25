@@ -1886,7 +1886,7 @@ const ShipmentRegistry: React.FC = () => {
                                                         value={pkg.count}
                                                         onChange={e => handlePackageChange(idx, 'count', e.target.value)}
                                                         className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                                                        placeholder="0"
+                                                        placeholder=""
                                                     />
                                                 </div>
                                                 <div className="col-span-4">
@@ -1904,7 +1904,7 @@ const ShipmentRegistry: React.FC = () => {
                                                         value={pkg.weight}
                                                         onChange={e => handlePackageChange(idx, 'weight', e.target.value)}
                                                         className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                                                        placeholder="0.0"
+                                                        placeholder=""
                                                     />
                                                     {editFormData.packages.length > 1 && (
                                                         <button onClick={() => removePackage(idx)} className="text-gray-400 hover:text-red-500">
