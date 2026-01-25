@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS job_payments (
     id SERIAL PRIMARY KEY,
-    job_id VARCHAR(50) REFERENCES shipments(id) ON DELETE CASCADE,
+    job_id VARCHAR(50), -- REFERENCES shipments(id) ON DELETE CASCADE (Disabled for migration stability)
     payment_type VARCHAR(100) NOT NULL, -- 'MCS Processing', 'MCS Import Duty', etc
     vendor VARCHAR(255),
     amount DECIMAL(15, 2) NOT NULL,
