@@ -6,7 +6,7 @@ import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI, deliveryAgents
 import {
     Search, Plus,
     FileText,
-    Check,
+    Check, Pencil,
     Anchor, Plane, Truck, Package, X, Download, Trash2,
     CreditCard, UploadCloud, FileSpreadsheet, Calendar, MoreHorizontal
 
@@ -59,6 +59,7 @@ const ShipmentRegistry: React.FC = () => {
     const [activeTab, setActiveTab] = useState('Details');
     const [editFormData, setEditFormData] = useState<any>({});
     const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+    const [openMenu, setOpenMenu] = useState<string | null>(null);
 
     // Drawer State
     const [isBLDrawerOpen, setIsBLDrawerOpen] = useState(false);
@@ -1163,13 +1164,25 @@ const ShipmentRegistry: React.FC = () => {
                         {/* Shipment Invoice Section (4) */}
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-200 relative">
                             <div className="absolute top-6 right-6 flex gap-2">
-                                <button
-                                    onClick={() => handleOpenPopup('invoice', selectedJob)}
-                                    className="text-gray-400 hover:text-indigo-600 transition-colors"
-                                    title="Edit Invoice"
-                                >
-                                    <MoreHorizontal className="w-6 h-6" />
-                                </button>
+                                <div className="relative">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'invoice' ? null : 'invoice'); }}
+                                        className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
+                                        title="Options"
+                                    >
+                                        <MoreHorizontal className="w-6 h-6" />
+                                    </button>
+                                    {openMenu === 'invoice' && (
+                                        <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
+                                            <button
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
+                                                onClick={() => { handleOpenPopup('invoice', selectedJob); setOpenMenu(null); }}
+                                            >
+                                                <Pencil className="w-4 h-4" /> Edit
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <h3 className="font-bold text-gray-900 text-lg mb-6 flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-indigo-600" />
@@ -1202,20 +1215,43 @@ const ShipmentRegistry: React.FC = () => {
                         {/* BL/AWB Details Section (5) */}
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-200 relative">
                             <div className="absolute top-6 right-6 flex gap-2">
-                                <button
-                                    onClick={() => {
-                                        setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
-                                        // If existing BLs, maybe prefill the first one for editing? The text says "options menu".
-                                        // I'll stick to opening the drawer. If BL exists, we should probably pass it.
-                                        // For now, assume adding or editing list. Using handleOpenPopup logic or direct drawer.
-                                        // Let's iterate if BLs exist.
-                                        setIsBLDrawerOpen(true);
-                                    }}
-                                    className="text-gray-400 hover:text-indigo-600 transition-colors"
-                                    title="Manage BL/AWB"
-                                >
-                                    <MoreHorizontal className="w-6 h-6" />
-                                </button>
+                                <div className="relative">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'bl' ? null : 'bl'); }}
+                                        className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
+                                        title="Manage BL/AWB"
+                                    >
+                                        <MoreHorizontal className="w-6 h-6" />
+                                    </button>
+                                    {openMenu === 'bl' && (
+                                        <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
+                                            <button
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
+                                                onClick={() => {
+                                                    if (selectedJob.bls && selectedJob.bls.length > 0) {
+                                                        setNewBL(selectedJob.bls[0]);
+                                                    } else {
+                                                        setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
+                                                    }
+                                                    setIsBLDrawerOpen(true);
+                                                    setOpenMenu(null);
+                                                }}
+                                            >
+                                                <Pencil className="w-4 h-4" /> Edit
+                                            </button>
+                                            <button
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
+                                                onClick={() => {
+                                                    setNewBL({ master_bl: '', house_bl: '', loading_port: '', vessel: '', etd: '', eta: '', delivery_agent: '' });
+                                                    setIsBLDrawerOpen(true);
+                                                    setOpenMenu(null);
+                                                }}
+                                            >
+                                                <Plus className="w-4 h-4" /> Add
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <h3 className="font-bold text-gray-900 text-lg mb-6 flex items-center gap-2">
                                 <FileSpreadsheet className="w-5 h-5 text-blue-600" />
