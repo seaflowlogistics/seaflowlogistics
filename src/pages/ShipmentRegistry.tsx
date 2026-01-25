@@ -175,7 +175,8 @@ const ShipmentRegistry: React.FC = () => {
                 vessel: data.vessel,
                 etd: data.etd,
                 eta: data.eta,
-                delivery_agent: data.delivery_agent
+                delivery_agent: data.delivery_agent,
+                packages: data.packages || []
             };
 
             if (data.id) {
@@ -1461,19 +1462,19 @@ const ShipmentRegistry: React.FC = () => {
                                                 <div>
                                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Packages</p>
                                                     <p className="font-semibold text-gray-900">
-                                                        {selectedJob.packages?.reduce((acc: number, p: any) => acc + (parseInt(p.count) || 0), 0) || ''}
+                                                        {bl.packages?.reduce((acc: number, p: any) => acc + (parseInt(p.count) || 0), 0) || ''}
                                                     </p>
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Package Type</p>
                                                     <p className="font-semibold text-gray-900 uppercase">
-                                                        {selectedJob.packages?.map((p: any) => p.type).filter((v: any, i: any, a: any) => a.indexOf(v) === i).join(', ') || '-'}
+                                                        {bl.packages?.map((p: any) => p.type).filter((v: any, i: any, a: any) => a.indexOf(v) === i).join(', ') || '-'}
                                                     </p>
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Weight</p>
                                                     <p className="font-semibold text-gray-900">
-                                                        {selectedJob.packages?.reduce((acc: number, p: any) => acc + (parseFloat(p.weight) || 0), 0).toFixed(2) || ''} KGS
+                                                        {bl.packages?.reduce((acc: number, p: any) => acc + (parseFloat(p.weight) || 0), 0).toFixed(2) || ''} KGS
                                                     </p>
                                                 </div>
                                             </div>

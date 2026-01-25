@@ -1,0 +1,1 @@
+ALTER TABLE shipment_bls ADD COLUMN IF NOT EXISTS packages JSONB DEFAULT '[]';

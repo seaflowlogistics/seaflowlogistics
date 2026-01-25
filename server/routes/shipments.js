@@ -369,8 +369,8 @@ router.post('/:id/bls', authenticateToken, async (req, res) => {
         const { master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent } = req.body;
 
         const result = await pool.query(
-            'INSERT INTO shipment_bls (shipment_id, master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-            [id, master_bl, house_bl, loading_port, vessel, etd || null, eta || null, delivery_agent]
+            'INSERT INTO shipment_bls (shipment_id, master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent, packages) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+            [id, master_bl, house_bl, loading_port, vessel, etd || null, eta || null, delivery_agent, req.body.packages ? JSON.stringify(req.body.packages) : '[]']
         );
         res.json(result.rows[0]);
     } catch (e) {
@@ -384,8 +384,8 @@ router.put('/:id/bls/:blId', authenticateToken, async (req, res) => {
         const { blId } = req.params;
         const { master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent } = req.body;
         const result = await pool.query(
-            'UPDATE shipment_bls SET master_bl = $1, house_bl = $2, loading_port = $3, vessel = $4, etd = $5, eta = $6, delivery_agent = $7 WHERE id = $8 RETURNING *',
-            [master_bl, house_bl, loading_port, vessel, etd || null, eta || null, delivery_agent, blId]
+            'UPDATE shipment_bls SET master_bl = $1, house_bl = $2, loading_port = $3, vessel = $4, etd = $5, eta = $6, delivery_agent = $7, packages = $8 WHERE id = $9 RETURNING *',
+            [master_bl, house_bl, loading_port, vessel, etd || null, eta || null, delivery_agent, req.body.packages ? JSON.stringify(req.body.packages) : '[]', blId]
         );
         res.json(result.rows[0]);
     } catch (e) {
