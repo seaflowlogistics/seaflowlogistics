@@ -129,16 +129,25 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                 <div className="h-full w-full bg-white shadow-2xl flex flex-col animate-slide-in-right">
 
                     {/* Header */}
-                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-gray-900">
-                            {title ? title : (isReschedule ? 'Reschedule Clearance' : 'Schedule Clearance')}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
+                    <div className="px-6 py-4 border-b border-gray-100">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-gray-900">
+                                {title ? title : (isReschedule ? 'Reschedule Clearance' : 'Schedule Clearance')}
+                            </h2>
+                            <button
+                                onClick={onClose}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        {isReschedule && job && (
+                            <div className="mt-2 text-sm">
+                                <span className="font-bold text-indigo-600">{job.job_id}</span>
+                                <span className="mx-2 text-gray-300">|</span>
+                                <span className="text-gray-600 font-medium">{job.consignee}</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Content */}
@@ -220,111 +229,121 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
 
 
                         {/* Clearance Method */}
-                        <div className="form-group">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Clearance Method</label>
-                            <div className="relative">
-                                <select
-                                    name="clearance_method"
-                                    value={formData.clearance_method}
-                                    onChange={handleInputChange}
-                                    className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.clearance_method ? 'text-gray-400' : 'text-gray-700'}`}
-                                >
-                                    <option value="" disabled>Select an option</option>
-                                    <option value="DHONI">DHONI</option>
-                                    <option value="LORRY">LORRY</option>
-                                    <option value="OTHER">OTHER</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                        {!isReschedule && (
+                            <div className="form-group">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Clearance Method</label>
+                                <div className="relative">
+                                    <select
+                                        name="clearance_method"
+                                        value={formData.clearance_method}
+                                        onChange={handleInputChange}
+                                        className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.clearance_method ? 'text-gray-400' : 'text-gray-700'}`}
+                                    >
+                                        <option value="" disabled>Select an option</option>
+                                        <option value="DHONI">DHONI</option>
+                                        <option value="LORRY">LORRY</option>
+                                        <option value="OTHER">OTHER</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Select Clearing BL/AWB */}
-                        <div className="form-group">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Select Clearing BL/AWB</label>
-                            <div className="relative">
-                                <select
-                                    name="bl_awb"
-                                    value={formData.bl_awb}
-                                    onChange={handleInputChange}
-                                    className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.bl_awb ? 'text-gray-400' : 'text-gray-700'}`}
-                                >
-                                    <option value="" disabled>Select an option</option>
-                                    {blOptions.length > 0 ? (
-                                        blOptions.map((opt: string, idx: number) => (
-                                            <option key={idx} value={opt}>{opt}</option>
-                                        ))
-                                    ) : (
-                                        <option value="" disabled>No BL/AWB available</option>
-                                    )}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                        {!isReschedule && (
+                            <div className="form-group">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Select Clearing BL/AWB</label>
+                                <div className="relative">
+                                    <select
+                                        name="bl_awb"
+                                        value={formData.bl_awb}
+                                        onChange={handleInputChange}
+                                        className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.bl_awb ? 'text-gray-400' : 'text-gray-700'}`}
+                                    >
+                                        <option value="" disabled>Select an option</option>
+                                        {blOptions.length > 0 ? (
+                                            blOptions.map((opt: string, idx: number) => (
+                                                <option key={idx} value={opt}>{opt}</option>
+                                            ))
+                                        ) : (
+                                            <option value="" disabled>No BL/AWB available</option>
+                                        )}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Clearance Transport Mode */}
-                        <div className="form-group">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Clearance Transport Mode</label>
-                            <div className="relative">
-                                <select
-                                    name="transport_mode"
-                                    value={formData.transport_mode}
-                                    onChange={handleInputChange}
-                                    className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.transport_mode ? 'text-gray-400' : 'text-gray-700'}`}
-                                >
-                                    <option value="" disabled>Select an option</option>
-                                    <option value="Sea">Sea</option>
-                                    <option value="Air">Air</option>
-                                    <option value="Road">Road</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                        {!isReschedule && (
+                            <div className="form-group">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Clearance Transport Mode</label>
+                                <div className="relative">
+                                    <select
+                                        name="transport_mode"
+                                        value={formData.transport_mode}
+                                        onChange={handleInputChange}
+                                        className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.transport_mode ? 'text-gray-400' : 'text-gray-700'}`}
+                                    >
+                                        <option value="" disabled>Select an option</option>
+                                        <option value="Sea">Sea</option>
+                                        <option value="Air">Air</option>
+                                        <option value="Road">Road</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Packages */}
-                        <div className="form-group">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Packages</label>
-                            <div className="relative">
-                                <select
-                                    name="packages"
-                                    value={formData.packages}
-                                    onChange={handleInputChange}
-                                    className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.packages ? 'text-gray-400' : 'text-gray-700'}`}
-                                >
-                                    <option value="" disabled>Select packages</option>
-                                    {packageOptions.length > 0 ? (
-                                        packageOptions.map((opt: string, idx: number) => (
-                                            <option key={idx} value={opt}>{opt}</option>
-                                        ))
-                                    ) : (
-                                        <option value="" disabled>No packages available for this BL</option>
-                                    )}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                        {!isReschedule && (
+                            <div className="form-group">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Packages</label>
+                                <div className="relative">
+                                    <select
+                                        name="packages"
+                                        value={formData.packages}
+                                        onChange={handleInputChange}
+                                        className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.packages ? 'text-gray-400' : 'text-gray-700'}`}
+                                    >
+                                        <option value="" disabled>Select packages</option>
+                                        {packageOptions.length > 0 ? (
+                                            packageOptions.map((opt: string, idx: number) => (
+                                                <option key={idx} value={opt}>{opt}</option>
+                                            ))
+                                        ) : (
+                                            <option value="" disabled>No packages available for this BL</option>
+                                        )}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Container Details */}
-                        <div className="form-group">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Container Details</label>
-                            <div className="relative">
-                                <select
-                                    name="container_details"
-                                    value={formData.container_details}
-                                    onChange={handleInputChange}
-                                    className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.container_details ? 'text-gray-400' : 'text-gray-700'}`}
-                                >
-                                    <option value="" disabled>Select an option</option>
-                                    {containerOptions.length > 0 ? (
-                                        containerOptions.map((opt: string, idx: number) => (
-                                            <option key={idx} value={opt}>{opt}</option>
-                                        ))
-                                    ) : (
-                                        <option value="" disabled>No containers available</option>
-                                    )}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                        {!isReschedule && (
+                            <div className="form-group">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Container Details</label>
+                                <div className="relative">
+                                    <select
+                                        name="container_details"
+                                        value={formData.container_details}
+                                        onChange={handleInputChange}
+                                        className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.container_details ? 'text-gray-400' : 'text-gray-700'}`}
+                                    >
+                                        <option value="" disabled>Select an option</option>
+                                        {containerOptions.length > 0 ? (
+                                            containerOptions.map((opt: string, idx: number) => (
+                                                <option key={idx} value={opt}>{opt}</option>
+                                            ))
+                                        ) : (
+                                            <option value="" disabled>No containers available</option>
+                                        )}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Remarks */}
                         <div className="form-group">

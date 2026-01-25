@@ -132,7 +132,7 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
                                         <div className="p-4 space-y-4">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <div className="font-bold text-gray-900">{schedule.packages || 0} PKG</div>
+                                                    <div className="font-bold text-gray-900">{schedule.packages || 0}</div>
                                                     <div className="text-xs text-gray-500 font-mono mt-0.5">{schedule.container_no || 'No Container'}</div>
                                                 </div>
                                                 <div className="flex gap-2">

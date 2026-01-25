@@ -272,7 +272,12 @@ const ClearanceSchedule: React.FC = () => {
                                                 </td>
                                             )}
                                             <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
-                                                {item.job_id}
+                                                <div className="flex items-center gap-2">
+                                                    {item.job_id}
+                                                    {item.reschedule_reason && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
+                                                    )}
+                                                </div>
                                                 <div className="text-[10px] text-gray-400 font-normal">{new Date(item.created_at).toLocaleDateString()}</div>
                                             </td>
                                             <td className="py-4 px-6 text-sm text-gray-900">
