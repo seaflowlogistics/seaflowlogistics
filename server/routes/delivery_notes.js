@@ -4,29 +4,13 @@ import { authenticateToken } from '../middleware/auth.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Multer Config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        // resolve to server/uploads
-        // __dirname is .../server/routes
-        const uploadDir = path.join(__dirname, '../uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        // Sanitize filename
-        const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-        cb(null, `${Date.now()}-${safeName}`);
-    }
-});
+// Memory Storage for DB persistence
+const storage = multer.memoryStorage();
 
 const upload = multer({
     storage,
@@ -42,6 +26,30 @@ const upload = multer({
 });
 
 const router = express.Router();
+
+// Ensure File Storage Table Exists
+const ensureFileStorageTable = async () => {
+    const client = await pool.connect();
+    try {
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS file_storage (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                filename TEXT,
+                mime_type TEXT,
+                data BYTES,
+                size INT,
+                uploaded_at TIMESTAMP DEFAULT current_timestamp
+            );
+        `);
+    } catch (err) {
+        console.error('Error ensuring file_storage table:', err);
+    } finally {
+        client.release();
+    }
+};
+
+// Initialize table on Load (async)
+ensureFileStorageTable();
 
 // Helper to generate DN Number
 const generateDNId = async () => {
@@ -69,8 +77,6 @@ router.post('/', authenticateToken, async (req, res) => {
 
         console.log('Creating Delivery Note:', req.body);
         const { items, vehicles, loadingDate, unloadingDate, comments } = req.body;
-        // items: [{ schedule_id, job_id, shortage, damaged, remarks }]
-        // vehicles: [{ vehicleId, driver, driverContact, dischargeLocation }]
 
         if (!items || items.length === 0) {
             throw new Error('No items provided for Delivery Note');
@@ -79,11 +85,9 @@ router.post('/', authenticateToken, async (req, res) => {
         // Generate ID
         const dnId = await generateDNId();
 
-        // Fetch Consignee/Exporter from the first job (assuming batch belongs to same logic often, or we list first)
+        // Fetch Consignee/Exporter from the first job
         let consignee = '';
         let exporter = '';
-
-        // Use the first job to populate header info
         const firstJobId = items[0].job_id;
         const jobRes = await client.query('SELECT receiver_name, sender_name FROM shipments WHERE id = $1', [firstJobId]);
         if (jobRes.rows.length > 0) {
@@ -91,10 +95,7 @@ router.post('/', authenticateToken, async (req, res) => {
             exporter = jobRes.rows[0].sender_name;
         }
 
-        // Insert Delivery Note
-        // We use req.user.username or req.user.name or fall back to 'System'
-        // authenticateToken usually provides req.user which matches the users table
-        const issuedBy = req.user.username || req.user.name || 'System'; // Adjust based on auth middleware
+        const issuedBy = req.user.username || req.user.name || 'System';
 
         await client.query(
             `INSERT INTO delivery_notes (id, consignee, exporter, issued_date, issued_by, status, loading_date, unloading_date, comments)
@@ -114,9 +115,7 @@ router.post('/', authenticateToken, async (req, res) => {
         // Insert Vehicles
         if (vehicles && vehicles.length > 0) {
             for (const v of vehicles) {
-                // Ensure vehicleId is valid UUID or null if empty string
                 const vId = (v.vehicleId && v.vehicleId.trim() !== '') ? v.vehicleId : null;
-
                 await client.query(
                     `INSERT INTO delivery_note_vehicles (delivery_note_id, vehicle_id, driver_name, driver_contact, discharge_location)
                      VALUES ($1, $2, $3, $4, $5)`,
@@ -126,7 +125,6 @@ router.post('/', authenticateToken, async (req, res) => {
         }
 
         await client.query('COMMIT');
-
         res.status(201).json({ id: dnId, message: 'Delivery Note Created Successfully' });
 
     } catch (err) {
@@ -138,7 +136,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-// Get all Delivery Notes with joined info
+// Get all Delivery Notes
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const { search, status } = req.query;
@@ -194,12 +192,6 @@ router.get('/:id', authenticateToken, async (req, res) => {
         }
         const dn = dnResult.rows[0];
 
-        // Fetch Items with Shipment Details (BL/AWB, etc.)
-        // Fetch Items with Shipment Details
-        // Joining to get BL/AWB, Shipper (Sender), Packages
-        // PRIORITIZE details from Clearance Schedule (cs) if they exist
-        // Also fetch 'port' from clearance schedule to use as fallback/default Discharge Location
-        // Fallback to Shipment (s) details
         const itemsResult = await pool.query(`
             SELECT dni.*, 
                    COALESCE(cs.bl_awb, s.bl_awb_no) as bl_awb_no, 
@@ -214,10 +206,6 @@ router.get('/:id', authenticateToken, async (req, res) => {
             WHERE dni.delivery_note_id = $1
         `, [id]);
 
-        // Fetch Vehicles
-        // Joining to get Vehicle Name/Registration if vehicle_id exists
-        // Note: vehicle_id in delivery_note_vehicles might be the registration number (string) based on fleet import logic
-        // We alias columns to match the frontend camelCase interface (DeliveryNoteVehicle)
         const vehiclesResult = await pool.query(`
             SELECT dnv.id,
                    dnv.vehicle_id as "vehicleId", 
@@ -273,34 +261,50 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-// Update Delivery Note Details (Documents, Comments, Date)
+
+// Update Delivery Note Details (Documents via DB, Comments, Date)
 router.put('/:id', authenticateToken, upload.array('files'), async (req, res) => {
+    const client = await pool.connect();
     try {
         const { id } = req.params;
         const { unloading_date, comments, mark_delivered } = req.body;
 
+        await client.query('BEGIN');
+
         // 1. Fetch existing data
-        const currentRes = await pool.query('SELECT documents, status FROM delivery_notes WHERE id = $1', [id]);
+        const currentRes = await client.query('SELECT documents, status FROM delivery_notes WHERE id = $1', [id]);
         if (currentRes.rows.length === 0) {
             return res.status(404).json({ error: 'Delivery note not found' });
         }
 
         let currentDocs = currentRes.rows[0].documents || [];
-        // Ensure strictly an array
         if (!Array.isArray(currentDocs)) currentDocs = [];
 
-        // 2. Process Uploaded Files
+        // 2. Process Uploaded Files - SAVE TO DB
         const newDocs = [];
         if (req.files && req.files.length > 0) {
-            req.files.forEach(file => {
+            await ensureFileStorageTable();
+
+            for (const file of req.files) {
+                // Insert into file_storage
+                const fileRes = await client.query(
+                    `INSERT INTO file_storage (filename, mime_type, data, size) 
+                     VALUES ($1, $2, $3, $4) 
+                     RETURNING id`,
+                    [file.originalname, file.mimetype, file.buffer, file.size]
+                );
+                const fileId = fileRes.rows[0].id;
+
                 newDocs.push({
+                    fileId: fileId, // Important: Store the DB ID
                     name: file.originalname,
-                    url: `/uploads/${file.filename}`,
+                    // Legacy URL for fallbacks or UI display logic
+                    url: `/api/delivery-notes/document/view?fileId=${fileId}`,
                     uploaded_at: new Date().toISOString(),
                     type: file.mimetype,
                     size: file.size
                 });
-            });
+            }
         }
 
         const updatedDocs = [...currentDocs, ...newDocs];
@@ -330,83 +334,91 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
 
         query += ' RETURNING *';
 
-        const result = await pool.query(query, params);
+        const result = await client.query(query, params);
+
+        await client.query('COMMIT');
         res.json(result.rows[0]);
 
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error updating delivery note:', error);
         res.status(500).json({ error: 'Internal server error' });
+    } finally {
+        client.release();
     }
 });
 
-// Delete Document from Delivery Note
+// Delete Document
 router.delete('/:id/documents', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { url } = req.body; // Full relative URL e.g. /uploads/filename.ext
+        const { url } = req.body;
 
-        if (!url) {
-            return res.status(400).json({ error: 'URL is required' });
-        }
+        if (!url) return res.status(400).json({ error: 'URL is required' });
 
-        // 1. Fetch existing data
         const currentRes = await pool.query('SELECT documents FROM delivery_notes WHERE id = $1', [id]);
-        if (currentRes.rows.length === 0) {
-            return res.status(404).json({ error: 'Delivery note not found' });
-        }
+        if (currentRes.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
 
         let currentDocs = currentRes.rows[0].documents || [];
         if (!Array.isArray(currentDocs)) currentDocs = [];
 
-        // 2. Find and Remove from Array
+        // Identify the doc to remove
+        const docToRemove = currentDocs.find(doc => doc.url === url);
         const newDocs = currentDocs.filter(doc => doc.url !== url);
 
-        // 3. Delete from Disk
-        // Safe Path Resolution
-        const filename = path.basename(url);
-        const absolutePath = path.join(__dirname, '../uploads', filename);
+        // Update DB Record
+        await pool.query('UPDATE delivery_notes SET documents = $1 WHERE id = $2', [JSON.stringify(newDocs), id]);
 
-        console.log(`Deleting file at: ${absolutePath}`);
-
-        if (fs.existsSync(absolutePath)) {
-            try {
-                fs.unlinkSync(absolutePath);
-            } catch (err) {
-                console.error('Failed to delete file from disk:', err);
-                // Continue to remove from DB even if disk delete fails
-            }
+        // If it has a fileId, delete from file_storage
+        if (docToRemove && docToRemove.fileId) {
+            await pool.query('DELETE FROM file_storage WHERE id = $1', [docToRemove.fileId]);
         }
+        // Note: We don't delete files from disk for legacy URLs to strictly avoid file system access, 
+        // as we assume we are moving to DB storage. 
 
-        // 4. Update DB
-        const result = await pool.query(
-            'UPDATE delivery_notes SET documents = $1 WHERE id = $2 RETURNING *',
-            [JSON.stringify(newDocs), id]
-        );
-
-        res.json(result.rows[0]);
+        // Return updated note structure for frontend
+        const updatedRes = await pool.query('SELECT * FROM delivery_notes WHERE id = $1', [id]);
+        res.json(updatedRes.rows[0]);
 
     } catch (error) {
-        console.error('Error deleting delivery note document:', error);
+        console.error('Error deleting document:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// Serve Document safely
+// Serve Document (DB or Disk Fallback)
 router.get('/document/view', authenticateToken, async (req, res) => {
     try {
-        const { path: filePath } = req.query;
-        if (!filePath) return res.status(400).send('Path required');
+        const { path: filePath, fileId } = req.query;
 
-        // Extract filename from the stored path (e.g. /uploads/filename.ext -> filename.ext)
-        const filename = path.basename(filePath);
-        const absolutePath = path.join(__dirname, '../uploads', filename);
-
-        if (fs.existsSync(absolutePath)) {
-            res.sendFile(absolutePath);
-        } else {
-            console.error(`File not found at: ${absolutePath}`);
-            res.status(404).json({ error: 'File not found on server' });
+        // 1. Try DB Storage
+        if (fileId) {
+            const fileRes = await pool.query('SELECT * FROM file_storage WHERE id = $1', [fileId]);
+            if (fileRes.rows.length > 0) {
+                const file = fileRes.rows[0];
+                res.setHeader('Content-Type', file.mime_type || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `inline; filename="${file.filename}"`);
+                return res.send(file.data);
+            } else {
+                // Even if fileId provided, if not found, it might be gone.
+                return res.status(404).json({ error: 'File not found in database' });
+            }
         }
+
+        // 2. Legacy Disk Fallback (if path provided)
+        if (filePath) {
+            const filename = path.basename(filePath);
+            const absolutePath = path.join(__dirname, '../uploads', filename);
+
+            if (fs.existsSync(absolutePath)) {
+                return res.sendFile(absolutePath);
+            } else {
+                return res.status(404).json({ error: 'File not found on server' });
+            }
+        }
+
+        res.status(400).send('File identifier required (fileId or path)');
+
     } catch (e) {
         console.error('Error serving document:', e);
         res.status(500).json({ error: 'Internal server error' });

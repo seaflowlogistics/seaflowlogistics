@@ -589,7 +589,7 @@ const DeliveryNotes: React.FC = () => {
             uploadedBy: string;
             status: string;
             uploadedDate: string;
-            documents: { name: string; url: string; uploaded_at?: string }[];
+            documents: { name: string; url: string; uploaded_at?: string; fileId?: string }[];
             jobIds: string[];
         }[] = [];
 
@@ -699,26 +699,33 @@ const DeliveryNotes: React.FC = () => {
                                         <td className="py-4 px-6 text-right">
                                             {row.documents.length > 0 ? (
                                                 <div className="flex flex-col items-end gap-1">
-                                                    {row.documents.map((doc, dIdx) => (
-                                                        <div key={dIdx} className="flex items-center gap-2">
-                                                            <a
-                                                                href={`${API_BASE_URL}/delivery-notes/document/view?path=${encodeURIComponent(doc.url)}&token=${localStorage.getItem('token') || sessionStorage.getItem('token')}`}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-xs font-medium border border-blue-100"
-                                                            >
-                                                                <FileText className="w-3 h-3" />
-                                                                View
-                                                            </a>
-                                                            <button
-                                                                onClick={() => handleDeleteDocument(row.noteId, doc.url)}
-                                                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                                                                title="Delete Document"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    ))}
+                                                    {row.documents.map((doc, dIdx) => {
+                                                        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                                                        const viewUrl = doc.fileId
+                                                            ? `${API_BASE_URL}/delivery-notes/document/view?fileId=${doc.fileId}&token=${token}`
+                                                            : `${API_BASE_URL}/delivery-notes/document/view?path=${encodeURIComponent(doc.url)}&token=${token}`;
+
+                                                        return (
+                                                            <div key={dIdx} className="flex items-center gap-2">
+                                                                <a
+                                                                    href={viewUrl}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-xs font-medium border border-blue-100"
+                                                                >
+                                                                    <FileText className="w-3 h-3" />
+                                                                    View
+                                                                </a>
+                                                                <button
+                                                                    onClick={() => handleDeleteDocument(row.noteId, doc.url)}
+                                                                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                                                    title="Delete Document"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             ) : (
                                                 <span className="text-gray-400 text-xs italic">No document</span>
