@@ -3,12 +3,12 @@ import Layout from '../components/Layout';
 import {
     Search, Printer, ChevronDown,
     X, Download, Upload,
-    Mail, Phone, Globe, MapPin, Trash2
+    Mail, Phone, Globe, MapPin, Trash2, FileText
 
 } from 'lucide-react';
 
 
-import { deliveryNotesAPI, consigneesAPI } from '../services/api';
+import { deliveryNotesAPI, consigneesAPI, FILE_BASE_URL } from '../services/api';
 
 import seaflowHeader from '../assets/seaflow-header.jpg';
 import seaflowFooter from '../assets/seaflow-footer.jpg';
@@ -71,6 +71,7 @@ interface DeliveryNote {
     // Detailed Data
     items?: DeliveryNoteItem[];
     vehicles?: DeliveryNoteVehicle[];
+    documents?: { name: string; url: string; uploaded_at: string; }[];
 }
 
 const DeliveryNotes: React.FC = () => {
@@ -86,6 +87,57 @@ const DeliveryNotes: React.FC = () => {
     const [selectedNote, setSelectedNote] = useState<DeliveryNote | null>(null);
     const [activeTab, setActiveTab] = useState<'document' | 'manage'>('manage');
     const printRef = useRef<HTMLDivElement>(null);
+
+    // Update Details State
+    const [detailsForm, setDetailsForm] = useState({
+        comments: '',
+        unloading_date: '',
+        mark_delivered: false
+    });
+    const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+
+    // Initialize form when note is selected
+    useEffect(() => {
+        if (selectedNote) {
+            setDetailsForm({
+                comments: selectedNote.comments || '',
+                unloading_date: selectedNote.unloading_date ? selectedNote.unloading_date.split('T')[0] : '',
+                mark_delivered: selectedNote.status === 'Delivered'
+            });
+            setFileToUpload(null);
+        }
+    }, [selectedNote]);
+
+    const handleSaveDetails = async () => {
+        if (!selectedNote) return;
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.append('comments', detailsForm.comments);
+            formData.append('unloading_date', detailsForm.unloading_date);
+            formData.append('mark_delivered', String(detailsForm.mark_delivered));
+
+            if (fileToUpload) {
+                formData.append('files', fileToUpload);
+            }
+
+            await deliveryNotesAPI.update(selectedNote.id, formData);
+
+            // Refresh
+            const updated = await deliveryNotesAPI.getById(selectedNote.id);
+            setSelectedNote(updated.data);
+            // Also update list
+            setDeliveryNotes(prev => prev.map(n => n.id === updated.data.id ? updated.data : n));
+
+            alert('Details updated successfully');
+            setFileToUpload(null);
+        } catch (e) {
+            console.error(e);
+            alert('Failed to update details');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Fetch Data
     useEffect(() => {
@@ -390,49 +442,85 @@ const DeliveryNotes: React.FC = () => {
         </div>
     );
 
-    // Render Manage View (Image 2 style)
+    // Render Manage View
     const renderManage = () => (
         <div className="space-y-6">
-            {/* Delivery Summary */}
-            <div className="bg-gray-50 p-4 rounded-lg grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase">Consignee</label>
-                    <p className="font-medium text-gray-900">{selectedNote?.consignee}</p>
-                </div>
-                <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase">Discharge Location</label>
-                    <p className="font-medium text-gray-900">
-                        {selectedNote?.vehicles && selectedNote.vehicles.length > 0
-                            ? selectedNote.vehicles.map(v => v.dischargeLocation).join(', ')
-                            : '-'}
-                    </p>
-                </div>
-                <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase">Created</label>
-                    <p className="font-medium text-gray-900">{selectedNote?.issued_date ? new Date(selectedNote.issued_date).toLocaleDateString() : '-'}</p>
-                </div>
-                <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase">Issued By</label>
-                    <p className="font-medium text-gray-900">{selectedNote?.issued_by}</p>
-                </div>
-            </div>
-
-            {/* Linked Jobs */}
-            <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase">Linked Jobs</h3>
-                    <span className="text-xs text-gray-400">{selectedNote?.job_ids?.length || 0} Jobs Selected</span>
-                </div>
-                <div className="space-y-2">
-                    {selectedNote?.items?.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-start bg-gray-50 p-3 rounded border border-gray-100">
-                            <div>
-                                <p className="font-bold text-gray-900 text-sm">{item.job_id}</p>
-                                <p className="text-xs text-gray-500">{selectedNote?.consignee}</p>
-                                <p className="text-[10px] text-gray-400 mt-1">Packages: {item.packages || 'N/A'}</p>
-                            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Delivery Summary */}
+                    <div className="bg-gray-50 p-4 rounded-lg grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                        <div>
+                            <label className="text-xs font-bold text-gray-400 uppercase">Consignee</label>
+                            <p className="font-medium text-gray-900">{selectedNote?.consignee}</p>
                         </div>
-                    ))}
+                        <div>
+                            <label className="text-xs font-bold text-gray-400 uppercase">Discharge Location</label>
+                            <p className="font-medium text-gray-900">
+                                {selectedNote?.vehicles && selectedNote.vehicles.length > 0
+                                    ? selectedNote.vehicles.map(v => v.dischargeLocation).join(', ')
+                                    : '-'}
+                            </p>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-gray-400 uppercase">Created</label>
+                            <p className="font-medium text-gray-900">{selectedNote?.issued_date ? new Date(selectedNote.issued_date).toLocaleDateString() : '-'}</p>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-gray-400 uppercase">Issued By</label>
+                            <p className="font-medium text-gray-900">{selectedNote?.issued_by}</p>
+                        </div>
+                    </div>
+
+                    {/* Linked Jobs */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xs font-bold text-gray-400 uppercase">Linked Jobs</h3>
+                            <span className="text-xs text-gray-400">{selectedNote?.job_ids?.length || 0} Jobs Selected</span>
+                        </div>
+                        <div className="space-y-2">
+                            {selectedNote?.items?.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-start bg-gray-50 p-3 rounded border border-gray-100">
+                                    <div>
+                                        <p className="font-bold text-gray-900 text-sm">{item.job_id}</p>
+                                        <p className="text-xs text-gray-500">{selectedNote?.consignee}</p>
+                                        <p className="text-[10px] text-gray-400 mt-1">Packages: {item.packages || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Documents Section (Top Right) */}
+                <div className="lg:col-span-1">
+                    <div className="bg-white border border-gray-200 rounded-lg p-4 h-full flex flex-col">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase mb-4">Documents</h3>
+                        <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[300px] custom-scrollbar">
+                            {selectedNote?.documents && selectedNote.documents.length > 0 ? (
+                                selectedNote.documents.map((doc, idx) => (
+                                    <a
+                                        key={idx}
+                                        href={`${FILE_BASE_URL}${doc.url}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-100 hover:bg-gray-100 transition-colors group"
+                                    >
+                                        <div className="p-2 bg-white rounded border border-gray-200 group-hover:border-blue-200">
+                                            <FileText className="w-5 h-5 text-blue-500" />
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <p className="text-sm font-medium text-gray-700 truncate" title={doc.name}>{doc.name}</p>
+                                            <p className="text-[10px] text-gray-400">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
+                                        </div>
+                                    </a>
+                                ))
+                            ) : (
+                                <div className="text-center py-12 text-gray-400 italic text-xs border-2 border-dashed border-gray-100 rounded-lg">
+                                    No documents attached
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -442,7 +530,12 @@ const DeliveryNotes: React.FC = () => {
 
                 <div className="mb-6">
                     <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" className="rounded text-blue-600 focus:ring-blue-500" />
+                        <input
+                            type="checkbox"
+                            className="rounded text-blue-600 focus:ring-blue-500"
+                            checked={detailsForm.mark_delivered}
+                            onChange={(e) => setDetailsForm(prev => ({ ...prev, mark_delivered: e.target.checked }))}
+                        />
                         <span className="text-sm font-medium text-gray-700">Mark as delivered</span>
                     </label>
                     <p className="text-xs text-gray-500 ml-6 mt-1">Pending delivery</p>
@@ -453,7 +546,8 @@ const DeliveryNotes: React.FC = () => {
                     <textarea
                         className="w-full text-sm border border-gray-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-gray-100"
                         rows={3}
-                        defaultValue={selectedNote?.comments || ''}
+                        value={detailsForm.comments}
+                        onChange={(e) => setDetailsForm(prev => ({ ...prev, comments: e.target.value }))}
                     ></textarea>
                 </div>
 
@@ -463,23 +557,39 @@ const DeliveryNotes: React.FC = () => {
                         <input
                             type="date"
                             className="w-full text-sm border border-gray-200 rounded-lg p-2 pl-3 focus:outline-none focus:ring-2 focus:ring-gray-100"
-                            defaultValue={selectedNote?.unloading_date ? selectedNote.unloading_date.split('T')[0] : ''}
+                            value={detailsForm.unloading_date}
+                            onChange={(e) => setDetailsForm(prev => ({ ...prev, unloading_date: e.target.value }))}
                         />
                     </div>
                 </div>
 
                 <div className="mb-6">
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Signed Delivery Note</label>
-                    <button className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline">
-                        <Upload className="w-4 h-4" /> Choose File
-                    </button>
-
-                    <p className="text-xs text-gray-400 mt-1">No file chosen</p>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Signed Delivery Note (Upload)</label>
+                    <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors">
+                            <Upload className="w-4 h-4" />
+                            {fileToUpload ? 'Change File' : 'Choose File'}
+                            <input
+                                type="file"
+                                className="hidden"
+                                onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                        setFileToUpload(e.target.files[0]);
+                                    }
+                                }}
+                            />
+                        </label>
+                        <span className="text-sm text-gray-500 italic">
+                            {fileToUpload ? fileToUpload.name : 'No file chosen'}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
-                    <button className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-900">Save changes</button>
+                    <button onClick={handleCloseDetails} className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+                    <button onClick={handleSaveDetails} disabled={loading} className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-900 disabled:opacity-50">
+                        {loading ? 'Saving...' : 'Save changes'}
+                    </button>
                 </div>
             </div>
         </div>

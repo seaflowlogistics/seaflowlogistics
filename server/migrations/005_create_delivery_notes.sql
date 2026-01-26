@@ -1,7 +1,7 @@
 -- Create Delivery Notes Table
 CREATE TABLE IF NOT EXISTS delivery_notes (
     id VARCHAR(50) PRIMARY KEY, -- DN-YYYY...
-    shipment_id VARCHAR(50) REFERENCES shipments(id) ON DELETE CASCADE,
+    shipment_id VARCHAR(50), -- REFERENCES shipments(id) ON DELETE CASCADE (Disabled for migration stability)
     consignee VARCHAR(255),
     exporter VARCHAR(255),
     details_location VARCHAR(255),

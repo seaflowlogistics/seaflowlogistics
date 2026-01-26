@@ -1,6 +1,38 @@
 import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+// Multer Config
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = 'uploads/';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        // Sanitize filename
+        const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+        cb(null, `${Date.now()}-${safeName}`);
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|pdf|xlsx|xls|csv|doc|docx/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        if (extname) {
+            return cb(null, true);
+        }
+        cb(new Error('Invalid file type'));
+    }
+});
 
 const router = express.Router();
 
@@ -231,6 +263,71 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         res.json({ message: 'Delivery Note deleted successfully' });
     } catch (error) {
         console.error('Error deleting delivery note:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Update Delivery Note Details (Documents, Comments, Date)
+router.put('/:id', authenticateToken, upload.array('files'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { unloading_date, comments, mark_delivered } = req.body;
+
+        // 1. Fetch existing data
+        const currentRes = await pool.query('SELECT documents, status FROM delivery_notes WHERE id = $1', [id]);
+        if (currentRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Delivery note not found' });
+        }
+
+        let currentDocs = currentRes.rows[0].documents || [];
+        // Ensure strictly an array
+        if (!Array.isArray(currentDocs)) currentDocs = [];
+
+        // 2. Process Uploaded Files
+        const newDocs = [];
+        if (req.files && req.files.length > 0) {
+            req.files.forEach(file => {
+                newDocs.push({
+                    name: file.originalname,
+                    url: `/uploads/${file.filename}`,
+                    uploaded_at: new Date().toISOString(),
+                    type: file.mimetype,
+                    size: file.size
+                });
+            });
+        }
+
+        const updatedDocs = [...currentDocs, ...newDocs];
+        const updatedDocsJson = JSON.stringify(updatedDocs);
+
+        // 3. Build Update Query
+        let query = 'UPDATE delivery_notes SET documents = $1';
+        const params = [updatedDocsJson];
+        let pIdx = 2;
+
+        if (unloading_date) {
+            query += `, unloading_date = $${pIdx++}`;
+            params.push(unloading_date);
+        }
+
+        if (comments !== undefined) {
+            query += `, comments = $${pIdx++}`;
+            params.push(comments);
+        }
+
+        if (mark_delivered === 'true' || mark_delivered === true) {
+            query += `, status = 'Delivered'`;
+        }
+
+        query += ` WHERE id = $${pIdx}`;
+        params.push(id);
+
+        query += ' RETURNING *';
+
+        const result = await pool.query(query, params);
+        res.json(result.rows[0]);
+
+    } catch (error) {
+        console.error('Error updating delivery note:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
