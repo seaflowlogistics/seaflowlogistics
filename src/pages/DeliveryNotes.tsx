@@ -105,8 +105,13 @@ const DeliveryNotes: React.FC = () => {
                 mark_delivered: selectedNote.status === 'Delivered'
             });
             setFileToUpload(null);
+            // Also set document note when opening details
+            setDocumentNote(selectedNote);
         }
     }, [selectedNote]);
+
+    const [documentNote, setDocumentNote] = useState<DeliveryNote | null>(null);
+    const [isDocumentPanelOpen, setIsDocumentPanelOpen] = useState(false);
 
     const handleSaveDetails = async () => {
         if (!selectedNote) return;
@@ -445,82 +450,46 @@ const DeliveryNotes: React.FC = () => {
     // Render Manage View
     const renderManage = () => (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Delivery Summary */}
-                    <div className="bg-gray-50 p-4 rounded-lg grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                        <div>
-                            <label className="text-xs font-bold text-gray-400 uppercase">Consignee</label>
-                            <p className="font-medium text-gray-900">{selectedNote?.consignee}</p>
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-gray-400 uppercase">Discharge Location</label>
-                            <p className="font-medium text-gray-900">
-                                {selectedNote?.vehicles && selectedNote.vehicles.length > 0
-                                    ? selectedNote.vehicles.map(v => v.dischargeLocation).join(', ')
-                                    : '-'}
-                            </p>
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-gray-400 uppercase">Created</label>
-                            <p className="font-medium text-gray-900">{selectedNote?.issued_date ? new Date(selectedNote.issued_date).toLocaleDateString() : '-'}</p>
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-gray-400 uppercase">Issued By</label>
-                            <p className="font-medium text-gray-900">{selectedNote?.issued_by}</p>
-                        </div>
-                    </div>
-
-                    {/* Linked Jobs */}
-                    <div className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xs font-bold text-gray-400 uppercase">Linked Jobs</h3>
-                            <span className="text-xs text-gray-400">{selectedNote?.job_ids?.length || 0} Jobs Selected</span>
-                        </div>
-                        <div className="space-y-2">
-                            {selectedNote?.items?.map((item, idx) => (
-                                <div key={idx} className="flex justify-between items-start bg-gray-50 p-3 rounded border border-gray-100">
-                                    <div>
-                                        <p className="font-bold text-gray-900 text-sm">{item.job_id}</p>
-                                        <p className="text-xs text-gray-500">{selectedNote?.consignee}</p>
-                                        <p className="text-[10px] text-gray-400 mt-1">Packages: {item.packages || 'N/A'}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+            {/* Delivery Summary */}
+            <div className="bg-gray-50 p-4 rounded-lg grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase">Consignee</label>
+                    <p className="font-medium text-gray-900">{selectedNote?.consignee}</p>
                 </div>
+                <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase">Discharge Location</label>
+                    <p className="font-medium text-gray-900">
+                        {selectedNote?.vehicles && selectedNote.vehicles.length > 0
+                            ? selectedNote.vehicles.map(v => v.dischargeLocation).join(', ')
+                            : '-'}
+                    </p>
+                </div>
+                <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase">Created</label>
+                    <p className="font-medium text-gray-900">{selectedNote?.issued_date ? new Date(selectedNote.issued_date).toLocaleDateString() : '-'}</p>
+                </div>
+                <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase">Issued By</label>
+                    <p className="font-medium text-gray-900">{selectedNote?.issued_by}</p>
+                </div>
+            </div>
 
-                {/* Documents Section (Top Right) */}
-                <div className="lg:col-span-1">
-                    <div className="bg-white border border-gray-200 rounded-lg p-4 h-full flex flex-col">
-                        <h3 className="text-xs font-bold text-gray-400 uppercase mb-4">Documents</h3>
-                        <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[300px] custom-scrollbar">
-                            {selectedNote?.documents && selectedNote.documents.length > 0 ? (
-                                selectedNote.documents.map((doc, idx) => (
-                                    <a
-                                        key={idx}
-                                        href={`${FILE_BASE_URL}${doc.url}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-100 hover:bg-gray-100 transition-colors group"
-                                    >
-                                        <div className="p-2 bg-white rounded border border-gray-200 group-hover:border-blue-200">
-                                            <FileText className="w-5 h-5 text-blue-500" />
-                                        </div>
-                                        <div className="overflow-hidden">
-                                            <p className="text-sm font-medium text-gray-700 truncate" title={doc.name}>{doc.name}</p>
-                                            <p className="text-[10px] text-gray-400">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
-                                        </div>
-                                    </a>
-                                ))
-                            ) : (
-                                <div className="text-center py-12 text-gray-400 italic text-xs border-2 border-dashed border-gray-100 rounded-lg">
-                                    No documents attached
-                                </div>
-                            )}
+            {/* Linked Jobs */}
+            <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase">Linked Jobs</h3>
+                    <span className="text-xs text-gray-400">{selectedNote?.job_ids?.length || 0} Jobs Selected</span>
+                </div>
+                <div className="space-y-2">
+                    {selectedNote?.items?.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-start bg-gray-50 p-3 rounded border border-gray-100">
+                            <div>
+                                <p className="font-bold text-gray-900 text-sm">{item.job_id}</p>
+                                <p className="text-xs text-gray-500">{selectedNote?.consignee}</p>
+                                <p className="text-[10px] text-gray-400 mt-1">Packages: {item.packages || 'N/A'}</p>
+                            </div>
                         </div>
-                    </div>
+                    ))}
                 </div>
             </div>
 
@@ -592,7 +561,7 @@ const DeliveryNotes: React.FC = () => {
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 
     return (
@@ -602,9 +571,65 @@ const DeliveryNotes: React.FC = () => {
                 {/* Left Side: The List */}
                 <div className="p-8 overflow-y-auto custom-scrollbar transition-all duration-300 w-full">
                     {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Issued delivery notes</h1>
-                        <p className="text-gray-500">Overview of all generated delivery notes with quick access to documents.</p>
+                    <div className="mb-8 flex justify-between items-start">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">Issued delivery notes</h1>
+                            <p className="text-gray-500">Overview of all generated delivery notes with quick access to documents.</p>
+                        </div>
+
+                        {/* Red Box Area: Document Section Trigger */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-1 flex flex-col items-end w-72 transition-all">
+                            <button
+                                onClick={() => setIsDocumentPanelOpen(!isDocumentPanelOpen)}
+                                className="flex items-center justify-between w-full px-4 py-2 text-sm font-bold text-gray-700 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                            >
+                                <span className="uppercase text-xs tracking-wider">Documents</span>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${isDocumentPanelOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Expandable Document Section */}
+                            {isDocumentPanelOpen && (
+                                <div className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-md shadow-sm animate-in fade-in zoom-in duration-200">
+                                    {documentNote ? (
+                                        <>
+                                            <div className="mb-3 pb-2 border-b border-gray-100 flex justify-between items-center">
+                                                <span className="text-xs font-bold text-blue-600">{documentNote.id}</span>
+                                                <span className="text-[10px] text-gray-400">{documentNote.documents?.length || 0} files</span>
+                                            </div>
+                                            <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                {documentNote.documents && documentNote.documents.length > 0 ? (
+                                                    documentNote.documents.map((doc, idx) => (
+                                                        <a
+                                                            key={idx}
+                                                            href={`${FILE_BASE_URL}${doc.url}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="flex items-center gap-2 p-2 bg-gray-50 rounded hover:bg-blue-50 transition-colors group"
+                                                        >
+                                                            <div className="p-1.5 bg-white rounded border border-gray-200 group-hover:border-blue-200">
+                                                                <FileText className="w-4 h-4 text-blue-500" />
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <p className="text-xs font-medium text-gray-700 truncate" title={doc.name}>{doc.name}</p>
+                                                                <p className="text-[9px] text-gray-400">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
+                                                            </div>
+                                                        </a>
+                                                    ))
+                                                ) : (
+                                                    <div className="text-center py-4 text-gray-400 italic text-[10px]">
+                                                        No documents
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="text-center py-6 text-gray-400 text-xs">
+                                            Select a delivery note to view documents
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Filters */}
@@ -683,7 +708,7 @@ const DeliveryNotes: React.FC = () => {
                                     </tr>
                                 ) : (
                                     filteredNotes.map((note) => (
-                                        <tr key={note.id} className={`hover:bg-gray-50 transition-colors group cursor-pointer ${selectedNote?.id === note.id ? 'bg-blue-50' : ''}`} onClick={() => handleViewDetails(note)}>
+                                        <tr key={note.id} className={`hover:bg-gray-50 transition-colors group cursor-pointer ${selectedNote?.id === note.id ? 'bg-blue-50' : ''}`} onClick={() => { handleViewDetails(note); setDocumentNote(note); }}>
                                             <td className="py-4 px-6">
                                                 <span className="text-blue-600 font-medium text-sm hover:underline">{note.id}</span>
                                             </td>
