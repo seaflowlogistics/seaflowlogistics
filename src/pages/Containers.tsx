@@ -88,19 +88,7 @@ const Containers: React.FC = () => {
 
                         {/* Sort & Pagination Controls placeholder */}
                         <div className="flex gap-8 items-end">
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">
-                                    SORT BY
-                                </label>
-                                <div className="flex gap-2">
-                                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium border border-blue-100 cursor-pointer">Created ↓</span>
-                                    <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs font-medium border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">Unloaded</span>
-                                    <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs font-medium border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">Expires</span>
-                                    <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs font-medium border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">Days left</span>
-                                    <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs font-medium border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">Clearance</span>
-                                    <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs font-medium border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">Delivery note</span>
-                                </div>
-                            </div>
+
 
                             <div>
                                 <label className="block text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">

@@ -1617,6 +1617,7 @@ const ShipmentRegistry: React.FC = () => {
                                         </td>
                                         <td className="py-4 px-6 text-center">
                                             <div className="flex items-center justify-center gap-2">
+
                                                 <button
                                                     onClick={async () => {
                                                         if (window.confirm('Delete payment?')) {
