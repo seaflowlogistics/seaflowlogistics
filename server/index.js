@@ -82,6 +82,26 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Logistics API is running' });
 });
 
+// Debug Uploads Endpoint
+app.get('/api/debug/uploads', (req, res) => {
+    try {
+        if (fs.existsSync(uploadsDir)) {
+            const files = fs.readdirSync(uploadsDir);
+            res.json({
+                path: uploadsDir,
+                files: files
+            });
+        } else {
+            res.json({
+                path: uploadsDir,
+                error: 'Directory not found'
+            });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
 app.get('*', (req, res) => {
