@@ -197,8 +197,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
                    COALESCE(cs.bl_awb, s.bl_awb_no) as bl_awb_no, 
                    s.sender_name, 
                    COALESCE(cs.packages, CAST(s.no_of_pkgs AS VARCHAR)) as packages, 
-                   s.container_type as package_type, 
-                   s.container_no,
+                   COALESCE(cs.container_type, s.container_type) as package_type, 
+                   COALESCE(cs.container_no, s.container_no) as container_no,
                    cs.port as schedule_port
             FROM delivery_note_items dni
             LEFT JOIN clearance_schedules cs ON dni.schedule_id = cs.id

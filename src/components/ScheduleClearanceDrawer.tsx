@@ -71,9 +71,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
         ? job.bls.map((b: any) => b.master_bl).filter(Boolean)
         : [job?.bl_awb_no].filter((opt) => opt && opt !== '-');
 
-    const containerOptions = (job?.containers && job.containers.length > 0)
-        ? job.containers.map((c: any) => `${c.container_type} - ${c.container_no}`)
-        : [];
+
 
     // Filter packages based on selected BL
     const getPackageOptions = () => {
@@ -320,28 +318,60 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                             </div>
                         )}
 
-                        {/* Container Details */}
+                        {/* Container Details (Multi-Select) */}
                         {!isReschedule && (
                             <div className="form-group">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Container Details</label>
-                                <div className="relative">
-                                    <select
-                                        name="container_details"
-                                        value={formData.container_details}
-                                        onChange={handleInputChange}
-                                        className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.container_details ? 'text-gray-400' : 'text-gray-700'}`}
-                                    >
-                                        <option value="" disabled>Select an option</option>
-                                        {containerOptions.length > 0 ? (
-                                            containerOptions.map((opt: string, idx: number) => (
-                                                <option key={idx} value={opt}>{opt}</option>
-                                            ))
-                                        ) : (
-                                            <option value="" disabled>No containers available</option>
-                                        )}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Container Details (Select Multiple)</label>
+                                <div className="border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto bg-white">
+                                    {job?.containers && job.containers.length > 0 ? (
+                                        job.containers.map((c: any, idx: number) => {
+                                            const val = c.container_no;
+                                            const isSelected = formData.container_no.split(',').map(s => s.trim()).includes(val);
+                                            return (
+                                                <div key={idx} className="flex items-center gap-2 py-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`cont-${idx}`}
+                                                        checked={isSelected}
+                                                        onChange={(e) => {
+                                                            const checked = e.target.checked;
+                                                            let currentNos = formData.container_no ? formData.container_no.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                            let currentTypes = formData.container_type ? formData.container_type.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+                                                            if (checked) {
+                                                                currentNos.push(c.container_no);
+                                                                currentTypes.push(c.container_type);
+                                                            } else {
+                                                                const index = currentNos.indexOf(c.container_no);
+                                                                if (index > -1) {
+                                                                    currentNos.splice(index, 1);
+                                                                    currentTypes.splice(index, 1);
+                                                                }
+                                                            }
+
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                container_no: currentNos.join(', '),
+                                                                container_type: currentTypes.join(', ')
+                                                            }));
+                                                        }}
+                                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                                    />
+                                                    <label htmlFor={`cont-${idx}`} className="text-sm text-gray-700 cursor-pointer select-none">
+                                                        <span className="font-medium">{c.container_no}</span>
+                                                        <span className="text-gray-400 mx-1">-</span>
+                                                        <span className="text-xs text-gray-500">{c.container_type}</span>
+                                                    </label>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic">No containers available</p>
+                                    )}
                                 </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Selected: {formData.container_no || 'None'}
+                                </p>
                             </div>
                         )}
 
