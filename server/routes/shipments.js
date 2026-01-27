@@ -301,6 +301,19 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
         const deliveryNoteResult = await pool.query('SELECT * FROM delivery_notes WHERE shipment_id = $1', [id]);
 
+        // Calculate Payment Completion (Job Payments Module)
+        const paymentsStats = await pool.query(`
+            SELECT 
+                COUNT(*) as total, 
+                COUNT(*) FILTER (WHERE status = 'Paid') as paid_count 
+            FROM job_payments 
+            WHERE job_id = $1
+        `, [id]);
+
+        const totalPayments = parseInt(paymentsStats.rows[0].total) || 0;
+        const paidPayments = parseInt(paymentsStats.rows[0].paid_count) || 0;
+        const isFullyPaid = totalPayments > 0 && totalPayments === paidPayments;
+
         res.json({
             ...shipmentResult.rows[0],
             documents: documentsResult.rows,
@@ -310,7 +323,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
             clearance_schedule: clearanceResult.rows[0] || null,
             delivery_note: deliveryNoteResult.rows[0] || null,
             containers: containersResult.rows,
-            bls: blsResult.rows
+            bls: blsResult.rows,
+            is_fully_paid: isFullyPaid
         });
 
     } catch (error) {

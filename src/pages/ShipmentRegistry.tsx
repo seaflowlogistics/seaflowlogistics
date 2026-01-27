@@ -267,15 +267,31 @@ const ShipmentRegistry: React.FC = () => {
 
         // Poll for updates every 5 seconds
         const intervalId = setInterval(() => {
-            // Only poll if we aren't currently searching (to avoid UI jumpiness during typing)
+            // Only poll if we aren't currently searching
             if (!searchTerm) {
-                // Pass true to silentLoading to avoid showing the full spinner on every poll
+                // Silent load of list
                 loadJobs(true);
+
+                // If a job is selected, refresh its details (to capture status changes like Payments)
+                if (selectedJob?.id) {
+                    shipmentsAPI.getById(selectedJob.id)
+                        .then(res => {
+                            setSelectedJob((prev: any) => {
+                                // Merge to keep any local UI state on the object if any (though usually separate)
+                                return { ...prev, ...res.data };
+                            });
+                            // If Payments tab is active, refresh payments too
+                            if (activeTab === 'Payments') {
+                                loadPayments(selectedJob.id);
+                            }
+                        })
+                        .catch(err => console.error("Background refresh failed", err));
+                }
             }
         }, 5000);
 
         return () => clearInterval(intervalId);
-    }, [searchTerm]);
+    }, [searchTerm, selectedJob?.id, activeTab]); // Dependencies trigger restart of timer, ensuring we have latest closures
 
     useEffect(() => {
         if (selectedJob && activeTab === 'Payments') {
@@ -1005,8 +1021,11 @@ const ShipmentRegistry: React.FC = () => {
         const isAccountsReady = isClearanceComplete;
 
         const isDocComplete = selectedJob.documents && selectedJob.documents.length > 0;
-        const isAccountsComplete = isAccountsReady && (selectedJob.payment_status === 'Paid' || selectedJob.payment_status === 'Approved');
-        const isJobCompleted = selectedJob.status === 'Completed';
+        // Accounts Complete means all payments are PAID (calculated by backend as is_fully_paid)
+        const isAccountsComplete = isAccountsReady && selectedJob.is_fully_paid;
+
+        // Job is fully completed if accounts are settled (and potentially user manually marks as completed, but for now strict process flow)
+        const isJobCompleted = isAccountsComplete && selectedJob.status === 'Completed';
 
         let activeStage = 0;
         if (isDocComplete) activeStage = 1;
@@ -1548,8 +1567,8 @@ const ShipmentRegistry: React.FC = () => {
                                 onClick={handleSendToAccounts}
                                 disabled={!isJobCleared}
                                 className={`px-4 py-2 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2 ${isJobCleared
-                                        ? 'bg-indigo-600 hover:bg-indigo-700'
-                                        : 'bg-gray-400 cursor-not-allowed'
+                                    ? 'bg-indigo-600 hover:bg-indigo-700'
+                                    : 'bg-gray-400 cursor-not-allowed'
                                     }`}
                             >
                                 {isJobCleared && (
