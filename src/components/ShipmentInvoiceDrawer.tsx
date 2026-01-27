@@ -30,7 +30,8 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
                 office: initialData?.office || ''
             });
         }
-    }, [isOpen, initialData]);
+    }, [isOpen]); // Fixed: Only run on open, not when initialData ref updates
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
