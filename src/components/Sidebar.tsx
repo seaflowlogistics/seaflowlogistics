@@ -88,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     <div className="flex items-center justify-between p-6 border-b border-white/20">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-accent-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <PackageCheck className="w-6 h-6 text-white" />
+                                <img src="./assets/seaflow-logo.jpg" className="w-6 h-6 text-white" />
                             </div>
                             <span className="text-xl font-bold bg-gradient-to-r from-primary-700 to-accent-700 bg-clip-text text-transparent">
                                 Seaflow Logistics
