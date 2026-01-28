@@ -61,6 +61,8 @@ const ShipmentRegistry: React.FC = () => {
     const [previewDoc, setPreviewDoc] = useState<any | null>(null);
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const [historyLogs, setHistoryLogs] = useState<any[]>([]);
+    const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
+    const [jobDetailsForm, setJobDetailsForm] = useState<any>({});
 
     // Drawer State
     const [isBLDrawerOpen, setIsBLDrawerOpen] = useState(false);
@@ -1097,6 +1099,31 @@ const ShipmentRegistry: React.FC = () => {
             }
         };
 
+        const handleEditJobDetails = () => {
+            setJobDetailsForm({
+                exporter: selectedJob.exporter || selectedJob.sender_name || '',
+                consignee: selectedJob.consignee || selectedJob.receiver_name || '',
+                shipment_type: selectedJob.shipment_type || 'IMP',
+                billing_contact: selectedJob.billing_contact || '',
+                job_invoice_no: selectedJob.job_invoice_no || selectedJob.invoice_id || selectedJob.invoice?.invoice_no || ''
+            });
+            setIsEditingJobDetails(true);
+            setOpenMenu(null);
+        };
+
+        const handleSaveJobDetails = async () => {
+            try {
+                await shipmentsAPI.update(selectedJob.id, jobDetailsForm);
+                const res = await shipmentsAPI.getById(selectedJob.id);
+                setSelectedJob(res.data);
+                setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
+                setIsEditingJobDetails(false);
+            } catch (e) {
+                console.error(e);
+                alert('Failed to update details');
+            }
+        };
+
         return (
             <div className="h-full flex flex-col animate-fade-in bg-white font-sans text-gray-900">
                 {/* Header Section */}
@@ -1184,12 +1211,7 @@ const ShipmentRegistry: React.FC = () => {
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Service</p>
                                 <p className="font-bold text-xl text-gray-900">{selectedJob.service || 'Clearance'}</p>
                             </div>
-                            <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Job Invoice</p>
-                                <p className={`font-bold text-xl ${selectedJob.job_invoice_no ? 'text-gray-900' : 'text-gray-300 italic'}`}>
-                                    {selectedJob.job_invoice_no || 'Pending'}
-                                </p>
-                            </div>
+
                         </div>
                         <div>
                             {/* Action Button Logic */}
@@ -1242,41 +1264,134 @@ const ShipmentRegistry: React.FC = () => {
 
                     {activeTab === 'Details' && (<>
 
-                        {/* Exporter / Consignee Block (3.2) - Dark Card */}
+                        {/* Exporter / Consignee Block - Dark Card */}
                         <div className="bg-slate-900 text-white rounded-xl p-8 mb-6 shadow-xl relative group">
-                            <div className="absolute top-6 right-6">
-                                <button className="text-slate-400 hover:text-white transition-colors" title="Options">
-                                    <MoreHorizontal className="w-6 h-6" />
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Exporter</p>
-                                    <p className="font-bold text-lg text-slate-100">{selectedJob.exporter || selectedJob.sender_name || '-'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Consignee</p>
-                                    <p className="font-bold text-lg text-slate-100">{selectedJob.consignee || selectedJob.receiver_name || '-'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Type</p>
-                                    <p className="font-bold text-lg text-slate-100">{selectedJob.shipment_type || 'IMP'}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Billing Contact</p>
-                                    <p className="font-medium text-slate-200">{selectedJob.billing_contact || '-'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Registered Date</p>
-                                    <p className="font-medium text-slate-200">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Job Invoice</p>
-                                    <p className="font-medium text-slate-200">{selectedJob.invoice?.invoice_no || selectedJob.invoice_id || <span className="opacity-50 italic">Not Generated</span>}</p>
-                                </div>
-                            </div>
+                            {isEditingJobDetails ? (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Exporter</label>
+                                            <input
+                                                type="text"
+                                                value={jobDetailsForm.exporter}
+                                                onChange={e => setJobDetailsForm({ ...jobDetailsForm, exporter: e.target.value })}
+                                                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Consignee</label>
+                                            <input
+                                                type="text"
+                                                value={jobDetailsForm.consignee}
+                                                onChange={e => setJobDetailsForm({ ...jobDetailsForm, consignee: e.target.value })}
+                                                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Type</label>
+                                            <select
+                                                value={jobDetailsForm.shipment_type}
+                                                onChange={e => setJobDetailsForm({ ...jobDetailsForm, shipment_type: e.target.value })}
+                                                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                                            >
+                                                <option value="IMP">IMP</option>
+                                                <option value="EXP">EXP</option>
+                                                <option value="CROSS">CROSS</option>
+                                                <option value="DOMESTIC">DOMESTIC</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Billing Contact</label>
+                                            <input
+                                                type="text"
+                                                value={jobDetailsForm.billing_contact}
+                                                onChange={e => setJobDetailsForm({ ...jobDetailsForm, billing_contact: e.target.value })}
+                                                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Registered Date</label>
+                                            <p className="font-medium text-slate-200 py-2">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Job Invoice No.</label>
+                                            <input
+                                                type="text"
+                                                value={jobDetailsForm.job_invoice_no}
+                                                onChange={e => setJobDetailsForm({ ...jobDetailsForm, job_invoice_no: e.target.value })}
+                                                placeholder="Enter Invoice No"
+                                                className="w-full bg-slate-800 border border-indigo-500/50 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-800">
+                                        <button
+                                            onClick={() => setIsEditingJobDetails(false)}
+                                            className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSaveJobDetails}
+                                            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors"
+                                        >
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="absolute top-6 right-6 relative">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'jobDetails' ? null : 'jobDetails'); }}
+                                            className="text-slate-400 hover:text-white transition-colors"
+                                            title="Options"
+                                        >
+                                            <MoreHorizontal className="w-6 h-6" />
+                                        </button>
+                                        {openMenu === 'jobDetails' && (
+                                            <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
+                                                    onClick={handleEditJobDetails}
+                                                >
+                                                    <Pencil className="w-4 h-4" /> Edit Details
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Exporter</p>
+                                            <p className="font-bold text-lg text-slate-100">{selectedJob.exporter || selectedJob.sender_name || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Consignee</p>
+                                            <p className="font-bold text-lg text-slate-100">{selectedJob.consignee || selectedJob.receiver_name || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Type</p>
+                                            <p className="font-bold text-lg text-slate-100">{selectedJob.shipment_type || 'IMP'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Billing Contact</p>
+                                            <p className="font-medium text-slate-200">{selectedJob.billing_contact || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Registered Date</p>
+                                            <p className="font-medium text-slate-200">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Job Invoice</p>
+                                            <p className="font-medium text-slate-200">{selectedJob.job_invoice_no || selectedJob.invoice_id || selectedJob.invoice?.invoice_no || <span className="opacity-50 italic">Not Generated</span>}</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         {/* Shipment Invoice Section (4) */}
