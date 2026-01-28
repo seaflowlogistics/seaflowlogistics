@@ -1035,8 +1035,8 @@ const ShipmentRegistry: React.FC = () => {
         const isDocComplete = hasDocuments && hasInvoiceDetails && hasBLDetails && hasContainerDetails;
 
         // Stage 2: Clearance (50%)
-        // Rule: All BLs Delivered (Backend sets status='Cleared' or progress=100)
-        // We rely on backend 'Cleared' status which is set when all BLs have delivery notes.
+        // Rule: All BLs have Delivery Notes ISSUED (Backend sets status='Cleared' or progress=100)
+        // Completion happens when DN is issued for all BLs.
         const isClearanceComplete = isDocComplete && (selectedJob.status === 'Cleared' || selectedJob.status === 'Completed' || (selectedJob.progress && parseInt(selectedJob.progress) === 100));
 
         // Stage 3: Accounts (75%)
