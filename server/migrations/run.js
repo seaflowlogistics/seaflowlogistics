@@ -1,15 +1,31 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import pg from 'pg';
 import pool from '../config/database.js';
+
+const { Pool } = pg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function runMigrations() {
     let client;
+    let migrationPool = pool;
+
+    // Use DIRECT_URL for migrations if available to bypass connection pooling
+    if (process.env.DIRECT_URL) {
+        console.log('🔗 Using Direct Connection for migrations...');
+        migrationPool = new Pool({
+            connectionString: process.env.DIRECT_URL,
+            ssl: process.env.NODE_ENV === 'production' || process.env.DIRECT_URL?.includes('sslmode')
+                ? { rejectUnauthorized: false }
+                : false
+        });
+    }
+
     try {
-        client = await pool.connect();
+        client = await migrationPool.connect();
         console.log('🔄 Running database migrations...');
 
         // 1. Create migrations table if not exists
@@ -82,6 +98,10 @@ async function runMigrations() {
         process.exit(1);
     } finally {
         if (client) client.release();
+        if (migrationPool !== pool) {
+            await migrationPool.end();
+            console.log('🔌 Migration pool closed.');
+        }
     }
 }
 
