@@ -151,7 +151,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
             // 3. Update Status if Complete
             if (deliveredBLs >= totalBLs) {
-                await client.query('UPDATE shipments SET progress = 100, status = $1 WHERE id = $2', ['Cleared', jobId]);
+                await client.query('UPDATE shipments SET progress = 100, status = $1 WHERE id = $2', ['Pending', jobId]);
             } else {
                 // Optional: Set partial progress? e.g. (delivered / total) * 100
                 // preserving 'status' might be better if not complete, or set to 'In Clearance'

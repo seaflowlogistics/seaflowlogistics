@@ -633,10 +633,15 @@ const ShipmentRegistry: React.FC = () => {
         }
     };
 
-    const getPaymentColor = (status: string) => {
-        return status === 'Paid'
-            ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
-            : 'bg-amber-100 text-amber-700 border-amber-200';
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Completed': return 'bg-green-100 text-green-700 border-green-200';
+            case 'Paid': return 'bg-emerald-100 text-emerald-700 border-emerald-200'; // Legacy/Payment specific
+            case 'Payment': return 'bg-purple-100 text-purple-700 border-purple-200';
+            case 'Pending': return 'bg-amber-100 text-amber-700 border-amber-200';
+            case 'New': return 'bg-blue-50 text-blue-700 border-blue-200';
+            default: return 'bg-gray-100 text-gray-700 border-gray-200';
+        }
     };
 
     const handleDeleteJob = async (jobId: string, e: React.MouseEvent) => {
@@ -700,8 +705,8 @@ const ShipmentRegistry: React.FC = () => {
                         {getModeIcon(job.transport_mode)}
                         {job.transport_mode || 'SEA'}
                     </span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getPaymentColor(job.payment_status)}`}>
-                        {job.payment_status}
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getStatusColor(job.status || 'New')}`}>
+                        {job.status || 'New'}
                     </span>
                 </div>
             </div>
@@ -1061,9 +1066,27 @@ const ShipmentRegistry: React.FC = () => {
         if (isJobCompleted) activeStage = 4;
 
         const handleMarkCompleted = async () => {
-            if (!window.confirm('Are you sure you want to mark this job as fully COMPLETED?')) return;
+            let jobInvoice = selectedJob.job_invoice_no;
+
+            if (!jobInvoice) {
+                const input = window.prompt("Job Invoice Number is required to complete the job. Please enter it below:");
+                if (input === null) return; // Cancelled
+                if (!input.trim()) {
+                    alert("Job Invoice Number cannot be empty.");
+                    return;
+                }
+                jobInvoice = input.trim();
+            } else {
+                if (!window.confirm('Are you sure you want to mark this job as fully COMPLETED?')) return;
+            }
+
             try {
-                await shipmentsAPI.update(selectedJob.id, { status: 'Completed' });
+                // Update both status and job_invoice_no (if it was just entered)
+                await shipmentsAPI.update(selectedJob.id, {
+                    status: 'Completed',
+                    job_invoice_no: jobInvoice
+                });
+
                 // Refresh
                 const res = await shipmentsAPI.getById(selectedJob.id);
                 setSelectedJob(res.data);
@@ -1120,7 +1143,7 @@ const ShipmentRegistry: React.FC = () => {
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getPaymentColor(selectedJob.payment_status)}`}>
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(selectedJob.status || 'New')}`}>
                                 {selectedJob.status || 'New'}
                             </span>
                         </div>
@@ -1160,6 +1183,12 @@ const ShipmentRegistry: React.FC = () => {
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Service</p>
                                 <p className="font-bold text-xl text-gray-900">{selectedJob.service || 'Clearance'}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Job Invoice</p>
+                                <p className={`font-bold text-xl ${selectedJob.job_invoice_no ? 'text-gray-900' : 'text-gray-300 italic'}`}>
+                                    {selectedJob.job_invoice_no || 'Pending'}
+                                </p>
                             </div>
                         </div>
                         <div>

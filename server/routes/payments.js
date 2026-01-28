@@ -240,6 +240,15 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
             [paymentIds]
         );
 
+        // Update Job Status to 'Payment' for related jobs
+        const pendingJobs = [...new Set(valRes.rows.map(r => r.id))];
+        if (pendingJobs.length > 0) {
+            await pool.query(
+                "UPDATE shipments SET status = 'Payment' WHERE id = ANY($1) AND status != 'Completed'",
+                [pendingJobs]
+            );
+        }
+
         await pool.query(
             'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
             [req.user.id, 'SEND_PAYMENTS_TO_ACCOUNTS', `Sent ${result.rowCount} payments to accounts`, 'JOB', 'BATCH']
