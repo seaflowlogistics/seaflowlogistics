@@ -10,8 +10,9 @@ import {
     Loader2,
     Users,
     ScrollText,
-    UserSearch,
-    User
+    User,
+    Bell,
+    UserSearch
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -125,24 +126,32 @@ const Dashboard: React.FC = () => {
         <Layout>
             <div className="space-y-6 animate-fade-in">
                 {/* Page Header */}
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-white shadow-md flex-shrink-0">
-                        {user?.photo_url ? (
-                            <img
-                                src={user.photo_url.startsWith('http') ? user.photo_url : `${import.meta.env.MODE === 'production' ? '' : 'http://localhost:5001'}${user.photo_url}`}
-                                alt="Profile"
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <span className="text-white text-lg font-bold">
-                                {user?.username ? user.username.charAt(0).toUpperCase() : <User className="w-6 h-6 text-white" />}
-                            </span>
-                        )}
+                {/* Page Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-15 h-15 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-white shadow-md flex-shrink-0">
+                            {user?.photo_url ? (
+                                <img
+                                    src={user.photo_url.startsWith('http') ? user.photo_url : `${import.meta.env.MODE === 'production' ? '' : 'http://localhost:5001'}${user.photo_url}`}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <span className="text-white text-lg font-bold">
+                                    {user?.username ? user.username.charAt(0).toUpperCase() : <User className="w-6 h-6 text-white" />}
+                                </span>
+                            )}
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                            <p className="text-gray-600 mt-1">Welcome back <span className="font-semibold text-indigo-600">{user?.username}</span>! Here's what's happening today.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                        <p className="text-gray-600 mt-1">Welcome back <span className="font-semibold text-indigo-600">{user?.username}</span>! Here's what's happening today.</p>
-                    </div>
+                    {/* Notifications */}
+                    <button className="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all relative group">
+                        <Bell className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 transition-colors" />
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-gray-50"></span>
+                    </button>
                 </div>
 
                 {/* Stats Grid */}
