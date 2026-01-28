@@ -20,7 +20,7 @@ const pool = new Pool({
 
 // Test connection
 pool.on('connect', () => {
-    console.log('✅ Connected to Database (PostgreSQL/CockroachDB)');
+    console.log('✅ Connected to Database (Supabase)');
 });
 
 pool.on('error', (err) => {

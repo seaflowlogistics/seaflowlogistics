@@ -14,7 +14,7 @@ Before you can have a link, the code must be running on a server.
 3.  **Configure Environment Variables**:
     *   In the Railway project dashboard, go to the **"Variables"** tab.
     *   Add the following secrets:
-        *   `DATABASE_URL`: Connection string for your CockroachDB/PostgreSQL database.
+        *   `DATABASE_URL`: Connection string for your Supabase PostgreSQL database.
         *   `JWT_SECRET`: A long random string (e.g., generate one [here](https://generate-secret.vercel.app/32)).
         *   `NODE_ENV`: Set this to `production`.
         *   `PORT`: Set this to `5001`.
