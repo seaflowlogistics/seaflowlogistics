@@ -38,7 +38,7 @@ const ensureFileStorageTable = async () => {
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 filename TEXT,
                 mime_type TEXT,
-                data BYTES,
+                data BYTEA,
                 size INT,
                 uploaded_at TIMESTAMP DEFAULT current_timestamp
             );
