@@ -39,8 +39,7 @@ interface JobFormData {
     house_bl: string;
     date: string;
     expected_delivery_date: string;
-    loading_port: string;
-    vessel: string;
+
     delivery_agent: string;
     packages: PackageDetail[];
     [key: string]: any; // Allow dynamic access
@@ -744,7 +743,7 @@ const ShipmentRegistry: React.FC = () => {
                             <option value="Form Filling">Form Filling</option>
                             <option value="Clearance">Clearance</option>
                             <option value="Form Filling & Clearance">Form Filling & Clearance</option>
-                            <option value="DR">DR</option>
+
                         </select>
                         <div className="absolute right-3 top-3.5 pointer-events-none text-gray-400">
                             <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
@@ -813,7 +812,7 @@ const ShipmentRegistry: React.FC = () => {
                             >
                                 <option value="SEA">SEA</option>
                                 <option value="AIR">AIR</option>
-                                <option value="POST">POST</option>
+                                <option value="POST">COURIER</option>
                                 <option value="EXPORT">EXPORT</option>
                             </select>
                             <div className="absolute right-3 top-3.5 pointer-events-none text-gray-400">
@@ -1426,10 +1425,7 @@ const ShipmentRegistry: React.FC = () => {
                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Invoice No.</p>
                                     <p className="font-bold text-gray-900">{selectedJob.invoice_no || '-'}</p>
                                 </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Cargo Type</p>
-                                    <p className="font-bold text-gray-900 uppercase">{selectedJob.cargo_type || '-'}</p>
-                                </div>
+
                                 <div>
                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">No. Items</p>
                                     <p className="font-bold text-gray-900">{selectedJob.no_of_pkgs || '0'}</p>
@@ -1442,10 +1438,7 @@ const ShipmentRegistry: React.FC = () => {
                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Registered Date</p>
                                     <p className="font-bold text-gray-900">{new Date(selectedJob.created_at).toLocaleDateString()}</p>
                                 </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Office</p>
-                                    <p className="font-bold text-gray-900 uppercase">{selectedJob.office || '-'}</p>
-                                </div>
+
                             </div>
                         </div>
 
@@ -1528,22 +1521,7 @@ const ShipmentRegistry: React.FC = () => {
                                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">House No.</p>
                                                 <p className="font-bold text-gray-900 break-all">{bl.house_bl || '-'}</p>
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ETD</p>
-                                                <p className="font-bold text-gray-900">{bl.etd ? new Date(bl.etd).toLocaleDateString() : '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ETA</p>
-                                                <p className="font-bold text-gray-900">{bl.eta ? new Date(bl.eta).toLocaleDateString() : '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Loading Port</p>
-                                                <p className="font-bold text-gray-900">{bl.loading_port || '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Vessel</p>
-                                                <p className="font-bold text-gray-900">{bl.vessel || '-'}</p>
-                                            </div>
+
                                             <div>
                                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Delivery Agent</p>
                                                 <p className="font-bold text-gray-900">{bl.delivery_agent || '-'}</p>
@@ -1629,17 +1607,16 @@ const ShipmentRegistry: React.FC = () => {
                                                 </td>
                                                 <td className="p-2">
                                                     <select value={newContainer.container_type} onChange={e => setNewContainer({ ...newContainer, container_type: e.target.value })} className="input-field w-full py-1 px-2 border rounded bg-white">
-                                                        <option value="FCL 20">FCL 20</option>
-                                                        <option value="FCL 40">FCL 40</option>
-                                                        <option value="LCL 20">LCL 20</option>
-                                                        <option value="LCL 40">LCL 40</option>
-                                                        <option value="OT 20">OT 20</option>
-                                                        <option value="OT 40">OT 40</option>
-                                                        <option value="FR 20">FR 20</option>
-                                                        <option value="FR 40">FR 40</option>
-                                                        <option value="DR">D/R</option>
-                                                        <option value="RF 20">Reefer 20 ft</option>
-                                                        <option value="RF 40">Reefer 40 ft</option>
+                                                        <option value="FCL 20">20' FCL </option>
+                                                        <option value="FCL 40">40' FCL </option>
+                                                        <option value="LCL 20">20' LCL </option>
+                                                        <option value="LCL 40">40' LCL </option>
+                                                        <option value="OT 20">20' OT </option>
+                                                        <option value="OT 40">40' OT </option>
+                                                        <option value="FR 20">20' FR </option>
+                                                        <option value="FR 40">40' FR </option>
+                                                        <option value="RF 20">20' RF </option>
+                                                        <option value="RF 40">40' RF </option>
                                                         <option value="LO">Loose Cargo</option>
                                                     </select>
                                                 </td>
@@ -1672,17 +1649,16 @@ const ShipmentRegistry: React.FC = () => {
                                                                 onChange={e => setNewContainer({ ...newContainer, container_type: e.target.value })}
                                                                 className="input-field w-full py-1 px-2 border rounded bg-white"
                                                             >
-                                                                <option value="FCL 20">FCL 20</option>
-                                                                <option value="FCL 40">FCL 40</option>
-                                                                <option value="LCL 20">LCL 20</option>
-                                                                <option value="LCL 40">LCL 40</option>
-                                                                <option value="OT 20">OT 20</option>
-                                                                <option value="OT 40">OT 40</option>
-                                                                <option value="FR 20">FR 20</option>
-                                                                <option value="FR 40">FR 40</option>
-                                                                <option value="DR">D/R</option>
-                                                                <option value="RF 20">Reefer 20 ft</option>
-                                                                <option value="RF 40">Reefer 40 ft</option>
+                                                                <option value="FCL 20">20' FCL </option>
+                                                                <option value="FCL 40">40' FCL </option>
+                                                                <option value="LCL 20">20' LCL </option>
+                                                                <option value="LCL 40">40' LCL </option>
+                                                                <option value="OT 20">20' OT </option>
+                                                                <option value="OT 40">40' OT </option>
+                                                                <option value="FR 20">20' FR </option>
+                                                                <option value="FR 40">40' FR </option>
+                                                                <option value="RF 20">20' RF </option>
+                                                                <option value="RF 40">40' RF </option>
                                                                 <option value="LO">Loose Cargo</option>
                                                             </select>
                                                         </td>
@@ -1909,17 +1885,17 @@ const ShipmentRegistry: React.FC = () => {
                 color = "text-blue-600 bg-blue-50";
             }
             else if (log.action === 'UPDATE_SHIPMENT_INVOICE' || (log.action === 'UPDATE_SHIPMENT' && log.details.includes('Invoice'))) {
-                label = 'Shipment Invoice';
+                label = 'Shipment Invoice Updated';
                 icon = FileText;
                 color = "text-purple-600 bg-purple-50";
             }
             else if (log.action === 'ADD_BL' || log.action === 'UPDATE_BL') {
-                label = 'BL/AWB Details';
+                label = 'BL/AWB Details Updated';
                 icon = FileSpreadsheet;
                 color = "text-indigo-600 bg-indigo-50";
             }
             else if (log.action === 'CREATE_CLEARANCE_SCHEDULE') {
-                label = 'Clearance';
+                label = 'Clearance Schedule Created';
                 icon = Calendar;
                 color = "text-orange-600 bg-orange-50";
             }
@@ -1984,7 +1960,7 @@ const ShipmentRegistry: React.FC = () => {
                         );
                     })}
                     {processLogs.length === 0 && (
-                        <p className="text-sm text-gray-400 pl-8">No process milestones recorded yet.</p>
+                        <p className="text-sm text-gray-400 pl-8">No process has been recorded yet.</p>
                     )}
                 </div>
             </div>
