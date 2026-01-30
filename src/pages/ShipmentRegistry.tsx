@@ -1082,25 +1082,35 @@ const ShipmentRegistry: React.FC = () => {
         if (isJobCompleted) activeStage = 4;
 
         const handleMarkCompleted = async () => {
-            let jobInvoice = selectedJob.job_invoice_no;
+            // Role Check
+            const allowedRoles = ['Administrator', 'Accountant'];
+            if (!user || !allowedRoles.includes(user.role)) {
+                alert("Only Accountants or Administrators can mark a job as Completed.");
+                return;
+            }
 
-            if (!jobInvoice) {
-                const input = window.prompt("Job Invoice Number is required to complete the job. Please enter it below:");
-                if (input === null) return; // Cancelled
-                if (!input.trim()) {
-                    alert("Job Invoice Number cannot be empty.");
-                    return;
-                }
-                jobInvoice = input.trim();
-            } else {
-                if (!window.confirm('Are you sure you want to mark this job as fully COMPLETED?')) return;
+            let currentInvoice = selectedJob.job_invoice_no || '';
+
+            let message = currentInvoice
+                ? "Please confirm the Job Invoice Number to complete the job:"
+                : "Job Invoice Number is required to complete the job. Please enter it below:";
+
+            const input = window.prompt(message, currentInvoice);
+
+            if (input === null) return; // Cancelled
+
+            const finalizedInvoice = input.trim();
+
+            if (!finalizedInvoice) {
+                alert("Job Invoice Number cannot be empty.");
+                return;
             }
 
             try {
-                // Update both status and job_invoice_no (if it was just entered)
+                // Update both status and job_invoice_no
                 await shipmentsAPI.update(selectedJob.id, {
                     status: 'Completed',
-                    job_invoice_no: jobInvoice
+                    job_invoice_no: finalizedInvoice
                 });
 
                 // Refresh
