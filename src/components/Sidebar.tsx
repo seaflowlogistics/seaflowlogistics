@@ -50,7 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     }
 
     // Clearance Tools
-    if (isClearance) {
+    if (isClearance || isAdministrator) {
         menuItems.push(
             { icon: Calendar, label: 'Clearance Schedule', path: '/schedule' },
             { icon: ClipboardList, label: 'Delivery Notes', path: '/delivery-notes' }
