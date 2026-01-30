@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
-import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI, deliveryAgentsAPI, vendorsAPI, paymentsAPI, paymentItemsAPI, logsAPI } from '../services/api';
+import { shipmentsAPI, consigneesAPI, exportersAPI, clearanceAPI, deliveryAgentsAPI, vendorsAPI, paymentsAPI, paymentItemsAPI, logsAPI, customersAPI } from '../services/api';
 import {
     Search, Plus,
     FileText,
@@ -34,6 +34,7 @@ interface JobFormData {
     shipment_type: string;
     billing_contact_same: boolean;
     billing_contact: string;
+    billing_type?: 'Individual' | 'Company';
     manual_invoice_no: string;
     bl_awb_no: string;
     house_bl: string;
@@ -247,9 +248,11 @@ const ShipmentRegistry: React.FC = () => {
     const [deliveryAgentsList, setDeliveryAgentsList] = useState<any[]>([]);
     const [vendorsList, setVendorsList] = useState<any[]>([]);
     const [paymentTypesList, setPaymentTypesList] = useState<any[]>([]);
+    const [customersList, setCustomersList] = useState<any[]>([]);
 
     // Form State (for Register New Job)
     const [isEditingJob, setIsEditingJob] = useState(false);
+    const [billingType, setBillingType] = useState('Individual');
     const [formData, setFormData] = useState<JobFormData>({
         service: 'Clearance',
         consignee: '',
@@ -353,6 +356,9 @@ const ShipmentRegistry: React.FC = () => {
 
             setVendorsList(vendorsRes.data || []);
 
+            const customersRes = await customersAPI.getAll();
+            setCustomersList(customersRes.data || []);
+
             // Load Payment Types
             const paymentItemsRes = await paymentItemsAPI.getAll();
             setPaymentTypesList(paymentItemsRes.data || []);
@@ -405,6 +411,7 @@ const ShipmentRegistry: React.FC = () => {
         setSelectedJob(null);
         // Ensure dropdowns are fresh
         loadDropdownData();
+        setBillingType('Individual');
     };
 
     const handleViewDoc = async (doc: any) => {
@@ -850,20 +857,51 @@ const ShipmentRegistry: React.FC = () => {
 
                     {!formData.billing_contact_same && (
                         <div className="mt-4 animate-fade-in-down">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Billing Contact</label>
+                            <div className="flex gap-4 mb-3 p-1 bg-white rounded-lg border border-gray-200 w-fit">
+                                <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors ${billingType === 'Individual' ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50'}`}>
+                                    <input
+                                        type="radio"
+                                        name="billingType"
+                                        className="hidden"
+                                        checked={billingType === 'Individual'}
+                                        onChange={() => {
+                                            setBillingType('Individual');
+                                            setFormData(prev => ({ ...prev, billing_contact: '' }));
+                                        }}
+                                    />
+                                    <span className="text-sm font-medium">Individual</span>
+                                </label>
+                                <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors ${billingType === 'Company' ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50'}`}>
+                                    <input
+                                        type="radio"
+                                        name="billingType"
+                                        className="hidden"
+                                        checked={billingType === 'Company'}
+                                        onChange={() => {
+                                            setBillingType('Company');
+                                            setFormData(prev => ({ ...prev, billing_contact: '' }));
+                                        }}
+                                    />
+                                    <span className="text-sm font-medium">Company</span>
+                                </label>
+                            </div>
+
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Billing Contact ({billingType})</label>
                             <div className="relative">
                                 <input
                                     list="billing-contact-list"
                                     name="billing_contact"
                                     value={formData.billing_contact}
                                     onChange={handleInputChange}
-                                    placeholder="Search or Select Billing Contact..."
+                                    placeholder={`Search ${billingType} Contact...`}
                                     className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-gray-700"
                                 />
                                 <datalist id="billing-contact-list">
-                                    {consigneesList.map((consignee: any) => (
-                                        <option key={consignee.id} value={consignee.name} />
-                                    ))}
+                                    {customersList
+                                        .filter(c => (c.type || 'Individual') === billingType)
+                                        .map((c: any) => (
+                                            <option key={c.id} value={c.name} />
+                                        ))}
                                 </datalist>
                             </div>
                         </div>

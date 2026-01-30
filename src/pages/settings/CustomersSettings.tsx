@@ -180,7 +180,7 @@ const CustomersSettings: React.FC = () => {
                     className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'Individual' ? 'text-black' : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
-                    Individuals
+                    Individual
                     {activeTab === 'Individual' && (
                         <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black rounded-t-full" />
                     )}
@@ -190,7 +190,7 @@ const CustomersSettings: React.FC = () => {
                     className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'Company' ? 'text-black' : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
-                    Companies
+                    Company
                     {activeTab === 'Company' && (
                         <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black rounded-t-full" />
                     )}
