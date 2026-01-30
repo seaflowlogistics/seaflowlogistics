@@ -294,7 +294,7 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Admin Management Section */}
-                {user?.role === 'Administrator' && (
+                {['Administrator', 'All'].includes(user?.role || '') && (
                     <div className="mb-6">
                         <Link to="/users" className="glass-card p-6 flex items-center justify-between hover:shadow-xl transition-all cursor-pointer group">
                             <div>
@@ -308,9 +308,9 @@ const Dashboard: React.FC = () => {
                     </div>
                 )}
 
-                {/* System Activity Section - Visible to All */}
-                <div className="mb-6">
-                    {user?.role === 'Administrator' ? (
+                {/* System Activity Section - Admins Only */}
+                {['Administrator', 'All'].includes(user?.role || '') && (
+                    <div className="mb-6">
                         <Link to="/logs" className="glass-card p-6 flex items-center justify-between hover:shadow-xl transition-all cursor-pointer group">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">Audit Logs</h3>
@@ -320,41 +320,12 @@ const Dashboard: React.FC = () => {
                                 <ScrollText className="w-6 h-6 text-orange-600 group-hover:text-white transition-colors" />
                             </div>
                         </Link>
-                    ) : (
-                        <div
-                            onClick={() => {
-                                if (window.confirm("Access Restricted. You need Administrator permission to view Audit Logs.\n\nWould you like to send an access request to the Admin?")) {
-                                    alert("Access request sent successfully!");
-                                }
-                            }}
-                            className="glass-card p-6 flex items-center justify-between hover:shadow-xl transition-all cursor-pointer group"
-                        >
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-1">Audit Logs</h3>
-                                <p className="text-sm text-gray-600">View system activities and track changes</p>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center group-hover:bg-orange-600 transition-colors">
-                                <ScrollText className="w-6 h-6 text-orange-600 group-hover:text-white transition-colors" />
-                            </div>
-                        </div>
-                    )}
-                </div>
 
-
-                {/* Clearance Agent Actions */}
-                {(user?.role === 'Clearance Agent' || user?.role === 'Administrator') && (
-                    <div className="glass-card p-6 hover:shadow-xl transition-all cursor-pointer group mb-6">
-                        <Link to="/shipments/new" className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-1">Create New Shipment</h3>
-                                <p className="text-sm text-gray-600">Register a new shipment, upload documents, and assign details</p>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-600 transition-colors">
-                                <Package className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
-                            </div>
-                        </Link>
                     </div>
                 )}
+
+
+
 
                 {/* Recent Shipments */}
                 <div className="glass-card p-6">
