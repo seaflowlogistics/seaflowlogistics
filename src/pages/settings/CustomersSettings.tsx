@@ -13,11 +13,13 @@ const CustomersSettings: React.FC = () => {
 
     // Form State
     const [formData, setFormData] = useState({
+        type: 'Individual', // Individual | Company
         name: '',
         email: '',
         phone: '',
         address: '',
-        code: ''
+        code: '', // ID/Passport or Reg No
+        gst_tin: ''
     });
 
     const fetchCustomers = async () => {
@@ -39,14 +41,22 @@ const CustomersSettings: React.FC = () => {
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // Prepare payload
+            const payload = {
+                ...formData,
+                address: formData.type === 'Company' && formData.gst_tin
+                    ? `${formData.address}\n\nGSTIN: ${formData.gst_tin}`
+                    : formData.address
+            };
+
             if (editingId) {
-                await customersAPI.update(editingId, formData);
+                await customersAPI.update(editingId, payload);
             } else {
-                await customersAPI.create(formData);
+                await customersAPI.create(payload);
             }
             setShowAddModal(false);
             setEditingId(null);
-            setFormData({ name: '', email: '', phone: '', address: '', code: '' });
+            resetForm();
             fetchCustomers();
         } catch (error) {
             console.error('Failed to save customer', error);
@@ -56,21 +66,44 @@ const CustomersSettings: React.FC = () => {
 
     const handleEdit = (customer: any) => {
         setEditingId(customer.id);
+
+        // Parse Address to extract GSTIN if present
+        let address = customer.address || '';
+        let gst_tin = '';
+        if (address.includes('GSTIN: ')) {
+            const parts = address.split('GSTIN: ');
+            address = parts[0].trim();
+            gst_tin = parts[1].trim();
+        }
+
+        // Infer Type: If GSTIN exists or name looks like a company, maybe? 
+        // For now, default to Individual unless GSTIN found, or user manually switches.
+        // Actually, let's look for a flag or just heuristic.
+        const type = gst_tin ? 'Company' : 'Individual';
+
         setFormData({
+            type,
             name: customer.name || '',
             email: customer.email || '',
             phone: customer.phone || '',
-            address: customer.address || '',
-            code: customer.code || ''
+            address: address,
+            code: customer.code || '',
+            gst_tin
         });
         setShowAddModal(true);
+    };
+
+    const resetForm = () => {
+        setFormData({ type: 'Individual', name: '', email: '', phone: '', address: '', code: '', gst_tin: '' });
     };
 
     const closeModal = () => {
         setShowAddModal(false);
         setEditingId(null);
-        setFormData({ name: '', email: '', phone: '', address: '', code: '' });
+        resetForm();
     };
+
+    // ... (keep file upload and delete handlers same)
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -160,7 +193,7 @@ const CustomersSettings: React.FC = () => {
                     <button
                         onClick={() => {
                             setEditingId(null);
-                            setFormData({ name: '', email: '', phone: '', address: '', code: '' });
+                            resetForm();
                             setShowAddModal(true);
                         }}
                         className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
@@ -190,9 +223,9 @@ const CustomersSettings: React.FC = () => {
                             <thead>
                                 <tr className="bg-black text-white text-xs uppercase tracking-wider">
                                     <th className="py-3 px-4 font-semibold w-1/3">Name</th>
-                                    <th className="py-3 px-4 font-semibold">Code</th>
+                                    <th className="py-3 px-4 font-semibold">ID / Code</th>
                                     <th className="py-3 px-4 font-semibold">Email</th>
-                                    <th className="py-3 px-4 font-semibold">Phone</th>
+                                    <th className="py-3 px-4 font-semibold">Contact</th>
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -237,58 +270,151 @@ const CustomersSettings: React.FC = () => {
                             </button>
                         </div>
                         <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Company / Name *</label>
-                                <input
-                                    required
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="e.g. Acme Corp"
-                                />
+
+                            {/* Type Toggle */}
+                            <div className="flex p-1 bg-gray-100 rounded-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, type: 'Individual' })}
+                                    className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${formData.type === 'Individual' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    Individual
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, type: 'Company' })}
+                                    className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${formData.type === 'Company' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    Company
+                                </button>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Code / ID</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
-                                    value={formData.code}
-                                    onChange={e => setFormData({ ...formData, code: e.target.value })}
-                                    placeholder="e.g. CUST1001"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                    <input
-                                        type="email"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
-                                        value={formData.email}
-                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                        placeholder="contact@acme.com"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
-                                        value={formData.phone}
-                                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                        placeholder="+1 234..."
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                <textarea
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all resize-none h-24"
-                                    value={formData.address}
-                                    onChange={e => setFormData({ ...formData, address: e.target.value })}
-                                    placeholder="Complete address..."
-                                />
-                            </div>
+
+                            {formData.type === 'Individual' ? (
+                                <>
+                                    {/* Individual Fields */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                            value={formData.name}
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            placeholder="Full Name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">ID / Passport Number</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all font-mono"
+                                            value={formData.code}
+                                            onChange={e => setFormData({ ...formData, code: e.target.value })}
+                                            placeholder="e.g. A1234567"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                            <input
+                                                type="email"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                                value={formData.email}
+                                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                                placeholder="email@example.com"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                                value={formData.phone}
+                                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                                placeholder="+1 234..."
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                        <textarea
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all resize-none h-24"
+                                            value={formData.address}
+                                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                            placeholder="Home Address..."
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    {/* Company Fields */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                            value={formData.name}
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            placeholder="Registered Company Name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Company Registration Number</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all font-mono"
+                                            value={formData.code}
+                                            onChange={e => setFormData({ ...formData, code: e.target.value })}
+                                            placeholder="Reg. No."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                        <textarea
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all resize-none h-20"
+                                            value={formData.address}
+                                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                            placeholder="Headquarters Address..."
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                            <input
+                                                type="email"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                                value={formData.email}
+                                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                                placeholder="company@example.com"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                                value={formData.phone}
+                                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                                placeholder="Office Phone"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">GST Tin</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all font-mono"
+                                            value={formData.gst_tin}
+                                            onChange={e => setFormData({ ...formData, gst_tin: e.target.value })}
+                                            placeholder="GSTIN..."
+                                        />
+                                    </div>
+                                </>
+                            )}
+
                             <div className="pt-2 flex justify-end gap-3">
                                 <button
                                     type="button"

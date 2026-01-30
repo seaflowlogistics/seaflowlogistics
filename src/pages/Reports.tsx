@@ -88,6 +88,7 @@ const Reports: React.FC = () => {
             created++;
             const status = s.status?.toLowerCase() || '';
 
+
             if (status !== 'cancelled' && status !== 'terminated') {
                 if (status === 'completed') {
                     completed++;

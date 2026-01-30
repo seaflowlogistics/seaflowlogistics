@@ -14,9 +14,9 @@ const ConsigneesSettings: React.FC = () => {
     // Form State
     const [formData, setFormData] = useState({
         name: '',
-        email: '',
+
         phone: '',
-        address: '',
+
         code: ''
     });
 
@@ -46,7 +46,7 @@ const ConsigneesSettings: React.FC = () => {
             }
             setShowAddModal(false);
             setEditingId(null);
-            setFormData({ name: '', email: '', phone: '', address: '', code: '' });
+            setFormData({ name: '', phone: '', code: '' });
             fetchConsignees();
         } catch (error) {
             console.error('Failed to save consignee', error);
@@ -58,9 +58,9 @@ const ConsigneesSettings: React.FC = () => {
         setEditingId(consignee.id);
         setFormData({
             name: consignee.name || '',
-            email: consignee.email || '',
+
             phone: consignee.phone || '',
-            address: consignee.address || '',
+
             code: consignee.code || ''
         });
         setShowAddModal(true);
@@ -69,7 +69,7 @@ const ConsigneesSettings: React.FC = () => {
     const closeModal = () => {
         setShowAddModal(false);
         setEditingId(null);
-        setFormData({ name: '', email: '', phone: '', address: '', code: '' });
+        setFormData({ name: '', phone: '', code: '' });
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,7 +162,7 @@ const ConsigneesSettings: React.FC = () => {
                     <button
                         onClick={() => {
                             setEditingId(null);
-                            setFormData({ name: '', email: '', phone: '', address: '', code: '' });
+                            setFormData({ name: '', phone: '', code: '' });
                             setShowAddModal(true);
                         }}
                         className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
@@ -194,7 +194,7 @@ const ConsigneesSettings: React.FC = () => {
                                 <tr className="bg-black text-white text-xs uppercase tracking-wider">
                                     <th className="py-3 px-4 font-semibold w-1/3">Name</th>
                                     <th className="py-3 px-4 font-semibold">Code</th>
-                                    <th className="py-3 px-4 font-semibold">Email</th>
+
                                     <th className="py-3 px-4 font-semibold">Phone</th>
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
@@ -204,7 +204,7 @@ const ConsigneesSettings: React.FC = () => {
                                     <tr key={item.id} className="hover:bg-gray-50 transition-colors group text-sm">
                                         <td className="py-3 px-4 font-semibold text-gray-900">{item.name}</td>
                                         <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.code || '-'}</td>
-                                        <td className="py-3 px-4 text-gray-600">{item.email || '-'}</td>
+
                                         <td className="py-3 px-4 text-gray-600 font-mono">{item.phone || '-'}</td>
                                         <td className="py-3 px-4 text-right flex justify-end gap-2">
                                             <button
@@ -263,16 +263,7 @@ const ConsigneesSettings: React.FC = () => {
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                    <input
-                                        type="email"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
-                                        value={formData.email}
-                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                        placeholder="contact@acme.com"
-                                    />
-                                </div>
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                                     <input
@@ -284,15 +275,7 @@ const ConsigneesSettings: React.FC = () => {
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                <textarea
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all resize-none h-24"
-                                    value={formData.address}
-                                    onChange={e => setFormData({ ...formData, address: e.target.value })}
-                                    placeholder="Complete address..."
-                                />
-                            </div>
+
                             <div className="pt-2 flex justify-end gap-3">
                                 <button
                                     type="button"
