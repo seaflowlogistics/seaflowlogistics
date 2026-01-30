@@ -17,6 +17,7 @@ interface Shipment {
     consignee_name: string;
     created_at: string;
     status: string;
+    payment_status?: string; // payment_status from the API
     port_of_loading?: string;
     transport_mode?: string;
     // Add other fields as needed based on API response
@@ -31,10 +32,10 @@ const Reports: React.FC = () => {
 
     // Stats
     const [stats, setStats] = useState({
-        pending: 0,
+        created: 0,
+        pendingPayment: 0,
         completed: 0,
-        cancelled: 0,
-        total: 0
+        cancelled: 0
     });
 
     // Filtered Shipments for Table
@@ -76,28 +77,43 @@ const Reports: React.FC = () => {
         filteredShipments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setFilteredShipments(monthShipments);
 
-        // 2. Calculate Stats (Overall or for this month? User image says "Last 30 days" under cards, but usually reports are for the selected period. Let's stick to selected month stats for consistency with the chart)
-        // Actually, typical dashboard logic:
-        // - Cards: Summary of the VIEWED period (selected month).
-        let pending = 0;
+        // 2. Calculate Stats
+        // Jobs Created: Total in this month
+        // Pending Payment: Jobs specifically with payment_status != 'Paid' (and not cancelled potentially?)
+        // Completed: Job status Completed AND Payment status Paid
+
+        let pendingPayment = 0;
         let completed = 0;
         let cancelled = 0;
 
         monthShipments.forEach(s => {
-            const st = s.status?.toLowerCase() || '';
-            if (st === 'completed') completed++;
-            else if (st === 'cancelled' || st === 'terminated') cancelled++;
-            else pending++;
+            const status = s.status?.toLowerCase() || '';
+            const payment = s.payment_status?.toLowerCase() || 'pending';
+
+            if (status === 'cancelled' || status === 'terminated') {
+                cancelled++;
+            } else {
+                // Completed Logic: Delivered AND Paid
+                if (status === 'completed' && payment === 'paid') {
+                    completed++;
+                }
+
+                // Pending Payment Logic: Active jobs that are not paid
+                // (Or should it include Completed but unpaid? Yes, pending payment implies any unpaid job)
+                if (payment !== 'paid') {
+                    pendingPayment++;
+                }
+            }
         });
 
         setStats({
-            pending,
+            created: monthShipments.length,
+            pendingPayment,
             completed,
-            cancelled,
-            total: monthShipments.length
+            cancelled
         });
 
-        // 3. Prepare Chart Data (Day by Day)
+        // 3. Prepare Chart Data (Day by Day Volume)
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const dailyData = [];
 
@@ -111,8 +127,6 @@ const Reports: React.FC = () => {
                 return sDate.getDate() === i;
             });
 
-            // You can split by status if you want stacked area, or just total volume
-            // The image shows a single line/area. Let's do Total Volume.
             dailyData.push({
                 date: dateStr,
                 day: i,
@@ -137,7 +151,7 @@ const Reports: React.FC = () => {
                 <div className="bg-white p-3 border border-gray-100 shadow-lg rounded-lg">
                     <p className="text-sm font-bold text-gray-900">{new Date(label).toDateString()}</p>
                     <p className="text-sm text-indigo-600 font-medium">
-                        Shipments: {payload[0].value}
+                        Jobs Created: {payload[0].value}
                     </p>
                 </div>
             );
@@ -174,31 +188,47 @@ const Reports: React.FC = () => {
                     <div className="space-y-8">
                         {/* KPI Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                                <p className="text-gray-500 text-sm font-medium">Pending Jobs</p>
-                                <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.pending}</h3>
-                                <p className="text-xs text-gray-400 mt-1">in {date.toLocaleDateString('en-US', { month: 'long' })}</p>
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group">
+                                <div className="relative z-10">
+                                    <p className="text-gray-500 text-sm font-medium">Jobs Created</p>
+                                    <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.created}</h3>
+                                    <p className="text-xs text-gray-400 mt-1">Total for {date.toLocaleDateString('en-US', { month: 'short' })}</p>
+                                </div>
+                                <div className="absolute right-0 top-0 h-full w-2 bg-indigo-500"></div>
                             </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                                <p className="text-gray-500 text-sm font-medium">Completed Jobs</p>
-                                <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.completed}</h3>
-                                <p className="text-xs text-gray-400 mt-1">in {date.toLocaleDateString('en-US', { month: 'long' })}</p>
+
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group">
+                                <div className="relative z-10">
+                                    <p className="text-gray-500 text-sm font-medium">Pending Payment</p>
+                                    <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.pendingPayment}</h3>
+                                    <p className="text-xs text-gray-400 mt-1">Unpaid Jobs</p>
+                                </div>
+                                <div className="absolute right-0 top-0 h-full w-2 bg-amber-500"></div>
                             </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                                <p className="text-gray-500 text-sm font-medium">Cancelled Jobs</p>
-                                <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.cancelled}</h3>
-                                <p className="text-xs text-gray-400 mt-1">in {date.toLocaleDateString('en-US', { month: 'long' })}</p>
+
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group">
+                                <div className="relative z-10">
+                                    <p className="text-gray-500 text-sm font-medium">Completed</p>
+                                    <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.completed}</h3>
+                                    <p className="text-xs text-gray-400 mt-1">Delivered & Paid</p>
+                                </div>
+                                <div className="absolute right-0 top-0 h-full w-2 bg-emerald-500"></div>
                             </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                                <p className="text-gray-500 text-sm font-medium">Total Jobs</p>
-                                <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</h3>
-                                <p className="text-xs text-gray-400 mt-1">in {date.toLocaleDateString('en-US', { month: 'long' })}</p>
+
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group">
+                                <div className="relative z-10">
+                                    <p className="text-gray-500 text-sm font-medium">Cancelled</p>
+                                    <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.cancelled}</h3>
+                                    <p className="text-xs text-gray-400 mt-1">Terminated Jobs</p>
+                                </div>
+                                <div className="absolute right-0 top-0 h-full w-2 bg-red-500"></div>
                             </div>
                         </div>
 
                         {/* Chart */}
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                            <div className="h-[350px] w-full mt-4">
+                            <h3 className="font-bold text-gray-900 mb-6">Job Creation Volume</h3>
+                            <div className="h-[350px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart
                                         data={chartData}
@@ -206,8 +236,8 @@ const Reports: React.FC = () => {
                                     >
                                         <defs>
                                             <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.1} />
-                                                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} />
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -228,7 +258,7 @@ const Reports: React.FC = () => {
                                         <Area
                                             type="monotone"
                                             dataKey="volume"
-                                            stroke="#F59E0B"
+                                            stroke="#6366f1"
                                             strokeWidth={3}
                                             fillOpacity={1}
                                             fill="url(#colorVolume)"
@@ -242,7 +272,7 @@ const Reports: React.FC = () => {
                         {/* Job Details Table */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                             <div className="px-6 py-5 border-b border-gray-100">
-                                <h3 className="font-bold text-gray-900">Job Details</h3>
+                                <h3 className="font-bold text-gray-900">Job Details ({date.toLocaleString('en-US', { month: 'long' })})</h3>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
@@ -252,6 +282,7 @@ const Reports: React.FC = () => {
                                             <th className="px-6 py-4">Consignee</th>
                                             <th className="px-6 py-4">Date</th>
                                             <th className="px-6 py-4">Status</th>
+                                            <th className="px-6 py-4">Payment</th>
                                             <th className="px-6 py-4">Port</th>
                                             <th className="px-6 py-4 text-right">Action</th>
                                         </tr>
@@ -276,6 +307,13 @@ const Reports: React.FC = () => {
                                                                 job.status === 'Clearance' ? 'bg-orange-100 text-orange-700' :
                                                                     'bg-gray-100 text-gray-700'}`}>
                                                             {job.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase
+                                                            ${job.payment_status === 'Paid' ? 'bg-green-100 text-green-700' :
+                                                                'bg-amber-100 text-amber-700'}`}>
+                                                            {job.payment_status || 'Pending'}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-gray-500 uppercase">{job.port_of_loading || job.port || '-'}</td>
