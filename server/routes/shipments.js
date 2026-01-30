@@ -305,7 +305,12 @@ router.get('/:id', authenticateToken, async (req, res) => {
         const containersResult = await pool.query('SELECT * FROM shipment_containers WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
         const blsResult = await pool.query('SELECT * FROM shipment_bls WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
 
-        const deliveryNoteResult = await pool.query('SELECT * FROM delivery_notes WHERE shipment_id = $1', [id]);
+        const deliveryNoteResult = await pool.query(`
+            SELECT DISTINCT dn.* 
+            FROM delivery_notes dn
+            JOIN delivery_note_items dni ON dn.id = dni.delivery_note_id
+            WHERE dni.job_id = $1
+        `, [id]);
 
         // Calculate Payment Completion (Job Payments Module)
         const paymentsStats = await pool.query(`
