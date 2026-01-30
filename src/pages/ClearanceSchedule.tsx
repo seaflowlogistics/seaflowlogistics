@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
 import { Search, Calendar, ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import { clearanceAPI, deliveryNotesAPI } from '../services/api';
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
@@ -7,6 +8,7 @@ import ClearanceDetailsDrawer from '../components/ClearanceDetailsDrawer';
 import DeliveryNoteDrawer from '../components/DeliveryNoteDrawer';
 
 const ClearanceSchedule: React.FC = () => {
+    const { user } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [clearanceType, setClearanceType] = useState('All types');
     const [transportMode, setTransportMode] = useState('All modes');
@@ -316,13 +318,16 @@ const ClearanceSchedule: React.FC = () => {
                                                 >
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                                                    className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors ml-2"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+
+                                                {user?.role === 'Administrator' && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                                                        className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors ml-2"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -371,7 +376,7 @@ const ClearanceSchedule: React.FC = () => {
                     onSave={handleDeliveryNoteSave}
                 />
             </div>
-        </Layout>
+        </Layout >
     );
 };
 

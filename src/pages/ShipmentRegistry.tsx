@@ -957,24 +957,26 @@ const ShipmentRegistry: React.FC = () => {
                                             >
                                                 <Download className="w-4 h-4" />
                                             </button>
-                                            <button
-                                                onClick={async () => {
-                                                    if (window.confirm('Delete document?')) {
-                                                        try {
-                                                            await shipmentsAPI.deleteDocument(selectedJob.id, doc.id);
-                                                            const res = await shipmentsAPI.getById(selectedJob.id);
-                                                            setSelectedJob(res.data);
-                                                        } catch (e) {
-                                                            console.error(e);
-                                                            alert('Failed to delete');
+                                            {user?.role === 'Administrator' && (
+                                                <button
+                                                    onClick={async () => {
+                                                        if (window.confirm('Delete document?')) {
+                                                            try {
+                                                                await shipmentsAPI.deleteDocument(selectedJob.id, doc.id);
+                                                                const res = await shipmentsAPI.getById(selectedJob.id);
+                                                                setSelectedJob(res.data);
+                                                            } catch (e) {
+                                                                console.error(e);
+                                                                alert('Failed to delete');
+                                                            }
                                                         }
-                                                    }
-                                                }}
-                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                                    }}
+                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -1542,13 +1544,15 @@ const ShipmentRegistry: React.FC = () => {
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
                                             </button>
-                                            <button
-                                                onClick={() => handleDeleteBLItem(bl.id)}
-                                                className="text-gray-300 hover:text-red-600 p-1"
-                                                title="Delete this BL"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
+                                            {user?.role === 'Administrator' && (
+                                                <button
+                                                    onClick={() => handleDeleteBLItem(bl.id)}
+                                                    className="text-gray-300 hover:text-red-600 p-1"
+                                                    title="Delete this BL"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
@@ -1752,7 +1756,9 @@ const ShipmentRegistry: React.FC = () => {
                                                                 >
                                                                     <Pencil className="w-4 h-4" />
                                                                 </button>
-                                                                <button onClick={() => handleDeleteContainerItem(c.id)} className="text-gray-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50"><Trash2 className="w-4 h-4" /></button>
+                                                                {user?.role === 'Administrator' && (
+                                                                    <button onClick={() => handleDeleteContainerItem(c.id)} className="text-gray-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50"><Trash2 className="w-4 h-4" /></button>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1885,20 +1891,22 @@ const ShipmentRegistry: React.FC = () => {
                                         <td className="py-4 px-6 text-center">
                                             <div className="flex items-center justify-center gap-2">
 
-                                                <button
-                                                    onClick={async () => {
-                                                        if (window.confirm('Delete payment?')) {
-                                                            try {
-                                                                await paymentsAPI.delete(payment.id);
-                                                                loadPayments(selectedJob.id);
-                                                            } catch (e) { console.error(e); }
-                                                        }
-                                                    }}
-                                                    className="w-8 h-8 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors flex items-center justify-center"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                {user?.role === 'Administrator' && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (window.confirm('Delete payment?')) {
+                                                                try {
+                                                                    await paymentsAPI.delete(payment.id);
+                                                                    loadPayments(selectedJob.id);
+                                                                } catch (e) { console.error(e); }
+                                                            }
+                                                        }}
+                                                        className="w-8 h-8 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors flex items-center justify-center"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
 import {
     Search, Printer, ChevronDown,
     X, Download, Upload,
@@ -75,6 +76,7 @@ interface DeliveryNote {
 }
 
 const DeliveryNotes: React.FC = () => {
+    const { user } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [recordsPerPage, setRecordsPerPage] = useState('50 records');
     const [statusFilter, setStatusFilter] = useState('All statuses');
@@ -916,14 +918,15 @@ const DeliveryNotes: React.FC = () => {
                                                 </td>
                                                 <td className="py-4 px-6 text-right">
                                                     <div className="flex items-center justify-end gap-2 text-gray-400">
-
-                                                        <button
-                                                            className="p-1 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                            onClick={(e) => { e.stopPropagation(); handleDeleteNote(note.id); }}
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
+                                                        {user?.role === 'Administrator' && (
+                                                            <button
+                                                                className="p-1 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteNote(note.id); }}
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
