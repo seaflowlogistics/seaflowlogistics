@@ -327,7 +327,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
             payment_status: invoiceResult.rows[0]?.status || 'Pending',
             invoice_id: invoiceResult.rows[0]?.id || null,
             clearance_schedule: clearanceResult.rows[0] || null,
+            clearance_schedules: clearanceResult.rows,
             delivery_note: deliveryNoteResult.rows[0] || null,
+            delivery_notes: deliveryNoteResult.rows,
             containers: containersResult.rows,
             bls: blsResult.rows,
             is_fully_paid: isFullyPaid

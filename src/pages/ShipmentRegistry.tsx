@@ -1037,6 +1037,22 @@ const ShipmentRegistry: React.FC = () => {
         // Progress Calculations based on 4 Stages
         const isSea = (selectedJob.transport_mode || 'SEA') === 'SEA';
 
+        // Helper Arrays
+        const bls = selectedJob.bls || [];
+        const schedules = selectedJob.clearance_schedules || (selectedJob.clearance_schedule ? [selectedJob.clearance_schedule] : []);
+        const deliveryNotes = selectedJob.delivery_notes || (selectedJob.delivery_note ? [selectedJob.delivery_note] : []);
+
+        // Status Checks
+        let isAllScheduled = false;
+        if (bls.length > 0) {
+            // Check if every BL has a corresponding schedule
+            isAllScheduled = bls.every((bl: any) => schedules.some((s: any) => s.bl_awb === bl.master_bl));
+        } else {
+            isAllScheduled = schedules.length > 0;
+        }
+
+        const isDeliveryNoteIssued = deliveryNotes.length > 0;
+
         // Stage 1: Documentation (25%)
         // Rule: Documents uploaded AND details filled (Invoice, BL/AWB, Containers if Sea)
         const hasDocuments = selectedJob.documents && selectedJob.documents.length > 0;
@@ -1047,9 +1063,8 @@ const ShipmentRegistry: React.FC = () => {
         const isDocComplete = hasDocuments && hasInvoiceDetails && hasBLDetails && hasContainerDetails;
 
         // Stage 2: Clearance (50%)
-        // Rule: All BLs have Delivery Notes ISSUED (Backend sets status='Cleared' or progress=100)
-        // Completion happens when DN is issued for all BLs.
-        const isClearanceComplete = isDocComplete && (selectedJob.status === 'Cleared' || selectedJob.status === 'Completed' || (selectedJob.progress && parseInt(selectedJob.progress) === 100));
+        // Rule: All BLs have Delivery Notes ISSUED
+        const isClearanceComplete = isDocComplete && (selectedJob.status === 'Cleared' || selectedJob.status === 'Completed' || (selectedJob.progress && parseInt(selectedJob.progress) === 100) || isDeliveryNoteIssued);
 
         // Stage 3: Accounts (75%)
         // Rule: Clearance Complete AND All payments processed (is_fully_paid)
@@ -1214,27 +1229,39 @@ const ShipmentRegistry: React.FC = () => {
                         </div>
                         <div>
                             {/* Action Button Logic */}
-                            {!isClearanceComplete ? (
-                                <button
-                                    onClick={() => handleOpenPopup('schedule', selectedJob)}
-                                    className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                                >
-                                    <Calendar className="w-4 h-4" /> Schedule Clearance
-                                </button>
-                            ) : !isAccountsComplete ? (
-                                <button
-                                    onClick={() => setActiveTab('Payments')}
-                                    className="px-5 py-2.5 bg-black text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200 animate-pulse"
-                                >
-                                    Go to Payments <ChevronRight className="w-4 h-4" />
-                                </button>
-                            ) : !isJobCompleted ? (
-                                <button
-                                    onClick={handleMarkCompleted}
-                                    className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
-                                >
-                                    <Check className="w-4 h-4" /> Mark Completed
-                                </button>
+                            {/* Action Button Logic */}
+                            {!isJobCompleted ? (
+                                isDeliveryNoteIssued ? (
+                                    isAccountsComplete ? (
+                                        <button
+                                            onClick={handleMarkCompleted}
+                                            className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
+                                        >
+                                            <Check className="w-4 h-4" /> Mark Completed
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setActiveTab('Payments')}
+                                            className="px-5 py-2.5 bg-black text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200 animate-pulse"
+                                        >
+                                            Go to Payments <ChevronRight className="w-4 h-4" />
+                                        </button>
+                                    )
+                                ) : isAllScheduled ? (
+                                    <button
+                                        onClick={() => handleOpenPopup('schedule', selectedJob)}
+                                        className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
+                                    >
+                                        <Calendar className="w-4 h-4" /> Clearance Scheduled
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handleOpenPopup('schedule', selectedJob)}
+                                        className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                    >
+                                        <Calendar className="w-4 h-4" /> Schedule Clearance
+                                    </button>
+                                )
                             ) : (
                                 <span className="px-5 py-2.5 bg-gray-100 text-gray-400 text-sm font-bold rounded-lg flex items-center gap-2 cursor-default border border-gray-200">
                                     <Lock className="w-4 h-4" /> Job Closed
