@@ -8,8 +8,7 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
-    type TooltipProps
+    ResponsiveContainer
 } from 'recharts';
 import { Loader2, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
