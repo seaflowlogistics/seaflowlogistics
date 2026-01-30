@@ -751,18 +751,7 @@ const ShipmentRegistry: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Section: Manual Job Invoice */}
-                <div className="form-group mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Job Invoice No.</label>
-                    <input
-                        type="text"
-                        name="manual_invoice_no"
-                        value={formData.manual_invoice_no || ''}
-                        onChange={handleInputChange}
-                        placeholder="Enter Job Invoice Number"
-                        className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-gray-700"
-                    />
-                </div>
+
 
                 {/* Section B: Consignee */}
                 <div className="form-group relative z-30">
