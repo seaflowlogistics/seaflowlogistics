@@ -8,6 +8,7 @@ const CustomersSettings: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [activeTab, setActiveTab] = useState<'Individual' | 'Company'>('Individual');
     const [importing, setImporting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -42,12 +43,25 @@ const CustomersSettings: React.FC = () => {
         e.preventDefault();
         try {
             // Prepare payload
+            // We still append GSTIN to address for storage since we only added 'type', not 'gst_tin' column
+            // But we natively send 'type' now.
             const payload = {
                 ...formData,
                 address: formData.type === 'Company' && formData.gst_tin
-                    ? `${formData.address}\n\nGSTIN: ${formData.gst_tin}`
+                    ? (formData.address.includes('GSTIN:') ? formData.address : `${formData.address}\n\nGSTIN: ${formData.gst_tin}`)
                     : formData.address
             };
+
+            // Ensure address doesn't get duplicate GSTIN appended if editing
+            if (formData.type === 'Company' && formData.gst_tin && formData.address.includes('GSTIN:')) {
+                // If address already has GSTIN, we might need to update it.
+                // Simple regex replace or split/join to update the GSTIN part?
+                // For now, let's just assume the user edited the address field directly if they wanted to change it, 
+                // or we strip it before re-appending.
+                // Safer approach: Extract raw address from current input, append new GSTIN.
+                const rawAddress = formData.address.split('GSTIN:')[0].trim();
+                payload.address = `${rawAddress}\n\nGSTIN: ${formData.gst_tin}`;
+            }
 
             if (editingId) {
                 await customersAPI.update(editingId, payload);
@@ -76,10 +90,8 @@ const CustomersSettings: React.FC = () => {
             gst_tin = parts[1].trim();
         }
 
-        // Infer Type: If GSTIN exists or name looks like a company, maybe? 
-        // For now, default to Individual unless GSTIN found, or user manually switches.
-        // Actually, let's look for a flag or just heuristic.
-        const type = gst_tin ? 'Company' : 'Individual';
+        // Use native type if available, else infer
+        const type = customer.type || (gst_tin ? 'Company' : 'Individual');
 
         setFormData({
             type,
@@ -102,8 +114,6 @@ const CustomersSettings: React.FC = () => {
         setEditingId(null);
         resetForm();
     };
-
-    // ... (keep file upload and delete handlers same)
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -141,10 +151,18 @@ const CustomersSettings: React.FC = () => {
         }
     };
 
-    const filteredCustomers = customers.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.code && c.code.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredCustomers = customers.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.code && c.code.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        // Filter by Tab/Type
+        // Handle migration fallback: if type is missing, treat as Individual unless inferred otherwise?
+        // Actually, our migration added default 'Individual', so existing records are 'Individual'.
+        // Only records with GSTIN might physically be Companies but labelled Individual.
+        // Let's rely on c.type primarily.
+        const cType = c.type || 'Individual';
+        return matchesSearch && cType === activeTab;
+    });
 
     return (
         <div className="flex-1 flex flex-col h-full bg-white">
@@ -155,12 +173,36 @@ const CustomersSettings: React.FC = () => {
                 </div>
             </div>
 
+            {/* Tabs */}
+            <div className="px-8 mb-6 border-b border-gray-200 flex gap-6">
+                <button
+                    onClick={() => setActiveTab('Individual')}
+                    className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'Individual' ? 'text-black' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    Individuals
+                    {activeTab === 'Individual' && (
+                        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black rounded-t-full" />
+                    )}
+                </button>
+                <button
+                    onClick={() => setActiveTab('Company')}
+                    className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'Company' ? 'text-black' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    Companies
+                    {activeTab === 'Company' && (
+                        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black rounded-t-full" />
+                    )}
+                </button>
+            </div>
+
             <div className="px-8 mb-6 flex justify-between items-center gap-4">
                 <div className="flex-1 relative max-w-md">
                     <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Search customers..."
+                        placeholder={`Search ${activeTab === 'Individual' ? 'individuals' : 'companies'}...`}
                         className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-black/5"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -172,6 +214,20 @@ const CustomersSettings: React.FC = () => {
                         {importing ? 'Importing...' : 'Import Excel'}
                         <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} disabled={importing} />
                     </label>
+
+                    <button
+                        onClick={() => {
+                            setEditingId(null);
+                            resetForm();
+                            setFormData(prev => ({ ...prev, type: activeTab })); // Pre-select current tab type
+                            setShowAddModal(true);
+                        }}
+                        className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add {activeTab}
+                    </button>
+
                     <button
                         onClick={async () => {
                             if (window.confirm('Are you sure you want to DELETE ALL customers? This action cannot be undone.')) {
@@ -188,33 +244,21 @@ const CustomersSettings: React.FC = () => {
                         className="px-4 py-2 bg-red-50 text-red-600 font-semibold rounded-lg shadow-sm hover:bg-red-100 transition-colors flex items-center gap-2 text-sm"
                     >
                         <Trash2 className="w-4 h-4" />
-                        Delete All
-                    </button>
-                    <button
-                        onClick={() => {
-                            setEditingId(null);
-                            resetForm();
-                            setShowAddModal(true);
-                        }}
-                        className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Manually
                     </button>
                 </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar">
                 {loading ? (
-                    <div className="text-center py-10 text-gray-500">Loading customers...</div>
+                    <div className="text-center py-10 text-gray-500">Loading...</div>
                 ) : filteredCustomers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed border-gray-200 rounded-lg bg-gray-50/50">
                         <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                             <Users className="w-6 h-6 text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">No customers found</h3>
+                        <h3 className="text-lg font-medium text-gray-900">No {activeTab.toLowerCase()}s found</h3>
                         <p className="text-sm text-gray-500 mt-1 max-w-sm">
-                            {(searchTerm) ? 'Try adjusting your search terms.' : 'Get started by importing an Excel sheet or adding customers manually.'}
+                            Get started by adding a new {activeTab.toLowerCase()}.
                         </p>
                     </div>
                 ) : (
@@ -222,8 +266,12 @@ const CustomersSettings: React.FC = () => {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-black text-white text-xs uppercase tracking-wider">
-                                    <th className="py-3 px-4 font-semibold w-1/3">Name</th>
-                                    <th className="py-3 px-4 font-semibold">ID / Code</th>
+                                    <th className="py-3 px-4 font-semibold w-1/3">
+                                        {activeTab === 'Company' ? 'Company Name' : 'Name'}
+                                    </th>
+                                    <th className="py-3 px-4 font-semibold">
+                                        {activeTab === 'Company' ? 'Reg. No' : 'ID / Passport'}
+                                    </th>
                                     <th className="py-3 px-4 font-semibold">Email</th>
                                     <th className="py-3 px-4 font-semibold">Contact</th>
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>

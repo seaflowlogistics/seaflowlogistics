@@ -22,7 +22,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // Create single customer
 router.post('/', authenticateToken, async (req, res) => {
-    const { name, email, phone, address, code } = req.body;
+    const { name, email, phone, address, code, type } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -30,8 +30,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'INSERT INTO customers (name, email, phone, address, code) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [name, email, phone, address, code]
+            'INSERT INTO customers (name, email, phone, address, code, type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [name, email, phone, address, code, type || 'Individual']
         );
 
         await logActivity(req.user.id, 'CREATE_CUSTOMER', `Created customer: ${name}`, 'CUSTOMER', result.rows[0].id);
@@ -46,7 +46,7 @@ router.post('/', authenticateToken, async (req, res) => {
 // Update customer
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { name, email, phone, address, code } = req.body;
+    const { name, email, phone, address, code, type } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -54,8 +54,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'UPDATE customers SET name = $1, email = $2, phone = $3, address = $4, code = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
-            [name, email, phone, address, code, id]
+            'UPDATE customers SET name = $1, email = $2, phone = $3, address = $4, code = $5, type = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING *',
+            [name, email, phone, address, code, type, id]
         );
 
         if (result.rows.length === 0) {
@@ -97,13 +97,14 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 
             try {
                 await pool.query(
-                    'INSERT INTO customers (name, email, phone, address, code) VALUES ($1, $2, $3, $4, $5)',
+                    'INSERT INTO customers (name, email, phone, address, code, type) VALUES ($1, $2, $3, $4, $5, $6)',
                     [
                         name,
                         normalizedRow['email'] || null,
                         normalizedRow['phone'] || null,
                         normalizedRow['address'] || null,
-                        normalizedRow['code'] || normalizedRow['id'] || null
+                        normalizedRow['code'] || normalizedRow['id'] || null,
+                        normalizedRow['type'] || 'Individual'
                     ]
                 );
                 successCount++;

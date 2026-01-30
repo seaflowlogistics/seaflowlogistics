@@ -1,0 +1,1 @@
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'Individual';
