@@ -5,13 +5,30 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Get notifications for current user
+// Get notifications
 router.get('/', authenticateToken, async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20',
-            [req.user.id]
-        );
+        const isAdmin = ['Administrator', 'All'].includes(req.user.role);
+
+        let query;
+        let params;
+
+        if (isAdmin) {
+            // Admin sees all notifications joined with user info
+            query = `
+                SELECT n.*, u.username as user_name, u.role as user_role 
+                FROM notifications n 
+                LEFT JOIN users u ON n.user_id = u.id 
+                ORDER BY n.created_at DESC LIMIT 50
+            `;
+            params = [];
+        } else {
+            // Regular users see only their own
+            query = 'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20';
+            params = [req.user.id];
+        }
+
+        const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching notifications:', error);

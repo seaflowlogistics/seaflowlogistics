@@ -15,7 +15,8 @@ import {
     UserSearch,
     CreditCard,
     Calendar,
-    FileText
+    FileText,
+    X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -193,61 +194,119 @@ const Dashboard: React.FC = () => {
                             )}
                         </button>
 
-                        {/* Notification Dropdown */}
+                        {/* Notification Drawer */}
                         {showNotifications && (
-                            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2">
-                                <div className="p-4 border-b border-gray-50 flex justify-between items-center">
-                                    <h3 className="font-semibold text-gray-900">Notifications</h3>
-                                    {unreadCount > 0 && (
-                                        <button
-                                            onClick={async (e) => {
-                                                e.stopPropagation();
-                                                await notificationsAPI.markAllRead();
-                                                setNotifications(notifications.map(n => ({ ...n, is_read: true })));
-                                                setUnreadCount(0);
-                                            }}
-                                            className="text-xs text-indigo-600 hover:text-indigo-700"
-                                        >
-                                            Mark all read
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="max-h-96 overflow-y-auto">
-                                    {notifications.length === 0 ? (
-                                        <div className="p-8 text-center text-gray-500">
-                                            <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                                            <p className="text-sm">No notifications</p>
+                            <>
+                                {/* Backdrop */}
+                                <div
+                                    className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm transition-opacity"
+                                    onClick={() => setShowNotifications(false)}
+                                ></div>
+
+                                {/* Drawer */}
+                                <div className="fixed top-0 right-0 h-full w-96 bg-white shadow-2xl z-50 transform transition-transform animate-in slide-in-from-right duration-300 flex flex-col border-l border-gray-100">
+                                    <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                        <div className="flex items-center gap-2">
+                                            <Bell className="w-5 h-5 text-indigo-600" />
+                                            <span className="font-bold text-gray-900 text-lg">Notifications</span>
+                                            {unreadCount > 0 && (
+                                                <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-xs font-bold border border-red-200">
+                                                    {unreadCount} New
+                                                </span>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <div className="divide-y divide-gray-50">
-                                            {notifications.map((notif: any) => (
-                                                <div
-                                                    key={notif.id}
-                                                    className={`p-4 hover:bg-gray-50 transition-colors ${!notif.is_read ? 'bg-indigo-50/30' : ''}`}
-                                                >
-                                                    <div className="flex gap-3">
-                                                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!notif.is_read ? 'bg-indigo-500' : 'bg-transparent'}`} />
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-900">{notif.title}</p>
-                                                            <p className="text-sm text-gray-600 mt-1">{notif.message}</p>
-                                                            <div className="flex items-center gap-2 mt-2">
-                                                                <span className="text-xs text-gray-400">
-                                                                    {new Date(notif.created_at).toLocaleDateString()}
-                                                                </span>
-                                                                {notif.link && (
-                                                                    <Link to={notif.link} className="text-xs text-indigo-600 hover:underline">
-                                                                        View Details
-                                                                    </Link>
+                                        <button
+                                            onClick={() => setShowNotifications(false)}
+                                            className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500 hover:text-gray-700"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </div>
+
+                                    {/* Actions Bar */}
+                                    {notifications.length > 0 && (
+                                        <div className="px-5 py-3 border-b border-gray-100 flex justify-end">
+                                            <button
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    await notificationsAPI.markAllRead();
+                                                    setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+                                                    setUnreadCount(0);
+                                                }}
+                                                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                                            >
+                                                <CheckCircle className="w-3 h-3" />
+                                                Mark all as read
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* List */}
+                                    <div className="flex-1 overflow-y-auto p-0">
+                                        {notifications.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center h-64 text-center p-6 text-gray-400">
+                                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                                    <Bell className="w-8 h-8 text-gray-300" />
+                                                </div>
+                                                <p className="font-medium text-gray-900">All caught up!</p>
+                                                <p className="text-sm mt-1">No new notifications for now.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-gray-50">
+                                                {notifications.map((notif: any) => (
+                                                    <div
+                                                        key={notif.id}
+                                                        className={`p-5 hover:bg-gray-50 transition-colors relative group ${!notif.is_read ? 'bg-indigo-50/40' : ''}`}
+                                                    >
+                                                        {!notif.is_read && (
+                                                            <span className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-r"></span>
+                                                        )}
+                                                        <div className="flex gap-4">
+                                                            {/* Icon Placeholder based on context or generic */}
+                                                            <div className={`mt-1 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${!notif.is_read ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}>
+                                                                <Bell className="w-4 h-4" />
+                                                            </div>
+
+                                                            <div className="flex-1 min-w-0">
+                                                                {/* Admin: Show User Context */}
+                                                                {notif.user_name && ['Administrator', 'All'].includes(user?.role || '') && (
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className="text-xs font-bold text-gray-700 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300">
+                                                                            {notif.user_name}
+                                                                        </span>
+                                                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider">
+                                                                            {notif.user_role}
+                                                                        </span>
+                                                                    </div>
                                                                 )}
+
+                                                                <p className="text-sm font-semibold text-gray-900 leading-snug">{notif.title}</p>
+                                                                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{notif.message}</p>
+
+                                                                <div className="flex items-center justify-between mt-3">
+                                                                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                                                                        <Clock className="w-3 h-3" />
+                                                                        {new Date(notif.created_at).toLocaleString()}
+                                                                    </span>
+                                                                    {notif.link && (
+                                                                        <Link
+                                                                            to={notif.link}
+                                                                            onClick={() => setShowNotifications(false)}
+                                                                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+                                                                        >
+                                                                            View
+                                                                        </Link>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            </>
                         )}
                     </div>
                 </div>
