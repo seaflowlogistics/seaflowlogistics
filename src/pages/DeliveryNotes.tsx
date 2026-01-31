@@ -354,9 +354,7 @@ const DeliveryNotes: React.FC = () => {
                             if (shortageItems && shortageItems.length > 0) {
                                 return (
                                     <div className="mb-6">
-                                        <div className="bg-gray-100 text-gray-700 font-bold px-2 py-1 text-[10px] mb-2 border-l-4 border-red-500">
-                                            Shortage / Damage Report
-                                        </div>
+
                                         <table className="w-full border-collapse text-[10px]">
                                             <thead className="bg-gray-200 font-bold border-y border-gray-400">
                                                 <tr>
