@@ -300,8 +300,14 @@ router.get('/:id', authenticateToken, async (req, res) => {
         }
 
         const documentsResult = await pool.query('SELECT * FROM shipment_documents WHERE shipment_id = $1 ORDER BY uploaded_at DESC', [id]);
-        const invoiceResult = await pool.query('SELECT * FROM invoices WHERE shipment_id = $1', [id]);
-        const clearanceResult = await pool.query('SELECT * FROM clearance_schedules WHERE job_id = $1', [id]);
+
+
+        let clearanceResult = { rows: [] };
+        try {
+            clearanceResult = await pool.query('SELECT * FROM clearance_schedules WHERE job_id = $1', [id]);
+        } catch (e) {
+            console.warn('Clearance fetch failed:', e.message);
+        }
 
         // Fetch Multi-BLs and Multi-Containers
         const containersResult = await pool.query('SELECT * FROM shipment_containers WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
@@ -339,8 +345,21 @@ router.get('/:id', authenticateToken, async (req, res) => {
         const pendingPayments = parseInt(paymentsStats.rows[0].pending_count) || 0;
         const isFullyPaid = totalPayments > 0 && totalPayments === paidPayments;
 
+        const shipmentData = shipmentResult.rows[0];
+
+        // Ensure packages is an array (handle TEXT vs JSONB column type discrepancies)
+        if (shipmentData && typeof shipmentData.packages === 'string') {
+            try {
+                shipmentData.packages = JSON.parse(shipmentData.packages);
+            } catch (e) {
+                shipmentData.packages = [];
+            }
+        } else if (shipmentData && !shipmentData.packages) {
+            shipmentData.packages = [];
+        }
+
         res.json({
-            ...shipmentResult.rows[0],
+            ...shipmentData,
             documents: documentsResult.rows,
             invoice: invoiceResult.rows[0] || null,
             payment_status: invoiceResult.rows[0]?.status || 'Pending',
