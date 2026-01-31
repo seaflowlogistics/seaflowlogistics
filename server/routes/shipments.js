@@ -736,15 +736,18 @@ router.put('/:id', authenticateToken, async (req, res) => {
                  invoice_items = COALESCE($17, invoice_items),
                  customs_r_form = COALESCE($18, customs_r_form),
                  bl_awb_no = COALESCE($19, bl_awb_no),
-                 expense_macl = COALESCE($20, expense_macl),
-                 expense_mpl = COALESCE($21, expense_mpl),
-                 expense_mcs = COALESCE($22, expense_mcs),
-                 expense_transportation = COALESCE($23, expense_transportation),
-                 expense_liner = COALESCE($24, expense_liner),
-                 shipment_type = COALESCE($25, shipment_type),
-                 billing_contact = COALESCE($26, billing_contact),
-                 service = COALESCE($27, service),
-                 packages = COALESCE($28, packages),
+                 container_no = COALESCE($20, container_no),
+                 container_type = COALESCE($21, container_type),
+                 cbm = COALESCE($22, cbm),
+                 expense_macl = COALESCE($23, expense_macl),
+                 expense_mpl = COALESCE($24, expense_mpl),
+                 expense_mcs = COALESCE($25, expense_mcs),
+                 expense_transportation = COALESCE($26, expense_transportation),
+                 expense_liner = COALESCE($27, expense_liner),
+                 shipment_type = COALESCE($28, shipment_type),
+                 billing_contact = COALESCE($29, billing_contact),
+                 service = COALESCE($30, service),
+                 packages = COALESCE($31, packages),
                  
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = $15
@@ -756,8 +759,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
                 date ?? null, expected_delivery_date ?? null, transport_mode ?? null,
                 id,
                 invoice_no ?? null, invoice_items ?? null, customs_r_form ?? null, bl_awb_no ?? null,
+                container_no ?? null, container_type ?? null, cbm ?? null,
                 expense_macl ?? null, expense_mpl ?? null, expense_mcs ?? null, expense_transportation ?? null, expense_liner ?? null,
-
                 shipment_type ?? null, billing_contact ?? null, service ?? null,
                 packages ? JSON.stringify(packages) : null
             ]
