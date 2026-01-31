@@ -12,6 +12,7 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
     const [formData, setFormData] = useState<any>({
         invoice_no: '',
         invoice_items: '',
+
         customs_r_form: '',
 
     });
@@ -21,6 +22,7 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
             setFormData({
                 invoice_no: initialData?.invoice_no || '',
                 invoice_items: initialData?.invoice_items || '',
+
                 customs_r_form: initialData?.customs_r_form || '',
 
             });
