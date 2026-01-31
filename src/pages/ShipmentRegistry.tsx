@@ -169,78 +169,29 @@ const ShipmentRegistry: React.FC = () => {
 
 
 
-    const handleDeleteBLItem = async (blId: string) => {
-        if (!window.confirm('Are you sure you want to delete this BL?')) return;
-        try {
-            await shipmentsAPI.deleteBL(selectedJob.id, blId);
-            // Refresh logic
-            const refreshed = await shipmentsAPI.getById(selectedJob.id);
-            setSelectedJob(refreshed.data);
-            setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...refreshed.data } : j));
-        } catch (e) {
-            console.error(e);
-            alert('Failed to delete BL');
-        }
-    };
+
 
     const handleBLDrawerSave = async (data: any) => {
         try {
-            // 1. Save or Update BL
-            let savedBL: any;
-            let updatedBLList;
-
-            // Prepare BL payload (exclude containers/packages for the BL call if API doesn't support it)
-            // Assuming API ignores extra fields or we clean it.
-            const blPayload = {
-                master_bl: data.master_bl,
+            // Update Shipment directly (Single BL/AWB model)
+            const payload = {
+                bl_awb_no: data.master_bl,
                 house_bl: data.house_bl,
                 delivery_agent: data.delivery_agent,
                 packages: data.packages || [],
                 containers: data.containers || []
             };
 
-            if (data.id) {
-                const updated = await shipmentsAPI.updateBL(selectedJob.id, data.id, blPayload);
-                savedBL = updated.data;
-                updatedBLList = selectedJob.bls.map((b: any) => b.id === data.id ? savedBL : b);
-            } else {
-                const added = await shipmentsAPI.addBL(selectedJob.id, blPayload);
-                savedBL = added.data;
-                updatedBLList = [...(selectedJob.bls || []), savedBL];
-            }
+            await shipmentsAPI.update(selectedJob.id, payload);
 
-            // 2. Save Packages Only (User requested separation)
-            // The drawer now returns 'packages' array
-
-            let updatedJobPackages = selectedJob.packages || [];
-
-            // if (data.packages) {
-            //     const newPackages = data.packages.map((i: any) => ({
-            //         count: i.pkg_count,
-            //         type: i.pkg_type,
-            //         weight: i.weight || 0
-            //     }));
-
-            //     updatedJobPackages = newPackages; // Replace existing packages to prevent duplication
-            //     // Update Job with new packages
-            //     await shipmentsAPI.update(selectedJob.id, { packages: updatedJobPackages });
-            // }
-
-            // 3. Refresh Details from Server to ensure consistency
+            // Instant Refresh
             try {
                 const refreshed = await shipmentsAPI.getById(selectedJob.id);
                 setSelectedJob(refreshed.data);
-                setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...refreshed.data } : j));
+                setJobs(prev => prev.map(j => j.id === selectedJob.id ? refreshed.data : j));
             } catch (refreshErr) {
                 console.error("Error refreshing job after save", refreshErr);
-                // Fallback to local update if refresh fails
-                const updatedJob = {
-                    ...selectedJob,
-                    bls: updatedBLList,
-                    packages: updatedJobPackages
-                };
-                setSelectedJob(updatedJob);
-                setJobs(prev => prev.map(j => j.id === selectedJob.id ? updatedJob : j));
+
             }
 
             setIsBLDrawerOpen(false);
@@ -1573,88 +1524,103 @@ const ShipmentRegistry: React.FC = () => {
                             {/* Displaying Single BL or First BL for summary view as per design implies singular card fields */}
                             {/* If multiple BLs, we might list them. But requirement 5 lists single fields. */}
                             {/* I will display the first BL if available, or dashes. */}
-                            {selectedJob.bls && selectedJob.bls.length > 0 ? (
-                                selectedJob.bls.map((bl: any, index: number) => (
-                                    <div key={index} className={index > 0 ? "mt-8 pt-8 border-t-2 border-dashed border-gray-100 relative" : "relative"}>
-                                        {/* Edit Action per BL for convenience */}
-                                        <div className="absolute top-0 right-0 flex gap-1">
-                                            <button
-                                                onClick={() => { setNewBL(bl); setIsBLDrawerOpen(true); }}
-                                                className="text-gray-300 hover:text-indigo-600 p-1"
-                                                title="Edit this BL"
-                                            >
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </button>
-                                            {user?.role === 'Administrator' && (
-                                                <button
-                                                    onClick={() => handleDeleteBLItem(bl.id)}
-                                                    className="text-gray-300 hover:text-red-600 p-1"
-                                                    title="Delete this BL"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            )}
+                            {selectedJob.bl_awb_no || selectedJob.house_bl ? (
+                                <div className="relative">
+                                    <div className="absolute top-0 right-0 flex gap-1">
+                                        <button
+                                            onClick={() => {
+                                                setNewBL({
+                                                    master_bl: selectedJob.bl_awb_no || '',
+                                                    house_bl: selectedJob.house_bl || '',
+                                                    delivery_agent: selectedJob.delivery_agent || '',
+                                                    packages: selectedJob.packages || [],
+                                                    containers: selectedJob.containers || []
+                                                });
+                                                setIsBLDrawerOpen(true);
+                                            }}
+                                            className="text-gray-300 hover:text-indigo-600 p-1"
+                                            title="Edit BL Details"
+                                        >
+                                            <Pencil className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Master No.</p>
+                                            <p className="font-bold text-gray-900 break-all">{selectedJob.bl_awb_no || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">House No.</p>
+                                            <p className="font-bold text-gray-900 break-all">{selectedJob.house_bl || '-'}</p>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Master No.</p>
-                                                <p className="font-bold text-gray-900 break-all">{bl.master_bl || '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">House No.</p>
-                                                <p className="font-bold text-gray-900 break-all">{bl.house_bl || '-'}</p>
-                                            </div>
-
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Delivery Agent</p>
-                                                <p className="font-bold text-gray-900">{bl.delivery_agent || '-'}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Packages List */}
-                                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Packages Breakdown</h4>
-                                            {(() => {
-                                                let displayPackages = bl.packages || [];
-                                                // Check for nested container structure
-                                                if (displayPackages.length > 0 && displayPackages[0].container_no) {
-                                                    displayPackages = displayPackages.flatMap((c: any) =>
-                                                        typeof c.packages === 'string' ? JSON.parse(c.packages) : (c.packages || [])
-                                                    );
-                                                }
-
-                                                if (displayPackages.length > 0) {
-                                                    return (
-                                                        <div className="space-y-3">
-                                                            {/* Header Row */}
-                                                            <div className="grid grid-cols-3 gap-4 pb-2 border-b border-gray-200">
-                                                                <div className="text-xs font-bold text-gray-500 uppercase">Count</div>
-                                                                <div className="text-xs font-bold text-gray-500 uppercase">CBM</div>
-                                                                <div className="text-xs font-bold text-gray-500 uppercase">Type</div>
-                                                            </div>
-                                                            {/* Items */}
-                                                            {displayPackages.map((pkg: any, idx: number) => (
-                                                                <div key={idx} className="grid grid-cols-3 gap-4 items-center">
-                                                                    <div className="font-bold text-gray-900 text-sm">{pkg.pkg_count || 0}</div>
-                                                                    <div className="font-medium text-gray-700 text-sm">{pkg.cbm || (pkg.weight ? `${pkg.weight} KG` : '-')}</div>
-                                                                    <div className="font-bold text-gray-900 text-sm uppercase">{pkg.pkg_type || 'PKG'}</div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    );
-                                                } else {
-                                                    return <p className="text-sm text-gray-400 italic">No package details specified</p>;
-                                                }
-                                            })()}
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Delivery Agent</p>
+                                            <p className="font-bold text-gray-900">{selectedJob.delivery_agent || '-'}</p>
                                         </div>
                                     </div>
-                                ))
+
+                                    {/* Packages List */}
+                                    <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Packages Breakdown</h4>
+                                        {(() => {
+                                            let displayPackages: any[] = [];
+                                            // Handle JSON string or object
+                                            if (typeof selectedJob.packages === 'string') {
+                                                try { displayPackages = JSON.parse(selectedJob.packages); } catch (e) { }
+                                            } else if (Array.isArray(selectedJob.packages)) {
+                                                displayPackages = selectedJob.packages;
+                                            }
+
+                                            // Clean up structure if needed
+                                            if (displayPackages.length > 0 && displayPackages[0].container_no) {
+                                                displayPackages = displayPackages.flatMap((c: any) =>
+                                                    typeof c.packages === 'string' ? JSON.parse(c.packages) : (c.packages || [])
+                                                );
+                                            }
+
+                                            if (displayPackages.length > 0) {
+                                                return (
+                                                    <div className="space-y-3">
+                                                        {/* Header Row */}
+                                                        <div className="grid grid-cols-3 gap-4 pb-2 border-b border-gray-200">
+                                                            <div className="text-xs font-bold text-gray-500 uppercase">Count</div>
+                                                            <div className="text-xs font-bold text-gray-500 uppercase">CBM</div>
+                                                            <div className="text-xs font-bold text-gray-500 uppercase">Type</div>
+                                                        </div>
+                                                        {/* Items */}
+                                                        {displayPackages.map((pkg: any, idx: number) => (
+                                                            <div key={idx} className="grid grid-cols-3 gap-4 items-center">
+                                                                <div className="font-bold text-gray-900 text-sm">{pkg.pkg_count || 0}</div>
+                                                                <div className="font-medium text-gray-700 text-sm">{pkg.cbm || (pkg.weight ? `${pkg.weight} KG` : '-')}</div>
+                                                                <div className="font-bold text-gray-900 text-sm uppercase">{pkg.pkg_type || 'PKG'}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            } else {
+                                                return <p className="text-sm text-gray-400 italic">No package details specified</p>;
+                                            }
+                                        })()}
+                                    </div>
+                                </div>
                             ) : (
                                 <div className="text-center py-8 text-gray-400 italic">
-                                    No BL/AWB details available. Click 'Add' to register one.
+                                    <p className="mb-4">No BL/AWB details available.</p>
+                                    <button
+                                        className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 font-medium inline-flex items-center gap-2"
+                                        onClick={() => {
+                                            setNewBL({ master_bl: '', house_bl: '', delivery_agent: '' });
+                                            setIsBLDrawerOpen(true);
+                                            setOpenMenu(null);
+                                        }}
+                                    >
+                                        <Plus className="w-4 h-4" /> Add BL Details
+                                    </button>
                                 </div>
-                            )}
+                            )
+                            }
                         </div>
 
                         {/* Containers Section (6) - Only for SEA */}

@@ -25,10 +25,7 @@ const migrate = async () => {
                 shipment_id TEXT REFERENCES shipments(id) ON DELETE CASCADE,
                 master_bl TEXT,
                 house_bl TEXT,
-                loading_port TEXT,
-                vessel TEXT,
-                etd TIMESTAMP,
-                eta TIMESTAMP,
+                
                 delivery_agent TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -52,8 +49,8 @@ const migrate = async () => {
             console.log('Migrating existing BLs...');
             // Note: loading_port is not in shipments, so we insert NULL or map from origin if desired. Leaving as NULL for now.
             await pool.query(`
-                INSERT INTO shipment_bls (shipment_id, master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent)
-                SELECT id, bl_awb_no, house_bl, NULL, vessel, date, expected_delivery_date, delivery_agent
+                INSERT INTO shipment_bls (shipment_id, master_bl, house_bl, delivery_agent)
+                SELECT id, bl_awb_no, house_bl, delivery_agent
                 FROM shipments
                 WHERE bl_awb_no IS NOT NULL OR house_bl IS NOT NULL;
             `);
