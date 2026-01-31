@@ -741,14 +741,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
                  expense_mcs = COALESCE($22, expense_mcs),
                  expense_transportation = COALESCE($23, expense_transportation),
                  expense_liner = COALESCE($24, expense_liner),
-                 house_bl = COALESCE($25, house_bl),
-                 vessel = COALESCE($26, vessel),
-                 delivery_agent = COALESCE($27, delivery_agent),
-                 unloaded_date = COALESCE($28, unloaded_date),
-                 shipment_type = COALESCE($29, shipment_type),
-                 billing_contact = COALESCE($30, billing_contact),
-                 service = COALESCE($31, service),
-                 packages = COALESCE($32, packages),
+                 shipment_type = COALESCE($25, shipment_type),
+                 billing_contact = COALESCE($26, billing_contact),
+                 service = COALESCE($27, service),
+                 packages = COALESCE($28, packages),
                  
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = $15
@@ -761,8 +757,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
                 id,
                 invoice_no ?? null, invoice_items ?? null, customs_r_form ?? null, bl_awb_no ?? null,
                 expense_macl ?? null, expense_mpl ?? null, expense_mcs ?? null, expense_transportation ?? null, expense_liner ?? null,
-                house_bl ?? null, vessel ?? null, delivery_agent ?? null,
-                unloaded_date ?? null,
                 shipment_type ?? null, billing_contact ?? null, service ?? null,
                 packages ? JSON.stringify(packages) : null
             ]
