@@ -40,7 +40,7 @@ const Dashboard: React.FC = () => {
                 const response = await analyticsAPI.getDashboard();
 
                 // Fetch All Shipments for "Recent" list (Last 24h)
-                const shipmentsRes = await shipmentsAPI.getAll();
+                const shipmentsRes = await shipmentsAPI.getAll({ status: 'All' });
                 const allShipments = shipmentsRes.data || [];
 
                 // 24h Filter
@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
     const handleViewToggle = async () => {
         setLoading(true);
         try {
-            const response = await shipmentsAPI.getAll();
+            const response = await shipmentsAPI.getAll({ status: 'All' });
             let allShipments = response.data || [];
 
             // Normalize fields
