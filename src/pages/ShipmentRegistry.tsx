@@ -547,8 +547,8 @@ const ShipmentRegistry: React.FC = () => {
             // Backend requires these, so we provide defaults or mapped values
             apiData.append('service', formData.service);
             apiData.append('description', `${formData.service}`);
-            apiData.append('weight', '0'); // default
-            apiData.append('price', '0');  // default
+            apiData.append('weight', ''); // default
+            apiData.append('price', '');  // default
 
 
             // Default dates or user inputs (though now UI input is removed, defaults will primarily be used)
@@ -556,12 +556,12 @@ const ShipmentRegistry: React.FC = () => {
             apiData.append('expected_delivery_date', formData.expected_delivery_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
 
             // BL/AWB Fields - Optional/Empty at creation now
-            apiData.append('bl_awb_no', '');
-            apiData.append('house_bl', '');
-            apiData.append('loading_port', '');
-            apiData.append('origin', 'China'); // Default fallback
-            apiData.append('vessel', '');
-            apiData.append('delivery_agent', '');
+            apiData.append('bl_awb_no', formData.bl_awb_no);
+            apiData.append('house_bl', formData.house_bl);
+            apiData.append('loading_port', formData.loading_port);
+            apiData.append('origin', formData.origin); // Default fallback
+            apiData.append('vessel', formData.vessel);
+            apiData.append('delivery_agent', formData.delivery_agent);
 
             // Packages logic - simplified as UI input is removed
             // Just send defaults or empty checks if for some reason state has data

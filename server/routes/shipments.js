@@ -757,6 +757,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
                 id,
                 invoice_no ?? null, invoice_items ?? null, customs_r_form ?? null, bl_awb_no ?? null,
                 expense_macl ?? null, expense_mpl ?? null, expense_mcs ?? null, expense_transportation ?? null, expense_liner ?? null,
+
                 shipment_type ?? null, billing_contact ?? null, service ?? null,
                 packages ? JSON.stringify(packages) : null
             ]
