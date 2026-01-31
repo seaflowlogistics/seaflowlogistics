@@ -307,22 +307,32 @@ router.get('/:id', authenticateToken, async (req, res) => {
         const containersResult = await pool.query('SELECT * FROM shipment_containers WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
         const blsResult = await pool.query('SELECT * FROM shipment_bls WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
 
-        const deliveryNoteResult = await pool.query(`
-            SELECT DISTINCT dn.* 
-            FROM delivery_notes dn
-            JOIN delivery_note_items dni ON dn.id = dni.delivery_note_id
-            WHERE dni.job_id = $1
-        `, [id]);
+        let deliveryNoteResult = { rows: [] };
+        try {
+            deliveryNoteResult = await pool.query(`
+                SELECT DISTINCT dn.* 
+                FROM delivery_notes dn
+                JOIN delivery_note_items dni ON dn.id = dni.delivery_note_id
+                WHERE dni.job_id = $1
+            `, [id]);
+        } catch (err) {
+            console.warn('Delivery Note fetch failed (likely schema mismatch):', err.message);
+        }
 
         // Calculate Payment Completion (Job Payments Module)
-        const paymentsStats = await pool.query(`
-            SELECT 
-                COUNT(*) as total, 
-                COUNT(*) FILTER (WHERE status = 'Paid') as paid_count,
-                COUNT(*) FILTER (WHERE status = 'Pending') as pending_count
-            FROM job_payments 
-            WHERE job_id = $1
-        `, [id]);
+        let paymentsStats = { rows: [{ total: 0, paid_count: 0, pending_count: 0 }] };
+        try {
+            paymentsStats = await pool.query(`
+                SELECT 
+                    COUNT(*) as total, 
+                    COUNT(*) FILTER (WHERE status = 'Paid') as paid_count,
+                    COUNT(*) FILTER (WHERE status = 'Pending') as pending_count
+                FROM job_payments 
+                WHERE job_id = $1
+            `, [id]);
+        } catch (err) {
+            console.warn('Payment stats fetch failed:', err.message);
+        }
 
         const totalPayments = parseInt(paymentsStats.rows[0].total) || 0;
         const paidPayments = parseInt(paymentsStats.rows[0].paid_count) || 0;
