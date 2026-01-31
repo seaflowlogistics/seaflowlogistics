@@ -282,7 +282,22 @@ router.get('/', authenticateToken, async (req, res) => {
         query += ' ORDER BY s.created_at DESC';
 
         const result = await pool.query(query, params);
-        res.json(result.rows);
+
+        // Ensure packages is parsed if necessary
+        const rows = result.rows.map(row => {
+            if (typeof row.packages === 'string') {
+                try {
+                    row.packages = JSON.parse(row.packages);
+                } catch (e) {
+                    row.packages = [];
+                }
+            } else if (!row.packages) {
+                row.packages = [];
+            }
+            return row;
+        });
+
+        res.json(rows);
     } catch (error) {
         console.error('Get shipments error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -299,8 +314,15 @@ router.get('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Shipment not found' });
         }
 
-        const documentsResult = await pool.query('SELECT * FROM shipment_documents WHERE shipment_id = $1 ORDER BY uploaded_at DESC', [id]);
+        let documentsResult = { rows: [] };
+        try {
+            documentsResult = await pool.query('SELECT * FROM shipment_documents WHERE shipment_id = $1 ORDER BY uploaded_at DESC', [id]);
+        } catch (e) { console.warn('Docs fetch failed', e.message); }
 
+        let invoiceResult = { rows: [] };
+        try {
+            invoiceResult = await pool.query('SELECT * FROM invoices WHERE shipment_id = $1', [id]);
+        } catch (e) { console.warn('Invoice fetch failed', e.message); }
 
         let clearanceResult = { rows: [] };
         try {
@@ -310,8 +332,15 @@ router.get('/:id', authenticateToken, async (req, res) => {
         }
 
         // Fetch Multi-BLs and Multi-Containers
-        const containersResult = await pool.query('SELECT * FROM shipment_containers WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
-        const blsResult = await pool.query('SELECT * FROM shipment_bls WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
+        let containersResult = { rows: [] };
+        try {
+            containersResult = await pool.query('SELECT * FROM shipment_containers WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
+        } catch (e) { console.warn('Containers fetch failed', e.message); }
+
+        let blsResult = { rows: [] };
+        try {
+            blsResult = await pool.query('SELECT * FROM shipment_bls WHERE shipment_id = $1 ORDER BY created_at ASC', [id]);
+        } catch (e) { console.warn('BLs fetch failed', e.message); }
 
         let deliveryNoteResult = { rows: [] };
         try {
