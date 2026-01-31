@@ -263,7 +263,7 @@ const DeliveryNotes: React.FC = () => {
                 </div>
 
                 {/* CONTENT LAYER */}
-                <div className="relative z-10 w-full h-full flex flex-col pt-[45mm] pb-[55mm]">
+                <div className="relative z-10 w-full h-full flex flex-col pt-[45mm] pb-[80mm]">
 
                     {/* 2. FIXED TOP CONTENT (Red Boxes: Logo/Title + Customer Details) */}
                     <div className="px-12 flex-shrink-0">
