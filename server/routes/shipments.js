@@ -594,19 +594,19 @@ router.post('/', authenticateToken, shipmentUpload, async (req, res) => {
 
         const shipmentQuery = `
             INSERT INTO shipments (
-                id, customer, origin, destination, status, progress, 
+                id, customer, status, progress, 
                 sender_name, sender_address, receiver_name, receiver_address,
-                description, weight, dimensions, price,
+                weight, dimensions, price,
                 date, expected_delivery_date, transport_mode,
                 driver, vehicle_id, service, billing_contact, shipment_type, packages
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
             RETURNING *
         `;
 
         const shipmentValues = [
-            id, customer, origin, destination, status, progress,
+            id, customer, status, progress,
             sender_name, sender_address, receiver_name, receiver_address,
-            description, safeWeight, dimensions, safePrice,
+            safeWeight, dimensions, safePrice,
             date, expected_delivery_date, transport_mode,
             driver || null, vehicle_id || null, service, billing_contact, shipment_type,
             packages ? JSON.stringify(packages) : '[]'
@@ -749,13 +749,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
                  house_bl = COALESCE($30, house_bl),
                  vessel = COALESCE($31, vessel),
                  delivery_agent = COALESCE($32, delivery_agent),
-                 office = COALESCE($33, office),
-                 cargo_type = COALESCE($34, cargo_type),
-                 unloaded_date = COALESCE($35, unloaded_date),
-                 shipment_type = COALESCE($36, shipment_type),
-                 billing_contact = COALESCE($37, billing_contact),
-                 service = COALESCE($38, service),
-                 packages = COALESCE($39, packages),
+                 unloaded_date = COALESCE($33, unloaded_date),
+                 shipment_type = COALESCE($34, shipment_type),
+                 billing_contact = COALESCE($35, billing_contact),
+                 service = COALESCE($36, service),
+                 packages = COALESCE($37, packages),
                  
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = $16
@@ -769,7 +767,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
                 invoice_no ?? null, invoice_items ?? null, customs_r_form ?? null, bl_awb_no ?? null, container_no ?? null, container_type ?? null, cbm ?? null, no_of_pkgs ?? null,
                 expense_macl ?? null, expense_mpl ?? null, expense_mcs ?? null, expense_transportation ?? null, expense_liner ?? null,
                 house_bl ?? null, vessel ?? null, delivery_agent ?? null,
-                office ?? null, cargo_type ?? null, unloaded_date ?? null,
+                unloaded_date ?? null,
                 shipment_type ?? null, billing_contact ?? null, service ?? null,
                 packages ? JSON.stringify(packages) : null
             ]
