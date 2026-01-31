@@ -13,24 +13,21 @@ interface ShipmentInvoiceDrawerProps {
 const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState<any>({
         invoice_no: '',
-        cargo_type: 'GENERAL',
-        no_of_pkgs: '',
+        invoice_items: '',
         customs_r_form: '',
-        office: ''
+
     });
 
     useEffect(() => {
         if (isOpen) {
             setFormData({
                 invoice_no: initialData?.invoice_no || '',
-                cargo_type: initialData?.cargo_type || 'GENERAL',
-                no_of_pkgs: initialData?.no_of_pkgs || initialData?.invoice_items || '',
+                invoice_items: initialData?.invoice_items || '',
                 customs_r_form: initialData?.customs_r_form || '',
-                office: initialData?.office || ''
+
             });
         }
-    }, [isOpen]); // Fixed: Only run on open, not when initialData ref updates
-
+    }, [isOpen]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -39,16 +36,7 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
 
     const handleSubmit = () => {
         onSave(formData);
-        // Do not close immediately, let parent handle it or close here?
-        // References show parent handles closing usually, but here we can close after save triggering?
-        // Logic in parent closes it? No, handleInvoiceDrawerSave calls setIsInvoiceDrawerOpen(false).
-        // onSave(formData);
-        // onClose(); // Removing explicit close here might depend on parent, usually parent closes. 
-        // But in the existing code it was:
-        // onSave(formData);
-        // onClose();
-        // Since parent refreshes data and closes, we can just call onSave.
-        // Actually, let's keep it safe.
+
     };
 
     if (!isOpen) return null;
@@ -83,13 +71,13 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">No. Items*</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Invoice Items (Count)</label>
                                 <input
-                                    type="number"
-                                    name="no_of_pkgs"
-                                    value={formData.no_of_pkgs}
+                                    name="invoice_items"
+                                    value={formData.invoice_items}
                                     onChange={handleInputChange}
                                     className="input-field w-full py-2 px-3 border rounded text-sm"
+                                    placeholder="e.g. 50 items"
                                 />
                             </div>
 
