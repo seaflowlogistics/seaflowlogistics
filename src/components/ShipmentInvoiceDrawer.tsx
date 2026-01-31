@@ -8,12 +8,11 @@ interface ShipmentInvoiceDrawerProps {
     initialData?: any;
 }
 
-
-
 const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState<any>({
         invoice_no: '',
         invoice_items: '',
+        no_of_pkgs: '',
         customs_r_form: '',
 
     });
@@ -23,11 +22,12 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
             setFormData({
                 invoice_no: initialData?.invoice_no || '',
                 invoice_items: initialData?.invoice_items || '',
+                no_of_pkgs: initialData?.no_of_pkgs || '',
                 customs_r_form: initialData?.customs_r_form || '',
 
             });
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -49,7 +49,7 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
 
                     {/* Header */}
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-gray-900">Shipment invoice</h2>
+                        <h2 className="text-xl font-bold text-gray-900">Shipment Invoice</h2>
                         <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600">
                             <X className="w-5 h-5" />
                         </button>
@@ -71,16 +71,17 @@ const ShipmentInvoiceDrawer: React.FC<ShipmentInvoiceDrawerProps> = ({ isOpen, o
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Invoice Items (Count)</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">No. of Items (Count)</label>
                                 <input
-                                    name="invoice_items"
-                                    value={formData.invoice_items}
+                                    name="no_of_pkgs"
+                                    type="number"
+                                    value={formData.no_of_pkgs}
                                     onChange={handleInputChange}
                                     className="input-field w-full py-2 px-3 border rounded text-sm"
-                                    placeholder="e.g. 50 items"
+                                    placeholder="0"
                                 />
                             </div>
-
+                            
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
