@@ -1099,7 +1099,7 @@ const ShipmentRegistry: React.FC = () => {
         // Stage 1: Documentation (25%)
         // Rule: Documents uploaded AND details filled (Invoice, BL/AWB, Containers if Sea)
         const hasDocuments = selectedJob.documents && selectedJob.documents.length > 0;
-        const hasInvoiceDetails = !!(selectedJob.invoice_no && selectedJob.no_of_pkgs);
+        const hasInvoiceDetails = !!(selectedJob.invoice_no && selectedJob.invoice_items);
         const hasBLDetails = selectedJob.bls && selectedJob.bls.length > 0;
         const hasContainerDetails = !isSea || (selectedJob.containers && selectedJob.containers.length > 0);
 
@@ -1774,7 +1774,7 @@ const ShipmentRegistry: React.FC = () => {
                                                                             container_type: c.container_type,
                                                                             container_details: `${c.container_type} - ${c.container_no}`,
                                                                             // Fallback to job details if needed, but container specific is key
-                                                                            packages: selectedJob.packages ? selectedJob.packages.map((p: any) => `${p.count} ${p.type}`).join(', ') : (selectedJob.no_of_pkgs || ''),
+                                                                            packages: selectedJob.packages ? selectedJob.packages.map((p: any) => `${p.count} ${p.type}`).join(', ') : (selectedJob.invoice_items || ''),
                                                                             transport_mode: selectedJob.transport_mode
                                                                         });
                                                                         setPopupType('schedule');
