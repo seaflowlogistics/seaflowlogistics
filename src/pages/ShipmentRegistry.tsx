@@ -1135,9 +1135,10 @@ const ShipmentRegistry: React.FC = () => {
 
             let currentInvoice = selectedJob.job_invoice_no || '';
 
-            let message = currentInvoice
-                ? "Please confirm the Job Invoice Number to complete the job:"
-                : "Job Invoice Number is required to complete the job. Please enter it below:";
+            // Update message to reflect new behavior
+            let message = !currentInvoice
+                ? "Job Invoice Number is required. Enter it to save (Status will remain pending until you confirm again):"
+                : "Please confirm the Job Invoice Number to complete the job:";
 
             const input = window.prompt(message, currentInvoice);
 
@@ -1151,16 +1152,33 @@ const ShipmentRegistry: React.FC = () => {
             }
 
             try {
-                // Update both status and job_invoice_no
-                await shipmentsAPI.update(selectedJob.id, {
-                    status: 'Completed',
-                    job_invoice_no: finalizedInvoice
-                });
+                // Feature change: Two-step completion.
+                // 1. If Invoice Number was empty, OR if user changed it -> Just save the number.
+                if (!currentInvoice || finalizedInvoice !== currentInvoice) {
+                    await shipmentsAPI.update(selectedJob.id, {
+                        job_invoice_no: finalizedInvoice
+                    });
 
-                // Refresh
-                const res = await shipmentsAPI.getById(selectedJob.id);
-                setSelectedJob(res.data);
-                setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
+                    // Refresh local state only
+                    const res = await shipmentsAPI.getById(selectedJob.id);
+                    setSelectedJob(res.data);
+                    setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
+
+                    // Inform user
+                    alert("Invoice Number Saved. Please click 'Mark Completed' AGAIN to confirm and close the job.");
+                }
+                // 2. If Invoice Number existed and user confirmed it (didn't change it) -> Mark as Completed
+                else {
+                    await shipmentsAPI.update(selectedJob.id, {
+                        status: 'Completed',
+                        job_invoice_no: finalizedInvoice
+                    });
+
+                    // Refresh
+                    const res = await shipmentsAPI.getById(selectedJob.id);
+                    setSelectedJob(res.data);
+                    setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
+                }
             } catch (e) {
                 console.error(e);
                 alert('Failed to update status');
