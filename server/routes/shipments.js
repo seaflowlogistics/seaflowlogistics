@@ -191,15 +191,15 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
                 // Insert Shipment
                 await pool.query(
                     `INSERT INTO shipments (
-                                id, customer, origin, destination, status, progress, 
-                                sender_name, receiver_name, description, weight, price, transport_mode,
-                                invoice_no, invoice_items, customs_r_form, bl_awb_no, container_no, container_type, cbm, no_of_pkgs,
+                                id, customer, status, progress, 
+                                sender_name, receiver_name, weight, price, transport_mode,
+                                invoice_no, invoice_items, customs_r_form, bl_awb_no, container_no, container_type, cbm,
                                 expense_macl, expense_mpl, expense_mcs, expense_transportation, expense_liner, date
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)`,
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
                     [
-                        id, customer, origin, destination, status, progress,
-                        exporter, consignee, description, weight, price, transport_mode,
-                        invoiceNo, invoiceItems, customsRForm, blAwbNo, containerNo, containerType, cbm, noOfPkg,
+                        id, customer, status, progress,
+                        exporter, consignee, weight, price, transport_mode,
+                        invoiceNo, invoiceItems, customsRForm, blAwbNo, containerNo, containerType, cbm,
                         expenseMacl, expenseMpl, expenseMcs, expenseTransportation, expenseLiner, dateVal
                     ]
                 );
