@@ -79,11 +79,42 @@ const ClearanceDetailsDrawer: React.FC<ClearanceDetailsDrawerProps> = ({
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Package Type</p>
-                                    <p className="text-sm font-medium text-gray-900 uppercase">{schedule.package_type || '-'}</p>
+                                    <p className="text-sm font-medium text-gray-900 uppercase">
+                                        {(() => {
+                                            const pkgStr = schedule.packages || '';
+                                            if (!pkgStr) return '-';
+                                            const entries = pkgStr.split(',').map((e: string) => e.trim());
+                                            const types: string[] = [];
+                                            entries.forEach((entry: string) => {
+                                                const parts = entry.split(' ');
+                                                if (parts.length > 1 && !isNaN(Number(parts[0]))) {
+                                                    types.push(parts.slice(1).join(' '));
+                                                }
+                                            });
+                                            const uniqueTypes = Array.from(new Set(types));
+                                            return uniqueTypes.length > 0 ? uniqueTypes.join(', ') : '-';
+                                        })()}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Package Quantity</p>
-                                    <p className="text-sm font-medium text-gray-900">{schedule.packages || '-'}</p>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {(() => {
+                                            const pkgStr = schedule.packages || '';
+                                            if (!pkgStr) return '-';
+                                            const entries = pkgStr.split(',').map((e: string) => e.trim());
+                                            const counts: string[] = [];
+                                            entries.forEach((entry: string) => {
+                                                const parts = entry.split(' ');
+                                                if (parts.length > 1 && !isNaN(Number(parts[0]))) {
+                                                    counts.push(parts[0]);
+                                                } else {
+                                                    counts.push(entry);
+                                                }
+                                            });
+                                            return counts.length > 0 ? counts.join(', ') : '-';
+                                        })()}
+                                    </p>
                                 </div>
                             </div>
                         </div>
