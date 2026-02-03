@@ -351,15 +351,30 @@ router.post('/process-batch', authenticateToken, async (req, res) => {
         const completedJobs = [];
 
         for (const jId of distinctJobIds) {
-            // Check if all payments are paid
-            const checkRes = await client.query("SELECT count(*) FROM job_payments WHERE job_id = $1 AND status != 'Paid'", [jId]);
-            if (parseInt(checkRes.rows[0].count) === 0) {
+            // 1. Check if all payments are paid
+            const checkPayRes = await client.query("SELECT count(*) FROM job_payments WHERE job_id = $1 AND status != 'Paid'", [jId]);
+            const allPaid = parseInt(checkPayRes.rows[0].count) === 0;
 
+            if (allPaid) {
                 // Log Payment Completion separately
                 await pool.query(
                     'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
                     [req.user.id, 'ALL_PAYMENTS_COMPLETED', `All payments completed`, 'SHIPMENT', jId]
                 );
+
+                // 2. Check if Job is Cleared (Delivery Done)
+                // If Job is Cleared AND All Payments Paid -> Mark Completed
+                const jobRes = await client.query("SELECT status FROM shipments WHERE id = $1", [jId]);
+                if (jobRes.rows.length > 0) {
+                    const currentStatus = jobRes.rows[0].status;
+                    if (currentStatus === 'Cleared') {
+                        await client.query("UPDATE shipments SET status = 'Completed' WHERE id = $1", [jId]);
+
+                        // Add to list for notification
+                        const jobDetails = await client.query("SELECT id, customer FROM shipments WHERE id = $1", [jId]);
+                        if (jobDetails.rows.length > 0) completedJobs.push(jobDetails.rows[0]);
+                    }
+                }
             }
         }
 

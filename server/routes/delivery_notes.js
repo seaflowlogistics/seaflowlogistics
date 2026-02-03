@@ -387,10 +387,11 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
             `, [jobId]);
 
                 if (parseInt(pendingDnRes.rows[0].count) === 0) {
-                    // All DNs for this job are delivered. Mark Job as Completed.
-                    await client.query("UPDATE shipments SET status = 'Completed', progress = 100 WHERE id = $1", [jobId]);
+                    // All DNs for this job are delivered. Mark Job as Cleared (Delivery Done).
+                    // Status 'Completed' is reserved for when Payments are also done.
+                    await client.query("UPDATE shipments SET status = 'Cleared', progress = 100 WHERE id = $1", [jobId]);
 
-                    await logActivity(req.user.id, 'JOB_COMPLETED', `Job marked as Completed (Delivery Confirmed)`, 'SHIPMENT', jobId);
+                    await logActivity(req.user.id, 'JOB_CLEARED', `Job marked as Cleared (Delivery Confirmed)`, 'SHIPMENT', jobId);
                 }
             }
         }
