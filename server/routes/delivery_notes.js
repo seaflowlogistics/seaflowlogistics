@@ -227,12 +227,12 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
         const itemsResult = await pool.query(`
             SELECT dni.*, 
-                   COALESCE(cs.bl_awb, s.bl_awb_no) as bl_awb_no, 
-                   s.sender_name, 
-                   COALESCE(cs.packages, CAST(s.no_of_pkgs AS VARCHAR)) as packages, 
-                   COALESCE(cs.container_type, s.container_type) as package_type, 
-                   COALESCE(cs.container_no, s.container_no) as container_no,
-                   cs.port as schedule_port
+            COALESCE(cs.bl_awb, s.bl_awb_no) as bl_awb_no, 
+            s.sender_name, 
+            COALESCE(cs.packages, NULLIF(CAST(s.packages AS VARCHAR), '[]'), s.invoice_items) as packages, 
+            COALESCE(cs.container_type, s.container_type) as package_type, 
+            COALESCE(cs.container_no, s.container_no) as container_no,
+            cs.port as schedule_port
             FROM delivery_note_items dni
             LEFT JOIN clearance_schedules cs ON dni.schedule_id = cs.id
             LEFT JOIN shipments s ON dni.job_id = s.id
@@ -241,17 +241,17 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
         const vehiclesResult = await pool.query(`
             SELECT dnv.id,
-                   dnv.vehicle_id as "vehicleId", 
-                   dnv.driver_name as "driver",
-                   dnv.driver_contact as "driverContact",
-                   dnv.discharge_location as "dischargeLocation",
-                   v.name as "vehicleName", 
-                   v.id as "registrationNumber",
-                   v.type as "vehicle_type"
+            dnv.vehicle_id as "vehicleId",
+            dnv.driver_name as "driver",
+            dnv.driver_contact as "driverContact",
+            dnv.discharge_location as "dischargeLocation",
+            v.name as "vehicleName",
+            v.id as "registrationNumber",
+            v.type as "vehicle_type"
             FROM delivery_note_vehicles dnv
             LEFT JOIN vehicles v ON dnv.vehicle_id = v.id
             WHERE dnv.delivery_note_id = $1
-        `, [id]);
+            `, [id]);
 
         res.json({
             ...dn,
@@ -321,8 +321,8 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
             for (const file of req.files) {
                 // Insert into file_storage
                 const fileRes = await client.query(
-                    `INSERT INTO file_storage (filename, mime_type, data, size) 
-                     VALUES ($1, $2, $3, $4) 
+                    `INSERT INTO file_storage(filename, mime_type, data, size)
+        VALUES($1, $2, $3, $4) 
                      RETURNING id`,
                     [file.originalname, file.mimetype, file.buffer, file.size]
                 );
@@ -332,7 +332,7 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
                     fileId: fileId, // Important: Store the DB ID
                     name: file.originalname,
                     // Legacy URL for fallbacks or UI display logic
-                    url: `/api/delivery-notes/document/view?fileId=${fileId}`,
+                    url: `/ api / delivery - notes / document / view ? fileId = ${fileId} `,
                     uploaded_at: new Date().toISOString(),
                     type: file.mimetype,
                     size: file.size
@@ -349,12 +349,12 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
         let pIdx = 2;
 
         if (unloading_date) {
-            query += `, unloading_date = $${pIdx++}`;
+            query += `, unloading_date = $${pIdx++} `;
             params.push(unloading_date);
         }
 
         if (comments !== undefined) {
-            query += `, comments = $${pIdx++}`;
+            query += `, comments = $${pIdx++} `;
             params.push(comments);
         }
 
@@ -362,7 +362,7 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
             query += `, status = 'Delivered'`;
         }
 
-        query += ` WHERE id = $${pIdx}`;
+        query += ` WHERE id = $${pIdx} `;
         params.push(id);
 
         query += ' RETURNING *';
@@ -384,7 +384,7 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
                     SELECT count(*) FROM delivery_notes dn
                     JOIN delivery_note_items dni ON dn.id = dni.delivery_note_id
                     WHERE dni.job_id = $1 AND dn.status != 'Delivered'
-                 `, [jobId]);
+            `, [jobId]);
 
                 if (parseInt(pendingDnRes.rows[0].count) === 0) {
                     // All DNs for this job are delivered. Mark Job as Completed.
@@ -456,7 +456,7 @@ router.get('/document/view', authenticateToken, async (req, res) => {
             if (fileRes.rows.length > 0) {
                 const file = fileRes.rows[0];
                 res.setHeader('Content-Type', file.mime_type || 'application/octet-stream');
-                res.setHeader('Content-Disposition', `inline; filename="${file.filename}"`);
+                res.setHeader('Content-Disposition', `inline; filename = "${file.filename}"`);
                 return res.send(file.data);
             } else {
                 // Even if fileId provided, if not found, it might be gone.
