@@ -79,7 +79,7 @@ const ClearanceDetailsDrawer: React.FC<ClearanceDetailsDrawerProps> = ({
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Package Type</p>
-                                    <p className="text-sm font-medium text-gray-900 uppercase">{schedule.package_type || 'PKG'}</p>
+                                    <p className="text-sm font-medium text-gray-900 uppercase">{schedule.package_type || '-'}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Package Quantity</p>
