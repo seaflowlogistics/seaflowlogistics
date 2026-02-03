@@ -597,7 +597,7 @@ const ShipmentRegistry: React.FC = () => {
 
     // initializePackages removed as it was unused
 
-    const handleOpenPopup = (type: any, job: any) => {
+    const handleOpenPopup = (type: any, job: any, data: any = null) => {
         // Redirect to new Drawers for specific types
         if (type === 'invoice') {
             if (selectedJob?.id !== job.id) setSelectedJob(job);
@@ -614,6 +614,7 @@ const ShipmentRegistry: React.FC = () => {
         // Logic for legacy popups (schedule, payment, upload)
         setPopupJob(job);
         setPopupType(type);
+        setPopupData(data);
         const initialData = { ...job };
 
         if (type === 'schedule') {
@@ -1305,9 +1306,12 @@ const ShipmentRegistry: React.FC = () => {
                                         </button>
                                     )
                                 ) : isAllScheduled ? (
-                                    <span className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 cursor-default shadow-lg shadow-emerald-200">
+                                    <button
+                                        onClick={() => handleOpenPopup('schedule', selectedJob, selectedJob.clearance_schedule)}
+                                        className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
+                                    >
                                         <Calendar className="w-4 h-4" /> Clearance Scheduled
-                                    </span>
+                                    </button>
                                 ) : isDocComplete ? (
                                     <button
                                         onClick={() => handleOpenPopup('schedule', selectedJob)}
@@ -2061,10 +2065,17 @@ const ShipmentRegistry: React.FC = () => {
             setLoading(true);
 
             if (popupType === 'schedule') {
-                await clearanceAPI.create({
-                    job_id: popupJob.id,
-                    ...data // Use data passed from drawer
-                });
+                if (popupData && popupData.id) {
+                    await clearanceAPI.update(popupData.id, {
+                        job_id: popupJob.id,
+                        ...data
+                    });
+                } else {
+                    await clearanceAPI.create({
+                        job_id: popupJob.id,
+                        ...data // Use data passed from drawer
+                    });
+                }
                 // Relaxed refresh logic
                 const res = await shipmentsAPI.getById(popupJob.id);
                 const updated = res.data;
@@ -2072,7 +2083,7 @@ const ShipmentRegistry: React.FC = () => {
                 if (selectedJob?.id === updated.id) {
                     setSelectedJob(updated);
                 }
-                alert("Clearance Scheduled Successfully");
+                alert(popupData ? "Clearance Rescheduled Successfully" : "Clearance Scheduled Successfully");
             } else if (popupType === 'payment') {
                 await paymentsAPI.create({
                     job_id: popupJob.id,
@@ -2349,7 +2360,8 @@ const ShipmentRegistry: React.FC = () => {
                     onSave={handlePopupSave}
                     job={popupJob}
                     initialData={popupData}
-                    title="Schedule Clearance"
+                    isReschedule={!!popupData}
+                    title={popupData ? "Reschedule Clearance" : "Schedule Clearance"}
                 />
             )}
 
