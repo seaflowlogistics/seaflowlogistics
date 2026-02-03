@@ -349,8 +349,16 @@ const DeliveryNotes: React.FC = () => {
                         </div>
 
                         {/* Shortage & Damage Table (Conditional) */}
+                        {/* Shortage & Damage Table (Conditional) */}
                         {(() => {
-                            const shortageItems = selectedNote?.items?.filter(item => item.shortage !== 'No' || item.damaged !== 'No');
+                            const isIssue = (val: string | undefined) => {
+                                if (!val) return false;
+                                const v = val.trim();
+                                return v !== 'No' && v !== '0' && v !== '';
+                            };
+
+                            const shortageItems = selectedNote?.items?.filter(item => isIssue(item.shortage) || isIssue(item.damaged));
+
                             if (shortageItems && shortageItems.length > 0) {
                                 return (
                                     <div className="mb-6">
@@ -368,10 +376,10 @@ const DeliveryNotes: React.FC = () => {
                                                     <tr key={idx} className="border-b border-gray-200">
                                                         <td className="py-1 px-2 align-top">{item.bl_awb_no || '-'}</td>
                                                         <td className="py-1 px-2 align-top text-red-600 font-medium">
-                                                            {item.shortage !== 'No' ? item.shortage : '-'}
+                                                            {isIssue(item.shortage) ? item.shortage : '-'}
                                                         </td>
                                                         <td className="py-1 px-2 align-top text-red-600 font-medium">
-                                                            {item.damaged !== 'No' ? item.damaged : '-'}
+                                                            {isIssue(item.damaged) ? item.damaged : '-'}
                                                         </td>
                                                     </tr>
                                                 ))}
