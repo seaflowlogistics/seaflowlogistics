@@ -59,11 +59,13 @@ router.get('/dashboard', authenticateToken, async (req, res) => {
 
     // Team Snapshot Data
 
-    // 1. Overdue Clearances: Schedules where date is past today
+    // 1. Overdue Clearances: Schedules where date is past today AND job is not cleared
     const overdueClearances = await pool.query(`
             SELECT COUNT(*) 
-            FROM clearance_schedules 
-            WHERE clearance_date < CURRENT_DATE
+            FROM clearance_schedules cs
+            JOIN shipments s ON cs.job_id = s.id
+            WHERE cs.clearance_date < CURRENT_DATE
+            AND s.status NOT IN ('Cleared', 'Completed')
         `);
 
     // 2. Scheduled Today (Created within 24h as per request)
