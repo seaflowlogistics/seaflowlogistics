@@ -854,6 +854,9 @@ router.delete('/:id', authenticateToken, authorizeRole(['Administrator', 'All'])
         // 4. Delete related Clearance Schedules
         await pool.query('DELETE FROM clearance_schedules WHERE job_id = $1', [id]);
 
+        // 5. Delete Audit Logs (History) to reset history if ID is reused
+        await pool.query("DELETE FROM audit_logs WHERE entity_id = $1 AND entity_type = 'SHIPMENT'", [id]);
+
         // 5. Delete the Shipment
         const result = await pool.query('DELETE FROM shipments WHERE id = $1 RETURNING *', [id]);
 
