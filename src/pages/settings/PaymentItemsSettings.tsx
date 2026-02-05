@@ -200,7 +200,7 @@ const PaymentItemsSettings: React.FC = () => {
             {/* Table Section */}
             <div className="flex-1 overflow-y-auto px-10 pb-10 custom-scrollbar">
                 {loading ? (
-                    <div className="text-center py-20 text-gray-500">Loading payment items...</div>
+                    <div className="text-center py-20 text-gray-500">Loading payment items......</div>
                 ) : filteredItems.length === 0 ? (
                     <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-xl">
                         <p className="text-gray-500">No payment items found.</p>
