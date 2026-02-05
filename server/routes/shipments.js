@@ -857,8 +857,10 @@ router.delete('/:id', authenticateToken, authorizeRole(['Administrator', 'All'])
         // 5. Soft-delete History: Rename entity_id in logs so they don't show up for the new job
         // Preserve them for audit trails if needed, but detach from the active ID "slot"
         const timestamp = Date.now();
+        // Rename entity_id for ALL logs matching this ID to ensure history is cleared for the ID slot.
+        // We do not filter by entity_type just to be safe and catch everything linked to this ID string.
         await pool.query(
-            "UPDATE audit_logs SET entity_id = $1 || '-DELETED-' || $2 WHERE entity_id = $1 AND entity_type = 'SHIPMENT'",
+            "UPDATE audit_logs SET entity_id = $1 || '-DELETED-' || $2 WHERE entity_id = $1",
             [id, timestamp]
         );
 
