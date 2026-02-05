@@ -65,7 +65,7 @@ router.get('/dashboard', authenticateToken, async (req, res) => {
             FROM clearance_schedules cs
             JOIN shipments s ON cs.job_id = s.id
             WHERE cs.clearance_date < CURRENT_DATE
-            AND s.status NOT IN ('Cleared', 'Completed')
+            AND s.status NOT IN ('Cleared', 'Completed', 'Payment')
         `);
 
     // 2. Scheduled Today (Created within 24h as per request)
