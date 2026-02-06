@@ -15,6 +15,7 @@ interface SearchableSelectProps {
     className?: string;
     required?: boolean;
     name?: string;
+    disabled?: boolean;
 }
 
 const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -23,7 +24,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     onChange,
     placeholder,
     className = "",
-    required
+    required,
+    disabled = false
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -48,23 +50,24 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     const selectedOption = options.find(opt => opt.value === value);
 
     const handleSelect = (val: string) => {
+        if (disabled) return;
         onChange(val);
         setIsOpen(false);
         setSearchTerm('');
     };
 
     return (
-        <div className={`relative ${className}`} ref={wrapperRef}>
+        <div className={`relative ${className} ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`} ref={wrapperRef}>
             <div
-                className={`min-h-[42px] px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm flex items-center justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${!selectedOption?.label ? 'text-gray-500' : 'text-gray-900'}`}
-                onClick={() => setIsOpen(!isOpen)}
+                className={`min-h-[42px] px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${!selectedOption?.label ? 'text-gray-500' : 'text-gray-900'} ${disabled ? 'bg-gray-100 pointer-events-none' : 'cursor-pointer'}`}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
             >
                 <span className="truncate block mr-2 flex-1">
                     {selectedOption ? selectedOption.label : placeholder || 'Select...'}
                 </span>
 
                 <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                    {value && (
+                    {value && !disabled && (
                         <div onClick={(e) => { e.stopPropagation(); onChange(''); }} className="p-1 hover:bg-gray-100 rounded-full">
                             <X className="w-3 h-3 text-gray-400" />
                         </div>
