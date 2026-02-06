@@ -1459,12 +1459,14 @@ const ShipmentRegistry: React.FC = () => {
                                         </button>
                                         {openMenu === 'jobDetails' && (
                                             <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                                <button
-                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
-                                                    onClick={handleEditJobDetails}
-                                                >
-                                                    <Pencil className="w-4 h-4" /> Edit Details
-                                                </button>
+                                                {user?.role !== 'Accountant' && (
+                                                    <button
+                                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
+                                                        onClick={handleEditJobDetails}
+                                                    >
+                                                        <Pencil className="w-4 h-4" /> Edit Details
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>
