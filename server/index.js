@@ -86,12 +86,12 @@ app.use('/api/files', filesRoutes);
 
 
 // Health check
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/health'], (req, res) => {
     res.json({ status: 'OK', message: 'Logistics API is running' });
 });
 
 // DB Diagnostic
-app.get('/diag/db', async (req, res) => {
+app.get(['/diag/db', '/api/diag/db'], async (req, res) => {
     try {
         const start = Date.now();
         const result = await pool.query('SELECT NOW() as time, current_database() as db');
