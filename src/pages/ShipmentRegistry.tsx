@@ -1430,7 +1430,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Registered Date</label>
                                             <p className="font-medium text-slate-200 py-2">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {hasRole('Administrator') && (
+                                        {(hasRole('Administrator') || hasRole('Accountant')) || hasRole('All') && (
                                             <div>
                                                 <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Job Invoice No.</label>
                                                 <input
@@ -1521,7 +1521,7 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-200 relative">
                             <div className="absolute top-6 right-6 flex gap-2">
                                 <div className="relative">
-                                    {user?.role !== 'Accountant' && (
+                                    {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'invoice' ? null : 'invoice'); }}
                                             className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
@@ -1571,7 +1571,7 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-200 relative">
                             <div className="absolute top-6 right-6 flex gap-2">
                                 <div className="relative">
-                                    {user?.role !== 'Accountant' && (
+                                    {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'bl' ? null : 'bl'); }}
                                             className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
@@ -1582,7 +1582,7 @@ const ShipmentRegistry: React.FC = () => {
                                     )}
                                     {openMenu === 'bl' && (
                                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                            {user?.role !== 'Accountant' && (
+                                            {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
                                                 <>
                                                     <button
                                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
@@ -1714,7 +1714,7 @@ const ShipmentRegistry: React.FC = () => {
                                     <Package className="w-5 h-5 text-orange-600" />
                                     Containers
                                 </h3>
-                                {user?.role !== 'Accountant' && (
+                                {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
                                     <button
                                         onClick={() => setAddingContainer(true)}
                                         className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-bold flex items-center gap-2"
@@ -2085,7 +2085,7 @@ const ShipmentRegistry: React.FC = () => {
 
         return (
             <div className="p-8">
-                <h3 className="text-lg font-bold text-gray-900 mb-6">Process History</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-6">Activity</h3>
                 <div className="relative border-l-2 border-gray-100 ml-3 space-y-8">
                     {processLogs.map((log: any) => {
                         const Icon = log.icon;
