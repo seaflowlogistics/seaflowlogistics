@@ -1032,46 +1032,48 @@ const ShipmentRegistry: React.FC = () => {
                 </table>
             </div>
 
-            <div className="border-t pt-6">
-                <h4 className="font-semibold text-sm text-gray-700 mb-4">Upload New Document</h4>
-                <div className="flex gap-4 items-end">
-                    <div className="flex-1">
-                        <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Document Type</label>
-                        <select id="docTypeSelect" className="w-full p-2 border rounded text-sm bg-gray-50">
-                            <option value="Invoice">Invoice</option>
-                            <option value="Packing List">Packing List</option>
-                            <option value="BL/AWB">BL/AWB</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div className="flex-1">
-                        <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">File</label>
-                        <input type="file" id="docFileInput" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                    </div>
-                    <button onClick={async () => {
-                        const fileInput = document.getElementById('docFileInput') as HTMLInputElement;
-                        const typeInput = document.getElementById('docTypeSelect') as HTMLSelectElement;
-                        if (fileInput?.files?.[0]) {
-                            const file = fileInput.files[0];
-                            const type = typeInput.value;
+            {user?.role !== 'Accountant' && (
+                <div className="border-t pt-6">
+                    <h4 className="font-semibold text-sm text-gray-700 mb-4">Upload New Document</h4>
+                    <div className="flex gap-4 items-end">
+                        <div className="flex-1">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Document Type</label>
+                            <select id="docTypeSelect" className="w-full p-2 border rounded text-sm bg-gray-50">
+                                <option value="Invoice">Invoice</option>
+                                <option value="Packing List">Packing List</option>
+                                <option value="BL/AWB">BL/AWB</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">File</label>
+                            <input type="file" id="docFileInput" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                        </div>
+                        <button onClick={async () => {
+                            const fileInput = document.getElementById('docFileInput') as HTMLInputElement;
+                            const typeInput = document.getElementById('docTypeSelect') as HTMLSelectElement;
+                            if (fileInput?.files?.[0]) {
+                                const file = fileInput.files[0];
+                                const type = typeInput.value;
 
-                            const formData = new FormData();
-                            formData.append('file', file);
-                            formData.append('document_type', type);
-                            try {
-                                await shipmentsAPI.uploadDocument(selectedJob.id, formData);
-                                alert('Uploaded successfully');
-                                const res = await shipmentsAPI.getById(selectedJob.id);
-                                setSelectedJob(res.data);
-                                fileInput.value = '';
-                            } catch (e) {
-                                console.error(e);
-                                alert('Upload failed');
+                                const formData = new FormData();
+                                formData.append('file', file);
+                                formData.append('document_type', type);
+                                try {
+                                    await shipmentsAPI.uploadDocument(selectedJob.id, formData);
+                                    alert('Uploaded successfully');
+                                    const res = await shipmentsAPI.getById(selectedJob.id);
+                                    setSelectedJob(res.data);
+                                    fileInput.value = '';
+                                } catch (e) {
+                                    console.error(e);
+                                    alert('Upload failed');
+                                }
                             }
-                        }
-                    }} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium text-sm">Upload</button>
+                        }} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium text-sm">Upload</button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 
