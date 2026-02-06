@@ -123,8 +123,12 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
-    console.log(`💚 Health check: http://localhost:${PORT}/health\n`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`\n🚀 Server running on http://localhost:${PORT}`);
+        console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
+        console.log(`💚 Health check: http://localhost:${PORT}/health\n`);
+    });
+}
+
+export default app;
