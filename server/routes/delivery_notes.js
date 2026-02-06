@@ -1,21 +1,12 @@
 import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
+import baseUpload from '../utils/upload.js';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { logActivity } from '../utils/logger.js';
-import { broadcastToAll } from '../utils/notify.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Memory Storage for DB persistence
-const storage = multer.memoryStorage();
 
 const upload = multer({
-    storage,
+    storage: baseUpload.storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
     fileFilter: (req, file, cb) => {
         const allowedTypes = /jpeg|jpg|png|pdf|xlsx|xls|csv|doc|docx/;

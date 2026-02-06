@@ -2,33 +2,20 @@
 import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
-import multer from 'multer';
+import baseUpload from '../utils/upload.js';
 import path from 'path';
 import fs from 'fs';
 import { generateInvoicePDF } from '../utils/invoiceGenerator.js';
 import XLSX from 'xlsx';
 import { logActivity } from '../utils/logger.js';
 import { broadcastNotification, createNotification } from '../utils/notify.js';
+import multer from 'multer';
 
 
 const router = express.Router();
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = 'uploads/';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
-});
-
 const upload = multer({
-    storage,
+    storage: baseUpload.storage, // Use storage from our central utility
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
     fileFilter: (req, file, cb) => {
         // Updated regex to allow xlxs, xls, csv for imports AND images/pdf for docs

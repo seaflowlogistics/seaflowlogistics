@@ -2,13 +2,12 @@
 import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
-import multer from 'multer';
+import upload from '../utils/upload.js';
 import XLSX from 'xlsx';
 import fs from 'fs';
 import { logActivity } from '../utils/logger.js';
 
 const router = express.Router();
-const upload = multer({ dest: 'uploads/' });
 
 // Get all vendors
 router.get('/', authenticateToken, async (req, res) => {
