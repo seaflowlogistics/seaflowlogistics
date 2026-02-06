@@ -3,6 +3,7 @@ import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import baseUpload from '../utils/upload.js';
 import multer from 'multer';
+import path from 'path';
 
 
 const upload = multer({

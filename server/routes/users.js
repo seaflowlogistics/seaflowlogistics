@@ -199,12 +199,12 @@ router.delete('/:id', authorizeRole(['Administrator', 'All']), async (req, res) 
     }
 });
 
+import multer from 'multer';
 import baseUpload from '../utils/upload.js';
 
-const __filename = fileURLToPath(import.meta.url);
-// Configure Multer for file upload
+// Configure Multer for profile photo (using memory storage for DB persistence)
 const upload = multer({
-    storage: baseUpload.storage,
+    storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 }, // Increase limit to 10MB
     fileFilter: (req, file, cb) => {
         // Allow any file that is an image
