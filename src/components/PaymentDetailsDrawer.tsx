@@ -67,45 +67,53 @@ const PaymentDetailsDrawer: React.FC<PaymentDetailsDrawerProps> = ({ isOpen, onC
                             <h4 className="text-sm font-bold text-gray-900 mb-4">Payment Items</h4>
                             <div className="space-y-3">
                                 {items.map((item, index) => (
-                                    <div key={item.id || index} className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded-lg px-2">
-                                        <div className="p-2 bg-gray-100 rounded-lg text-gray-500">
-                                            <Receipt className="w-4 h-4" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <span className="text-xs font-medium text-gray-500">{item.job_id}</span>
-                                                <span className="text-sm font-medium text-gray-900">{item.payment_type}</span>
+                                    <div key={item.id || index} className="py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded-lg px-2">
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-2 bg-gray-100 rounded-lg text-gray-500">
+                                                <Receipt className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-1">
+                                                    <span className="text-xs font-medium text-gray-500">{item.job_id}</span>
+                                                    <span className="text-sm font-medium text-gray-900">{item.payment_type}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                {editingId === item.id ? (
+                                                    <div className="flex items-center gap-1">
+                                                        <input
+                                                            type="number"
+                                                            value={editAmount}
+                                                            onChange={e => setEditAmount(e.target.value)}
+                                                            className="w-24 p-1 text-right text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                            autoFocus
+                                                        />
+                                                        <button onClick={() => handleSave(item.id)} className="p-1 text-green-600 hover:bg-green-50 rounded"><Check className="w-4 h-4" /></button>
+                                                        <button onClick={() => setEditingId(null)} className="p-1 text-red-600 hover:bg-red-50 rounded"><X className="w-4 h-4" /></button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <span className="text-sm font-bold text-gray-900">{formatCurrency(item.amount)}</span>
+                                                        {(item.status === 'Pending' || item.status === 'Draft') && (
+                                                            <button
+                                                                onClick={() => handleEditClick(item)}
+                                                                className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                                                title="Edit Amount"
+                                                            >
+                                                                <Pencil className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center gap-2">
-                                            {editingId === item.id ? (
-                                                <div className="flex items-center gap-1">
-                                                    <input
-                                                        type="number"
-                                                        value={editAmount}
-                                                        onChange={e => setEditAmount(e.target.value)}
-                                                        className="w-24 p-1 text-right text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                        autoFocus
-                                                    />
-                                                    <button onClick={() => handleSave(item.id)} className="p-1 text-green-600 hover:bg-green-50 rounded"><Check className="w-4 h-4" /></button>
-                                                    <button onClick={() => setEditingId(null)} className="p-1 text-red-600 hover:bg-red-50 rounded"><X className="w-4 h-4" /></button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <span className="text-sm font-bold text-gray-900">{formatCurrency(item.amount)}</span>
-                                                    {(item.status === 'Pending' || item.status === 'Draft') && (
-                                                        <button
-                                                            onClick={() => handleEditClick(item)}
-                                                            className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                                                            title="Edit Amount"
-                                                        >
-                                                            <Pencil className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
+                                        {item.comments && (
+                                            <div className="mt-2 ml-10 p-3 bg-gray-50/80 rounded-lg border border-gray-100">
+                                                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Comments</p>
+                                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.comments}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
