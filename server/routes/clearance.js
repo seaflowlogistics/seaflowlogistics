@@ -120,13 +120,13 @@ router.get('/', async (req, res) => {
         if (search) {
             const i = params.length + 1;
             conditions.push(`(
-        cs.job_id ILIKE $${i} OR 
+                cs.job_id ILIKE $${i} OR 
                 s.customer ILIKE $${i} OR 
                 s.sender_name ILIKE $${i} OR 
                 cs.bl_awb ILIKE $${i} OR
                 cs.port ILIKE $${i}
-    )`);
-            params.push(`% ${search} % `);
+            )`);
+            params.push(`%${search}%`);
         }
 
         if (type && type !== 'All types') {
