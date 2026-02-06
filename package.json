@@ -8,8 +8,6 @@
     "build": "tsc -b && vite build",
     "postinstall": "cd server && npm install",
     "start": "cd server && node index.js",
-    "migrate": "cd server && npm run migrate",
-    "seed": "cd server && npm run seed",
     "lint": "eslint .",
     "preview": "vite preview"
   },
