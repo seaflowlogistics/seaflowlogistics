@@ -14,6 +14,28 @@ const VALID_ROLES = [
     'All'
 ];
 
+// Helper to validate roles
+const validateRoles = (role) => {
+    if (Array.isArray(role)) {
+        return role.every(r => VALID_ROLES.includes(r));
+    }
+    return VALID_ROLES.includes(role);
+};
+
+// Helper to format roles for DB (array -> comma-separated string)
+const formatRolesForDB = (role) => {
+    if (Array.isArray(role)) {
+        return role.join(',');
+    }
+    return role;
+};
+
+// Helper to format roles for Response (comma-separated string -> array)
+const formatRolesFromDB = (roleStr) => {
+    if (!roleStr) return [];
+    return roleStr.includes(',') ? roleStr.split(',') : [roleStr];
+};
+
 // Ensure authentication
 router.use(authenticateToken);
 
@@ -27,7 +49,14 @@ router.get('/', authorizeRole(['Administrator', 'All']), async (req, res) => {
             FROM users u
             ORDER BY u.created_at DESC
         `);
-        res.json(result.rows);
+
+        // Transform roles to array
+        const users = result.rows.map(u => ({
+            ...u,
+            role: formatRolesFromDB(u.role)
+        }));
+
+        res.json(users);
     } catch (error) {
         console.error('Error fetching users:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -42,9 +71,11 @@ router.post('/', authorizeRole(['Administrator', 'All']), async (req, res) => {
         return res.status(400).json({ error: 'Missing required fields (username, role, email)' });
     }
 
-    if (!VALID_ROLES.includes(role)) {
+    if (!validateRoles(role)) {
         return res.status(400).json({ error: 'Invalid role' });
     }
+
+    const dbRole = formatRolesForDB(role);
 
     // Generate random password if not provided
     const generatedPassword = password || Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
@@ -56,7 +87,7 @@ router.post('/', authorizeRole(['Administrator', 'All']), async (req, res) => {
         // Insert user
         const result = await pool.query(
             'INSERT INTO users (username, password, role, email, must_change_password) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, role, email, created_at',
-            [username, hashedPassword, role, email, true]
+            [username, hashedPassword, dbRole, email, true]
         );
 
         // Send Welcome Email
@@ -72,10 +103,11 @@ router.post('/', authorizeRole(['Administrator', 'All']), async (req, res) => {
         // Log action
         await pool.query(
             'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
-            [req.user.id, 'CREATE_USER', `Created user ${username} with role ${role}`, 'USER', result.rows[0].id]
+            [req.user.id, 'CREATE_USER', `Created user ${username} with role ${dbRole}`, 'USER', result.rows[0].id]
         );
 
         const newUser = result.rows[0];
+        newUser.role = formatRolesFromDB(newUser.role);
         // Return the generated password so the admin can give it to the user if email fails
         newUser.temporaryPassword = generatedPassword;
 
@@ -95,7 +127,10 @@ router.put('/:id', async (req, res) => {
     const { role, password, username, email } = req.body;
 
     // Authorization Check: Admin or Self
-    const isAdmin = ['Administrator', 'All'].includes(req.user.role);
+    // Check if user has admin privileges (handling both standard and comma-separated roles from token)
+    const userRoles = req.user.role.includes(',') ? req.user.role.split(',') : [req.user.role];
+    const isAdmin = userRoles.includes('Administrator') || userRoles.includes('All');
+
     if (!isAdmin && req.user.id !== id) {
         return res.status(403).json({ error: 'Access denied' });
     }
@@ -105,7 +140,7 @@ router.put('/:id', async (req, res) => {
         return res.status(403).json({ error: 'Only Administrators can change roles' });
     }
 
-    if (role && !VALID_ROLES.includes(role)) {
+    if (role && !validateRoles(role)) {
         return res.status(400).json({ error: 'Invalid role' });
     }
 
@@ -116,7 +151,7 @@ router.put('/:id', async (req, res) => {
 
         if (role) {
             query += `role = $${index}, `;
-            values.push(role);
+            values.push(formatRolesForDB(role));
             index++;
         }
 
@@ -160,7 +195,10 @@ router.put('/:id', async (req, res) => {
             [req.user.id, 'UPDATE_USER', `Updated user ${result.rows[0].username}`, 'USER', id]
         );
 
-        res.json(result.rows[0]);
+        const updatedUser = result.rows[0];
+        updatedUser.role = formatRolesFromDB(updatedUser.role);
+
+        res.json(updatedUser);
     } catch (error) {
         if (error.code === '23505') { // Unique violation
             return res.status(409).json({ error: 'Username or email already exists' });

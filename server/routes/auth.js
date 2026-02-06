@@ -56,7 +56,8 @@ router.post('/login', async (req, res) => {
             }
         }
 
-        // Generate JWT token
+        // Generate JWT token (store role as is, middleware handles string splitting)
+        // Note: For cleaner payload we could split it here too, but keeping it consistent with DB string is fine for token
         const token = jwt.sign(
             { id: user.id, username: user.username, role: user.role },
             process.env.JWT_SECRET,
@@ -79,13 +80,16 @@ router.post('/login', async (req, res) => {
             // Don't fail login if session tracking fails, but nice to know
         }
 
+        // Format role as array for frontend
+        const userRole = user.role && user.role.includes(',') ? user.role.split(',') : [user.role];
+
         res.json({
             token,
             user: {
                 id: user.id,
                 username: user.username,
                 email: user.email,
-                role: user.role,
+                role: userRole,
                 must_change_password: user.must_change_password,
                 two_factor_enabled: user.two_factor_enabled,
                 photo_url: user.photo_url
@@ -93,8 +97,8 @@ router.post('/login', async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ 
-            error: 'Internal server error', 
+        res.status(500).json({
+            error: 'Internal server error',
             message: error.message,
             stack: process.env.NODE_ENV === 'production' ? null : error.stack
         });
@@ -188,7 +192,11 @@ router.get('/me', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        res.json(result.rows[0]);
+        const user = result.rows[0];
+        // Ensure role is array
+        user.role = user.role && user.role.includes(',') ? user.role.split(',') : [user.role];
+
+        res.json(user);
     } catch (error) {
         console.error('Get current user error:', error);
         res.status(500).json({ error: 'Internal server error' });

@@ -26,7 +26,22 @@ export const authenticateToken = (req, res, next) => {
 
 export const authorizeRole = (allowedRoles) => {
     return (req, res, next) => {
-        if (!req.user || !allowedRoles.includes(req.user.role)) {
+        if (!req.user) {
+            return res.status(403).json({ error: 'Access denied: User not authenticated' });
+        }
+
+        // Normalize user roles to array
+        let userRoles = [];
+        if (Array.isArray(req.user.role)) {
+            userRoles = req.user.role;
+        } else if (typeof req.user.role === 'string') {
+            userRoles = req.user.role.split(',');
+        }
+
+        // Check if user has at least one of the allowed roles
+        const hasPermission = userRoles.some(role => allowedRoles.includes(role));
+
+        if (!hasPermission) {
             return res.status(403).json({ error: 'Access denied: Insufficient permissions' });
         }
         next();
