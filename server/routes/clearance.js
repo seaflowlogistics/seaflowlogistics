@@ -105,8 +105,7 @@ router.get('/', async (req, res) => {
                    s.customer, 
                    s.sender_name as exporter, 
                    s.receiver_name as consignee,
-                   s.transport_mode as shipment_transport_mode,
-                   s.bl_awb_no
+                   s.transport_mode as shipment_transport_mode
             FROM clearance_schedules cs
             LEFT JOIN shipments s ON cs.job_id = s.id
         `;
@@ -114,8 +113,8 @@ router.get('/', async (req, res) => {
         const params = [];
         const conditions = [];
 
-        // Exclude schedules that are already linked to a Delivery Note (and thus "transferred")
-        conditions.push(`cs.id NOT IN (SELECT schedule_id FROM delivery_note_items WHERE schedule_id IS NOT NULL)`);
+        // Exclude schedules that are already linked to a Delivery Note
+        // conditions.push(`cs.id NOT IN (SELECT schedule_id FROM delivery_note_items WHERE schedule_id IS NOT NULL)`);
 
         if (search) {
             const i = params.length + 1;
