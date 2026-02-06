@@ -1217,36 +1217,38 @@ const ShipmentRegistry: React.FC = () => {
                     <div className="flex justify-between items-start mb-6">
                         <div>
                             {/* Quick Actions Icons */}
-                            <div className="flex items-center gap-2 mb-3">
-                                <button
-                                    onClick={() => handleOpenPopup('invoice', selectedJob)}
-                                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                                    title="Shipment Invoice"
-                                >
-                                    <FileText className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={() => handleOpenPopup('bl', selectedJob)}
-                                    className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                                    title="BL/AWB Details"
-                                >
-                                    <FileSpreadsheet className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={() => handleOpenPopup('payment', selectedJob)}
-                                    className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
-                                    title="Add Payment"
-                                >
-                                    <CreditCard className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={() => handleOpenPopup('upload', selectedJob)}
-                                    className="p-2 bg-violet-50 text-violet-600 rounded-lg hover:bg-violet-100 transition-colors"
-                                    title="Upload Document"
-                                >
-                                    <UploadCloud className="w-5 h-5" />
-                                </button>
-                            </div>
+                            {user?.role !== 'Accountant' && (
+                                <div className="flex items-center gap-2 mb-3">
+                                    <button
+                                        onClick={() => handleOpenPopup('invoice', selectedJob)}
+                                        className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                        title="Shipment Invoice"
+                                    >
+                                        <FileText className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleOpenPopup('bl', selectedJob)}
+                                        className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                                        title="BL/AWB Details"
+                                    >
+                                        <FileSpreadsheet className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleOpenPopup('payment', selectedJob)}
+                                        className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
+                                        title="Add Payment"
+                                    >
+                                        <CreditCard className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleOpenPopup('upload', selectedJob)}
+                                        className="p-2 bg-violet-50 text-violet-600 rounded-lg hover:bg-violet-100 transition-colors"
+                                        title="Upload Document"
+                                    >
+                                        <UploadCloud className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            )}
 
                             <h1 className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight">
                                 {selectedJob.customer || 'Customer Name'}
