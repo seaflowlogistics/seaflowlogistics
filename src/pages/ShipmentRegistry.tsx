@@ -1417,7 +1417,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Registered Date</label>
                                             <p className="font-medium text-slate-200 py-2">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {['Administrator', 'Accountant'].includes(user?.role || '') && (
+                                        {['Administrator'].includes(user?.role || '') && (
                                             <div>
                                                 <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Job Invoice No.</label>
                                                 <input
@@ -1513,12 +1513,14 @@ const ShipmentRegistry: React.FC = () => {
                                     </button>
                                     {openMenu === 'invoice' && (
                                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                            <button
-                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
-                                                onClick={() => { handleOpenPopup('invoice', selectedJob); setOpenMenu(null); }}
-                                            >
-                                                <Pencil className="w-4 h-4" /> Edit
-                                            </button>
+                                            {user?.role !== 'Accountant' && (
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
+                                                    onClick={() => { handleOpenPopup('invoice', selectedJob); setOpenMenu(null); }}
+                                                >
+                                                    <Pencil className="w-4 h-4" /> Edit
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -1559,30 +1561,34 @@ const ShipmentRegistry: React.FC = () => {
                                     </button>
                                     {openMenu === 'bl' && (
                                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                            <button
-                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
-                                                onClick={() => {
-                                                    if (selectedJob.bls && selectedJob.bls.length > 0) {
-                                                        setNewBL(selectedJob.bls[0]);
-                                                    } else {
-                                                        setNewBL({ master_bl: '', house_bl: '', delivery_agent: '' });
-                                                    }
-                                                    setIsBLDrawerOpen(true);
-                                                    setOpenMenu(null);
-                                                }}
-                                            >
-                                                <Pencil className="w-4 h-4" /> Edit
-                                            </button>
-                                            <button
-                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
-                                                onClick={() => {
-                                                    setNewBL({ master_bl: '', house_bl: '', delivery_agent: '' });
-                                                    setIsBLDrawerOpen(true);
-                                                    setOpenMenu(null);
-                                                }}
-                                            >
-                                                <Plus className="w-4 h-4" /> Add
-                                            </button>
+                                            {user?.role !== 'Accountant' && (
+                                                <>
+                                                    <button
+                                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
+                                                        onClick={() => {
+                                                            if (selectedJob.bls && selectedJob.bls.length > 0) {
+                                                                setNewBL(selectedJob.bls[0]);
+                                                            } else {
+                                                                setNewBL({ master_bl: '', house_bl: '', delivery_agent: '' });
+                                                            }
+                                                            setIsBLDrawerOpen(true);
+                                                            setOpenMenu(null);
+                                                        }}
+                                                    >
+                                                        <Pencil className="w-4 h-4" /> Edit
+                                                    </button>
+                                                    <button
+                                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
+                                                        onClick={() => {
+                                                            setNewBL({ master_bl: '', house_bl: '', delivery_agent: '' });
+                                                            setIsBLDrawerOpen(true);
+                                                            setOpenMenu(null);
+                                                        }}
+                                                    >
+                                                        <Plus className="w-4 h-4" /> Add
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -1602,7 +1608,7 @@ const ShipmentRegistry: React.FC = () => {
                                         <div className="absolute top-0 right-0 flex gap-1">
                                             <button
                                                 onClick={() => { setNewBL(bl); setIsBLDrawerOpen(true); }}
-                                                className="text-gray-300 hover:text-indigo-600 p-1"
+                                                className={`text-gray-300 hover:text-indigo-600 p-1 ${user?.role === 'Accountant' ? 'hidden' : ''}`}
                                                 title="Edit this BL"
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
@@ -1687,12 +1693,14 @@ const ShipmentRegistry: React.FC = () => {
                                     <Package className="w-5 h-5 text-orange-600" />
                                     Containers
                                 </h3>
-                                <button
-                                    onClick={() => setAddingContainer(true)}
-                                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-bold flex items-center gap-2"
-                                >
-                                    <Plus className="w-4 h-4" /> Add Container
-                                </button>
+                                {user?.role !== 'Accountant' && (
+                                    <button
+                                        onClick={() => setAddingContainer(true)}
+                                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-bold flex items-center gap-2"
+                                    >
+                                        <Plus className="w-4 h-4" /> Add Container
+                                    </button>
+                                )}
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm text-left">
@@ -1815,7 +1823,7 @@ const ShipmentRegistry: React.FC = () => {
                                                                         });
                                                                         setAddingContainer(false);
                                                                     }}
-                                                                    className="text-gray-400 hover:text-indigo-600 p-1.5 rounded hover:bg-indigo-50"
+                                                                    className={`text-gray-400 hover:text-indigo-600 p-1.5 rounded hover:bg-indigo-50 ${user?.role === 'Accountant' ? 'hidden' : ''}`}
                                                                 >
                                                                     <Pencil className="w-4 h-4" />
                                                                 </button>
@@ -1953,6 +1961,15 @@ const ShipmentRegistry: React.FC = () => {
                                         </td>
                                         <td className="py-4 px-6 text-center">
                                             <div className="flex items-center justify-center gap-2">
+                                                {((user?.role === 'Accountant' && ['Draft', 'Pending'].includes(payment.status)) || user?.role === 'Administrator' || user?.role === 'All') && (
+                                                    <button
+                                                        onClick={() => handleOpenPopup('payment', selectedJob, payment)}
+                                                        className="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-colors flex items-center justify-center"
+                                                        title="Edit"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                )}
 
                                                 {user?.role === 'Administrator' && (
                                                     <button
@@ -1978,7 +1995,7 @@ const ShipmentRegistry: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </div >
         );
     };
 
@@ -2103,11 +2120,18 @@ const ShipmentRegistry: React.FC = () => {
                 }
                 alert(popupData ? "Clearance Rescheduled Successfully" : "Clearance Scheduled Successfully");
             } else if (popupType === 'payment') {
-                await paymentsAPI.create({
-                    job_id: popupJob.id,
-                    ...editFormData
-                });
-                alert('Payment Details Added Successfully');
+                if (popupData && popupData.id) {
+                    await paymentsAPI.update(popupData.id, {
+                        ...editFormData
+                    });
+                    alert('Payment Details Updated Successfully');
+                } else {
+                    await paymentsAPI.create({
+                        job_id: popupJob.id,
+                        ...editFormData
+                    });
+                    alert('Payment Details Added Successfully');
+                }
                 loadPayments(popupJob.id);
             } else {
                 const response = await shipmentsAPI.update(popupJob.id, editFormData);
@@ -2173,6 +2197,7 @@ const ShipmentRegistry: React.FC = () => {
                                         }}
                                         placeholder="Select Payment Type"
                                         required
+                                        disabled={user?.role === 'Accountant'}
                                     />
                                 </div>
                                 <div>
@@ -2183,22 +2208,44 @@ const ShipmentRegistry: React.FC = () => {
                                         onChange={(val) => setEditFormData((prev: any) => ({ ...prev, vendor: val }))}
                                         placeholder="Select Vendor"
                                         required
+                                        disabled={user?.role === 'Accountant'}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Amount *</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">MVR</span>
-                                        <input type="number" name="amount" value={editFormData.amount || ''} onChange={handleEditChange} className="w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="0.00" />
+                                        <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-medium ${user?.role === 'Accountant' ? 'text-gray-400' : 'text-gray-500'}`}>MVR</span>
+                                        <input
+                                            type="number"
+                                            name="amount"
+                                            value={editFormData.amount || ''}
+                                            onChange={handleEditChange}
+                                            className="w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            placeholder="0.00"
+                                        />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Bill Ref. No.</label>
-                                    <input type="text" name="bill_ref_no" value={editFormData.bill_ref_no || ''} onChange={handleEditChange} className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Reference Number" />
+                                    <input
+                                        type="text"
+                                        name="bill_ref_no"
+                                        value={editFormData.bill_ref_no || ''}
+                                        onChange={handleEditChange}
+                                        disabled={user?.role === 'Accountant'}
+                                        className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
+                                        placeholder="Reference Number"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Paid By *</label>
-                                    <select name="paid_by" value={editFormData.paid_by || ''} onChange={handleEditChange} className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                    <select
+                                        name="paid_by"
+                                        value={editFormData.paid_by || ''}
+                                        onChange={handleEditChange}
+                                        disabled={user?.role === 'Accountant'}
+                                        className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
+                                    >
                                         <option value="">Select Payer</option>
                                         <option value="Company">Company</option>
                                         <option value="Customer">Customer</option>

@@ -131,15 +131,27 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { amount } = req.body;
+        const { amount, payment_type, vendor, bill_ref_no, paid_by } = req.body;
 
         if (!amount) {
             return res.status(400).json({ error: 'Amount is required' });
         }
 
+        // Fetch current to merge/check
+        const currentRes = await pool.query('SELECT * FROM job_payments WHERE id = $1', [id]);
+        if (currentRes.rows.length === 0) return res.status(404).json({ error: 'Payment not found' });
+        const current = currentRes.rows[0];
+
         const result = await pool.query(
-            'UPDATE job_payments SET amount = $1 WHERE id = $2 RETURNING *',
-            [amount, id]
+            `UPDATE job_payments 
+             SET amount = $1,
+                 payment_type = COALESCE($3, payment_type),
+                 vendor = COALESCE($4, vendor),
+                 bill_ref_no = COALESCE($5, bill_ref_no),
+                 paid_by = COALESCE($6, paid_by)
+             WHERE id = $2 
+             RETURNING *`,
+            [amount, id, payment_type, vendor, bill_ref_no, paid_by]
         );
 
         if (result.rows.length === 0) {
