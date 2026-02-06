@@ -10,6 +10,7 @@ const VALID_ROLES = [
 
     'Accountant',
     'Clearance',
+    'Documentation',
     'All'
 ];
 

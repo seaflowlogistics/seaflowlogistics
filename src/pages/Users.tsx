@@ -41,6 +41,7 @@ const ROLES = [
 
     'Accountant',
     'Clearance',
+    'Documentation',
     'All'
 ];
 
