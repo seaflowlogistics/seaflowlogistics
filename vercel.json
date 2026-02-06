@@ -1,17 +1,8 @@
 {
-    "functions": {
-        "server/index.js": {
-            "runtime": "@vercel/node"
-        }
-    },
     "rewrites": [
         {
             "source": "/api/(.*)",
-            "destination": "/server/index.js"
-        },
-        {
-            "source": "/uploads/(.*)",
-            "destination": "/server/uploads/$1"
+            "destination": "/api/index.js"
         },
         {
             "source": "/(.*)",

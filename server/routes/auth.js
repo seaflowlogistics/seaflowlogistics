@@ -68,7 +68,7 @@ router.post('/login', async (req, res) => {
             const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
             const userAgent = req.headers['user-agent'] || 'Unknown';
             // Simple IP extraction (handles proxies if configured, otherwise simple)
-            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown';
+            const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.socket?.remoteAddress || 'Unknown';
 
             await pool.query(
                 'INSERT INTO user_sessions (user_id, token_hash, ip_address, user_agent, expires_at) VALUES ($1, $2, $3, $4, NOW() + INTERVAL \'24 hours\')',
