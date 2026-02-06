@@ -40,11 +40,15 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Ensure uploads directory exists
+// Ensure uploads directory exists (try-catch for read-only systems)
 import fs from 'fs';
 const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+} catch (e) {
+    console.warn('Could not create uploads directory (expected in serverless):', e.message);
 }
 
 // Serve static files
@@ -84,6 +88,28 @@ app.use('/api/files', filesRoutes);
 // Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Logistics API is running' });
+});
+
+// DB Diagnostic
+app.get('/diag/db', async (req, res) => {
+    try {
+        const start = Date.now();
+        const result = await pool.query('SELECT NOW() as time, current_database() as db');
+        const end = Date.now();
+        res.json({
+            status: 'Connected',
+            time: result.rows[0].time,
+            database: result.rows[0].db,
+            latency: `${end - start}ms`
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'Error',
+            message: error.message,
+            code: error.code,
+            detail: error.detail
+        });
+    }
 });
 
 // Debug Uploads Endpoint
