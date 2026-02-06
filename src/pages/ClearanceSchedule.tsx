@@ -8,7 +8,7 @@ import ClearanceDetailsDrawer from '../components/ClearanceDetailsDrawer';
 import DeliveryNoteDrawer from '../components/DeliveryNoteDrawer';
 
 const ClearanceSchedule: React.FC = () => {
-    const { user, hasRole } = useAuth();
+    const { hasRole } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [clearanceType, setClearanceType] = useState('All types');
     const [transportMode, setTransportMode] = useState('All modes');

@@ -76,7 +76,7 @@ interface DeliveryNote {
 }
 
 const DeliveryNotes: React.FC = () => {
-    const { user, hasRole } = useAuth();
+    const { hasRole } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [recordsPerPage, setRecordsPerPage] = useState('50 records');
     const [statusFilter, setStatusFilter] = useState('All statuses');
