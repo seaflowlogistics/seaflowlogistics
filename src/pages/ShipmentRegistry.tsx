@@ -1306,6 +1306,7 @@ const ShipmentRegistry: React.FC = () => {
                         <div>
                             {/* Action Button Logic */}
                             {/* Action Button Logic */}
+                            {/* Action Button Logic */}
                             {!isJobCompleted ? (
                                 isDeliveryNoteIssued ? (
                                     isAccountsComplete ? (
@@ -1880,7 +1881,7 @@ const ShipmentRegistry: React.FC = () => {
             <div className="p-8 font-sans">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-gray-900">Payments</h3>
-                    {jobPayments.some((p: any) => p.status === 'Draft') && (
+                    {jobPayments.some((p: any) => p.status === 'Draft') && user?.role !== 'Accountant' && (
                         <div className="relative group/btn">
                             <button
                                 onClick={handleSendToAccounts}
