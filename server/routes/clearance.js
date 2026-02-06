@@ -113,8 +113,8 @@ router.get('/', async (req, res) => {
         const params = [];
         const conditions = [];
 
-        // Exclude schedules that are already linked to a Delivery Note
-        // conditions.push(`cs.id NOT IN (SELECT schedule_id FROM delivery_note_items WHERE schedule_id IS NOT NULL)`);
+        // Exclude schedules that are already linked to a Delivery Note (and thus "transferred")
+        conditions.push(`cs.id NOT IN (SELECT schedule_id FROM delivery_note_items WHERE schedule_id IS NOT NULL)`);
 
         if (search) {
             const i = params.length + 1;
