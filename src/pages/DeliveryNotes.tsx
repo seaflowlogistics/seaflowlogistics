@@ -73,6 +73,10 @@ interface DeliveryNote {
     items?: DeliveryNoteItem[];
     vehicles?: DeliveryNoteVehicle[];
     documents?: { name: string; url: string; uploaded_at: string; }[];
+    transport_mode?: string;
+    captain_name?: string;
+    captain_contact?: string;
+    discharge_location?: string;
 }
 
 const DeliveryNotes: React.FC = () => {
@@ -297,13 +301,12 @@ const DeliveryNotes: React.FC = () => {
                                     <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
                                         <span className="font-bold">Delivery:</span> <span>{selectedNote?.id}</span>
                                     </div>
-                                    <div className="border-b border-gray-300 pb-1 mb-1 flex justify-between">
-                                        <span className="font-bold">Loading Date:</span> <span>{selectedNote?.loading_date ? new Date(selectedNote.loading_date).toLocaleDateString() : '-'}</span>
-                                    </div>
                                     <div className="flex justify-between">
                                         <span className="font-bold">Discharge Location:</span>
                                         <span>
                                             {(() => {
+                                                if (selectedNote?.discharge_location) return selectedNote.discharge_location;
+
                                                 const vehicleLocs = selectedNote?.vehicles
                                                     ? selectedNote.vehicles.map(v => v.dischargeLocation).filter(Boolean)
                                                     : [];
@@ -422,7 +425,14 @@ const DeliveryNotes: React.FC = () => {
                                         <div className="grid grid-cols-[40px_1fr] gap-1 mb-2">
                                             <span className="font-bold">Name:</span>
                                             <div className="uppercase font-medium whitespace-nowrap overflow-hidden">
-                                                {selectedNote?.vehicles && selectedNote.vehicles.length > 0 ? (
+                                                {selectedNote?.transport_mode === 'DHONI' ? (
+                                                    <span>
+                                                        {[
+                                                            selectedNote.captain_name,
+                                                            selectedNote.captain_contact
+                                                        ].filter(Boolean).join(' / ')}
+                                                    </span>
+                                                ) : selectedNote?.vehicles && selectedNote.vehicles.length > 0 ? (
                                                     <span>
                                                         {[
                                                             selectedNote.vehicles[0].vehicleName || selectedNote.vehicles[0].vehicleId,
@@ -431,7 +441,7 @@ const DeliveryNotes: React.FC = () => {
                                                         ].filter(Boolean).join(' / ')}
                                                     </span>
                                                 ) : (
-                                                    <span>-</span>
+                                                    <span>{selectedNote?.transport_mode || '-'}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -520,9 +530,9 @@ const DeliveryNotes: React.FC = () => {
                 <div>
                     <label className="text-xs font-bold text-gray-400 uppercase">Discharge Location</label>
                     <p className="font-medium text-gray-900">
-                        {selectedNote?.vehicles && selectedNote.vehicles.length > 0
+                        {selectedNote?.discharge_location || (selectedNote?.vehicles && selectedNote.vehicles.length > 0
                             ? selectedNote.vehicles.map(v => v.dischargeLocation).join(', ')
-                            : '-'}
+                            : '-')}
                     </p>
                 </div>
                 <div>

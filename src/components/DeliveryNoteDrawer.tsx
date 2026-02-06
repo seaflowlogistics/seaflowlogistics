@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, Plus, Trash2 } from 'lucide-react';
-import { fleetAPI } from '../services/api';
+import { X, ArrowLeft } from 'lucide-react';
 
 interface DeliveryNoteDrawerProps {
     isOpen: boolean;
@@ -9,42 +8,28 @@ interface DeliveryNoteDrawerProps {
     onSave: (data: any) => void;
 }
 
-interface VehicleEntry {
-    id: string;
-    vehicleId: string;
-    driver: string;
-    driverContact: string;
-    dischargeLocation: string;
-}
+
 
 const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose, selectedSchedules, onSave }) => {
     const [step, setStep] = useState(1);
     const [itemDetails, setItemDetails] = useState<Record<string, { shortage: string; damaged: string; remarks: string }>>({});
-    const [vehiclesList, setVehiclesList] = useState<any[]>([]);
+
 
     // Step 2 State
-    const [addedVehicles, setAddedVehicles] = useState<VehicleEntry[]>([
-        { id: '1', vehicleId: '', driver: '', driverContact: '', dischargeLocation: '' }
-    ]);
+    const [transportMode, setTransportMode] = useState<string>('LORRY');
+    const [transportDetails, setTransportDetails] = useState({
+        captainName: '',
+        captainContact: '',
+        dischargeLocation: ''
+    });
+
     const [commonDetails, setCommonDetails] = useState({
-        loadingDate: '',
         unloadingDate: '',
         comments: ''
     });
 
     useEffect(() => {
         if (isOpen) {
-            fleetAPI.getAll().then(res => setVehiclesList(res.data)).catch(console.error);
-            // Initialize with default vehicle and pre-filled discharge location from the first selected schedule's port
-            setAddedVehicles([
-                {
-                    id: '1',
-                    vehicleId: '',
-                    driver: '',
-                    driverContact: '',
-                    dischargeLocation: selectedSchedules[0]?.port || ''
-                }
-            ]);
             setStep(1); // Reset step
         }
     }, [isOpen, selectedSchedules]);
@@ -61,28 +46,7 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
         }));
     };
 
-    const handleAddVehicle = () => {
-        setAddedVehicles(prev => [
-            ...prev,
-            {
-                id: Date.now().toString(),
-                vehicleId: '',
-                driver: '',
-                driverContact: '',
-                dischargeLocation: selectedSchedules[0]?.port || ''
-            }
-        ]);
-    };
 
-    const handleRemoveVehicle = (id: string) => {
-        if (addedVehicles.length > 1) {
-            setAddedVehicles(prev => prev.filter(v => v.id !== id));
-        }
-    };
-
-    const handleVehicleChange = (id: string, field: keyof VehicleEntry, value: string) => {
-        setAddedVehicles(prev => prev.map(v => v.id === id ? { ...v, [field]: value } : v));
-    };
 
     const handleCommonChange = (field: string, value: string) => {
         setCommonDetails(prev => ({ ...prev, [field]: value }));
@@ -98,7 +62,8 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
                 job_id: s.job_id,
                 ...itemDetails[s.id]
             })),
-            vehicles: addedVehicles,
+            transportMode,
+            ...transportDetails,
             ...commonDetails
         };
         onSave(combinedData);
@@ -171,89 +136,68 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
                         </div>
                     ) : (
                         <div className="space-y-8">
-                            {/* Vehicles Section */}
+                            {/* Transport Mode Section */}
                             <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-sm font-bold text-gray-900 uppercase">Vehicles</h3>
-                                    <button onClick={handleAddVehicle} className="text-xs flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-full text-indigo-700 font-medium transition-colors">
-                                        <Plus className="w-3 h-3" /> Add Vehicle
-                                    </button>
-                                </div>
+                                <h3 className="text-sm font-bold text-gray-900 uppercase">Transport Details</h3>
+                                <div className="space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1">Transport Mode</label>
+                                        <select
+                                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
+                                            value={transportMode}
+                                            onChange={e => setTransportMode(e.target.value)}
+                                        >
+                                            <option value="LORRY">LORRY</option>
+                                            <option value="PICKUP">PICKUP</option>
+                                            <option value="DHONI">DHONI</option>
+                                            <option value="OTHERS">OTHERS</option>
+                                        </select>
+                                    </div>
 
-                                <div className="space-y-4">
-                                    {addedVehicles.map((vehicle) => (
-                                        <div key={vehicle.id} className="bg-gray-50 p-4 rounded-xl border border-gray-200 relative group">
-                                            {addedVehicles.length > 1 && (
-                                                <button
-                                                    onClick={() => handleRemoveVehicle(vehicle.id)}
-                                                    className="absolute top-2 right-2 p-1.5 bg-white rounded-full text-gray-400 hover:text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            )}
-
-                                            <div className="grid grid-cols-1 gap-3">
+                                    {/* Conditional Fields for DHONI */}
+                                    {transportMode === 'DHONI' && (
+                                        <div className="grid grid-cols-1 gap-4 animate-fade-in">
+                                            <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Select Vehicle</label>
-                                                    <select
-                                                        className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
-                                                        value={vehicle.vehicleId}
-                                                        onChange={e => handleVehicleChange(vehicle.id, 'vehicleId', e.target.value)}
-                                                    >
-                                                        <option value="">Select Vehicle</option>
-                                                        {vehiclesList.map((v: any) => (
-                                                            <option key={v.id} value={v.id}>{v.registration_number} - {v.type}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label className="block text-xs font-semibold text-gray-500 mb-1">Driver</label>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
-                                                            value={vehicle.driver}
-                                                            onChange={e => handleVehicleChange(vehicle.id, 'driver', e.target.value)}
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs font-semibold text-gray-500 mb-1">Contact</label>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
-                                                            value={vehicle.driverContact}
-                                                            onChange={e => handleVehicleChange(vehicle.id, 'driverContact', e.target.value)}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Discharge Location</label>
+                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Captain Name</label>
                                                     <input
                                                         type="text"
-                                                        className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
-                                                        value={vehicle.dischargeLocation}
-                                                        onChange={e => handleVehicleChange(vehicle.id, 'dischargeLocation', e.target.value)}
+                                                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
+                                                        value={transportDetails.captainName}
+                                                        onChange={e => setTransportDetails(prev => ({ ...prev, captainName: e.target.value }))}
+                                                        placeholder="Enter captain name"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Captain Contact</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
+                                                        value={transportDetails.captainContact}
+                                                        onChange={e => setTransportDetails(prev => ({ ...prev, captainContact: e.target.value }))}
+                                                        placeholder="Enter contact number"
                                                     />
                                                 </div>
                                             </div>
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-500 mb-1">Discharge Location</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
+                                                    value={transportDetails.dischargeLocation}
+                                                    onChange={e => setTransportDetails(prev => ({ ...prev, dischargeLocation: e.target.value }))}
+                                                    placeholder="Enter discharge location"
+                                                />
+                                            </div>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             </div>
 
                             {/* Common Details */}
                             <div className="space-y-4 pt-4 border-t border-gray-100">
                                 <h3 className="text-sm font-bold text-gray-900 uppercase">Delivery Details</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Loading Date</label>
-                                        <input
-                                            type="date"
-                                            className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
-                                            value={commonDetails.loadingDate}
-                                            onChange={e => handleCommonChange('loadingDate', e.target.value)}
-                                        />
-                                    </div>
+                                <div className="grid grid-cols-1 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Unloading Date</label>
                                         <input
@@ -270,6 +214,7 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
                                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500 min-h-[100px]"
                                         value={commonDetails.comments}
                                         onChange={e => handleCommonChange('comments', e.target.value)}
+                                        placeholder="Add any additional notes here..."
                                     />
                                 </div>
                             </div>

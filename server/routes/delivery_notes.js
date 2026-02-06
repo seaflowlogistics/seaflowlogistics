@@ -49,7 +49,7 @@ router.post('/', authenticateToken, async (req, res) => {
         await client.query('BEGIN');
 
         console.log('Creating Delivery Note:', req.body);
-        const { items, vehicles, loadingDate, unloadingDate, comments } = req.body;
+        const { items, transportMode, captainName, captainContact, dischargeLocation, unloadingDate, comments } = req.body;
 
         if (!items || items.length === 0) {
             throw new Error('No items provided for Delivery Note');
@@ -71,9 +71,17 @@ router.post('/', authenticateToken, async (req, res) => {
         const issuedBy = req.user.username || req.user.name || 'System';
 
         await client.query(
-            `INSERT INTO delivery_notes (id, consignee, exporter, issued_date, issued_by, status, loading_date, unloading_date, comments)
-             VALUES ($1, $2, $3, CURRENT_DATE, $4, 'Pending', $5, $6, $7)`,
-            [dnId, consignee, exporter, issuedBy, loadingDate || null, unloadingDate || null, comments]
+            `INSERT INTO delivery_notes (
+                id, consignee, exporter, issued_date, issued_by, status, 
+                unloading_date, comments,
+                transport_mode, captain_name, captain_contact, discharge_location
+            )
+             VALUES ($1, $2, $3, CURRENT_DATE, $4, 'Pending', $5, $6, $7, $8, $9, $10)`,
+            [
+                dnId, consignee, exporter, issuedBy,
+                unloadingDate || null, comments,
+                transportMode, captainName, captainContact, dischargeLocation
+            ]
         );
 
         // Insert Items
@@ -85,17 +93,12 @@ router.post('/', authenticateToken, async (req, res) => {
             );
         }
 
-        // Insert Vehicles
+        // Legacy Vehicle Logic (Removed in favor of single transport mode on Delivery Note)
+        /*
         if (vehicles && vehicles.length > 0) {
-            for (const v of vehicles) {
-                const vId = (v.vehicleId && v.vehicleId.trim() !== '') ? v.vehicleId : null;
-                await client.query(
-                    `INSERT INTO delivery_note_vehicles (delivery_note_id, vehicle_id, driver_name, driver_contact, discharge_location)
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [dnId, vId, v.driver, v.driverContact, v.dischargeLocation]
-                );
-            }
+            // ...
         }
+        */
 
         // UPDATE JOB PROGRESS
         // Check if all BLs for the job(s) are now delivered
