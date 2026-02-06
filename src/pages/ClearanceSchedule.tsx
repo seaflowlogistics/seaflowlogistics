@@ -103,9 +103,9 @@ const ClearanceSchedule: React.FC = () => {
             setIsDeliveryDrawerOpen(false);
             setSelectedIds([]);
             setIsDeliveryNoteMode(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to create delivery note', error);
-            alert('Failed to create delivery note');
+            alert(error.response?.data?.error || error.message || 'Failed to create delivery note');
         }
     };
 

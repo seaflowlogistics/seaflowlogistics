@@ -1,4 +1,9 @@
 import pool from './config/database.js';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load env from server directory if running from root
+dotenv.config({ path: path.join(process.cwd(), 'server', '.env') });
 
 const run = async () => {
     try {
