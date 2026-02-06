@@ -1135,7 +1135,7 @@ const ShipmentRegistry: React.FC = () => {
                 return;
             }
 
-            let currentInvoice = selectedJob.job_invoice_no || '';
+            let currentInvoice = selectedJob.job_invoice_no || selectedJob.invoice_id || '';
 
             // Update message to reflect new behavior
             let message = !currentInvoice
