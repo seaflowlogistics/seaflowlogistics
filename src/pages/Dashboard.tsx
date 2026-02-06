@@ -21,7 +21,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 
 const Dashboard: React.FC = () => {
-    const { user } = useAuth();
+    const { user, hasRole } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<any>(null);
@@ -223,7 +223,7 @@ const Dashboard: React.FC = () => {
                     <div>
                         <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {(['Administrator', 'All', 'Accountant', 'Clearance'].includes(user?.role || '') && (
+                            {((hasRole('Administrator') || hasRole('Accountant') || hasRole('Clearance')) && (
                                 <Link to="/registry" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
                                     <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                         <ScrollText className="w-6 h-6" />
@@ -233,7 +233,7 @@ const Dashboard: React.FC = () => {
                                 </Link>
                             ))}
 
-                            {(['Administrator', 'All', 'Clearance'].includes(user?.role || '') && (
+                            {((hasRole('Administrator') || hasRole('Clearance')) && (
                                 <Link to="/schedule" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
                                     <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                                         <Calendar className="w-6 h-6" />
@@ -243,7 +243,7 @@ const Dashboard: React.FC = () => {
                                 </Link>
                             ))}
 
-                            {(['Administrator', 'All', 'Accountant', 'Clearance'].includes(user?.role || '') && (
+                            {((hasRole('Administrator') || hasRole('Accountant') || hasRole('Clearance')) && (
                                 <Link to="/delivery-notes" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
                                     <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                         <CheckCircle className="w-6 h-6" />
@@ -253,7 +253,7 @@ const Dashboard: React.FC = () => {
                                 </Link>
                             ))}
 
-                            {(['Administrator', 'All', 'Accountant'].includes(user?.role || '') && (
+                            {((hasRole('Administrator') || hasRole('Accountant')) && (
                                 <Link to="/payments" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
                                     <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center mb-3 group-hover:bg-green-600 group-hover:text-white transition-colors">
                                         <CreditCard className="w-6 h-6" />
@@ -263,7 +263,7 @@ const Dashboard: React.FC = () => {
                                 </Link>
                             ))}
 
-                            {(['Administrator', 'All'].includes(user?.role || '') && (
+                            {(hasRole('Administrator') && (
                                 <Link to="/users" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
                                     <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                         <Users className="w-6 h-6" />
@@ -273,7 +273,7 @@ const Dashboard: React.FC = () => {
                                 </Link>
                             ))}
 
-                            {(['Administrator', 'All'].includes(user?.role || '') && (
+                            {(hasRole('Administrator') && (
                                 <Link to="/reports" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
                                     <div className="w-12 h-12 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center mb-3 group-hover:bg-pink-600 group-hover:text-white transition-colors">
                                         <FileText className="w-6 h-6" />
@@ -283,7 +283,7 @@ const Dashboard: React.FC = () => {
                                 </Link>
                             ))}
 
-                            {(['Administrator', 'All'].includes(user?.role || '') && (
+                            {(hasRole('Administrator') && (
                                 <Link to="/logs" className="glass-card p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">
                                     <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-3 group-hover:bg-orange-600 group-hover:text-white transition-colors">
                                         <ScrollText className="w-6 h-6" />

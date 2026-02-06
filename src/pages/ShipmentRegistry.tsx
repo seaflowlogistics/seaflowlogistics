@@ -49,7 +49,8 @@ interface JobFormData {
 
 const ShipmentRegistry: React.FC = () => {
     // State
-    const { user } = useAuth();
+    const { user, hasRole } = useAuth();
+    const canEdit = hasRole('Administrator') || hasRole('Clearance') || hasRole('Documentation');
     const location = useLocation();
     // const navigate = useNavigate(); // Unused for now
     const [jobs, setJobs] = useState<any[]>([]);
@@ -707,7 +708,7 @@ const ShipmentRegistry: React.FC = () => {
                     <span className="text-xs font-medium text-gray-400">
                         {new Date(job.created_at || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
-                    {user?.role === 'Administrator' && (
+                    {hasRole('Administrator') && (
                         <button
                             onClick={(e) => handleDeleteJob(job.id, e)}
                             className="p-1 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
@@ -999,7 +1000,7 @@ const ShipmentRegistry: React.FC = () => {
                                             >
                                                 <Download className="w-4 h-4" />
                                             </button>
-                                            {user?.role === 'Administrator' && (
+                                            {hasRole('Administrator') && (
                                                 <button
                                                     onClick={async () => {
                                                         if (window.confirm('Delete document?')) {
@@ -1032,7 +1033,7 @@ const ShipmentRegistry: React.FC = () => {
                 </table>
             </div>
 
-            {user?.role !== 'Accountant' && (
+            {canEdit && (
                 <div className="border-t pt-6">
                     <h4 className="font-semibold text-sm text-gray-700 mb-4">Upload New Document</h4>
                     <div className="flex gap-4 items-end">
@@ -1129,8 +1130,7 @@ const ShipmentRegistry: React.FC = () => {
 
         const handleMarkCompleted = async () => {
             // Role Check
-            const allowedRoles = ['Administrator', 'Accountant'];
-            if (!user || !allowedRoles.includes(user.role)) {
+            if (!user || (!hasRole('Administrator') && !hasRole('Accountant'))) {
                 alert("Only Accountants or Administrators can mark a job as Completed.");
                 return;
             }
@@ -1428,7 +1428,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Registered Date</label>
                                             <p className="font-medium text-slate-200 py-2">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {['Administrator'].includes(user?.role || '') && (
+                                        {hasRole('Administrator') && (
                                             <div>
                                                 <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Job Invoice No.</label>
                                                 <input
@@ -1504,7 +1504,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Registered Date</p>
                                             <p className="font-medium text-slate-200">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {['Administrator', 'Accountant'].includes(user?.role || '') && (
+                                        {(hasRole('Administrator') || hasRole('Accountant')) && (
                                             <div>
                                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Job Invoice</p>
                                                 <p className="font-medium text-slate-200">{selectedJob.job_invoice_no || selectedJob.invoice_id || selectedJob.invoice?.invoice_no || <span className="opacity-50 italic">Not Generated</span>}</p>
@@ -1627,12 +1627,12 @@ const ShipmentRegistry: React.FC = () => {
                                         <div className="absolute top-0 right-0 flex gap-1">
                                             <button
                                                 onClick={() => { setNewBL(bl); setIsBLDrawerOpen(true); }}
-                                                className={`text-gray-300 hover:text-indigo-600 p-1 ${user?.role === 'Accountant' ? 'hidden' : ''}`}
+                                                className={`text-gray-300 hover:text-indigo-600 p-1 ${!canEdit ? 'hidden' : ''}`}
                                                 title="Edit this BL"
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
                                             </button>
-                                            {user?.role === 'Administrator' && (
+                                            {hasRole('Administrator') && (
                                                 <button
                                                     onClick={() => handleDeleteBLItem(bl.id)}
                                                     className="text-gray-300 hover:text-red-600 p-1"
@@ -1842,11 +1842,11 @@ const ShipmentRegistry: React.FC = () => {
                                                                         });
                                                                         setAddingContainer(false);
                                                                     }}
-                                                                    className={`text-gray-400 hover:text-indigo-600 p-1.5 rounded hover:bg-indigo-50 ${user?.role === 'Accountant' ? 'hidden' : ''}`}
+                                                                    className={`text-gray-400 hover:text-indigo-600 p-1.5 rounded hover:bg-indigo-50 ${!canEdit ? 'hidden' : ''}`}
                                                                 >
                                                                     <Pencil className="w-4 h-4" />
                                                                 </button>
-                                                                {user?.role === 'Administrator' && (
+                                                                {hasRole('Administrator') && (
                                                                     <button onClick={() => handleDeleteContainerItem(c.id)} className="text-gray-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50"><Trash2 className="w-4 h-4" /></button>
                                                                 )}
                                                             </div>
@@ -1990,7 +1990,7 @@ const ShipmentRegistry: React.FC = () => {
                                                     </button>
                                                 )}
 
-                                                {user?.role === 'Administrator' && (
+                                                {hasRole('Administrator') && (
                                                     <button
                                                         onClick={async () => {
                                                             if (window.confirm('Delete payment?')) {
@@ -2216,7 +2216,7 @@ const ShipmentRegistry: React.FC = () => {
                                         }}
                                         placeholder="Select Payment Type"
                                         required
-                                        disabled={user?.role === 'Accountant'}
+                                        disabled={!canEdit}
                                     />
                                 </div>
                                 <div>
@@ -2227,7 +2227,7 @@ const ShipmentRegistry: React.FC = () => {
                                         onChange={(val) => setEditFormData((prev: any) => ({ ...prev, vendor: val }))}
                                         placeholder="Select Vendor"
                                         required
-                                        disabled={user?.role === 'Accountant'}
+                                        disabled={!canEdit}
                                     />
                                 </div>
                                 <div>
@@ -2251,7 +2251,7 @@ const ShipmentRegistry: React.FC = () => {
                                         name="bill_ref_no"
                                         value={editFormData.bill_ref_no || ''}
                                         onChange={handleEditChange}
-                                        disabled={user?.role === 'Accountant'}
+                                        disabled={!canEdit}
                                         className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
                                         placeholder="Reference Number"
                                     />
@@ -2262,7 +2262,7 @@ const ShipmentRegistry: React.FC = () => {
                                         name="paid_by"
                                         value={editFormData.paid_by || ''}
                                         onChange={handleEditChange}
-                                        disabled={user?.role === 'Accountant'}
+                                        disabled={!canEdit}
                                         className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
                                     >
                                         <option value="">Select Payer</option>

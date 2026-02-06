@@ -8,7 +8,7 @@ interface User {
     id: string;
     username: string;
     email?: string;
-    role: string;
+    role: string | string[];
     created_at: string;
     last_active?: string;
     is_logged_in?: boolean;
@@ -46,16 +46,21 @@ const ROLES = [
 ];
 
 const Users: React.FC = () => {
-    const { user: currentUser } = useAuth();
+    const { user: currentUser, hasRole } = useAuth();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        username: string;
+        email: string;
+        password: string;
+        role: string[];
+    }>({
         username: '',
         email: '',
         password: '',
-        role: ROLES[0]
+        role: [ROLES[0]]
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -134,11 +139,20 @@ const Users: React.FC = () => {
 
     const openEditModal = (user: User) => {
         setEditingUser(user);
+        let userRoles: string[] = [];
+        if (Array.isArray(user.role)) {
+            userRoles = user.role;
+        } else if (user.role) {
+            userRoles = [user.role];
+        } else {
+            userRoles = [ROLES[0]];
+        }
+
         setFormData({
             username: user.username,
             email: user.email || '',
             password: '',
-            role: user.role
+            role: userRoles
         });
         setIsModalOpen(true);
     };
@@ -149,9 +163,22 @@ const Users: React.FC = () => {
             username: '',
             email: '',
             password: '',
-            role: ROLES[0]
+            role: [ROLES[0]]
         });
         setError('');
+    };
+
+    const toggleRole = (roleToToggle: string) => {
+        setFormData(prev => {
+            const currentRoles = prev.role;
+            if (currentRoles.includes(roleToToggle)) {
+                // Don't allow empty roles, must have at least one
+                if (currentRoles.length === 1) return prev;
+                return { ...prev, role: currentRoles.filter(r => r !== roleToToggle) };
+            } else {
+                return { ...prev, role: [...currentRoles, roleToToggle] };
+            }
+        });
     };
 
     if (loading) {
@@ -162,7 +189,7 @@ const Users: React.FC = () => {
         );
     }
 
-    if (currentUser?.role !== 'Administrator') {
+    if (!hasRole('Administrator')) {
         return (
             <Layout>
                 <div className="p-6 text-center text-red-600">
@@ -220,9 +247,13 @@ const Users: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="py-4 px-6">
-                                        <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full w-fit">
-                                            <Shield className="w-4 h-4" />
-                                            {user.role}
+                                        <div className="flex flex-wrap gap-1">
+                                            {(Array.isArray(user.role) ? user.role : [user.role]).map((r, idx) => (
+                                                <div key={idx} className="flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full w-fit">
+                                                    <Shield className="w-4 h-4" />
+                                                    {r}
+                                                </div>
+                                            ))}
                                         </div>
                                     </td>
                                     <td className="py-4 px-6">
@@ -398,23 +429,21 @@ const Users: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.role}
-                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                            className="input-field appearance-none"
-                                        >
-                                            {ROLES.map((role) => (
-                                                <option key={role} value={role}>{role}</option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
-                                            <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
-                                                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                            </svg>
-                                        </div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Roles</label>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50/50">
+                                        {ROLES.map((role) => (
+                                            <label key={role} className="flex items-center gap-3 p-1.5 hover:bg-white hover:shadow-sm rounded transition-all cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.role.includes(role)}
+                                                    onChange={() => toggleRole(role)}
+                                                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                                />
+                                                <span className="text-sm font-medium text-gray-700">{role}</span>
+                                            </label>
+                                        ))}
                                     </div>
+                                    <p className="text-xs text-gray-500 mt-1">Select at least one role.</p>
                                 </div>
 
                                 <div className="flex justify-end gap-3 mt-6">

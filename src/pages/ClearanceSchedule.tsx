@@ -8,7 +8,7 @@ import ClearanceDetailsDrawer from '../components/ClearanceDetailsDrawer';
 import DeliveryNoteDrawer from '../components/DeliveryNoteDrawer';
 
 const ClearanceSchedule: React.FC = () => {
-    const { user } = useAuth();
+    const { user, hasRole } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [clearanceType, setClearanceType] = useState('All types');
     const [transportMode, setTransportMode] = useState('All modes');
@@ -319,7 +319,7 @@ const ClearanceSchedule: React.FC = () => {
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
 
-                                                {user?.role === 'Administrator' && (
+                                                {hasRole('Administrator') && (
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
                                                         className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors ml-2"

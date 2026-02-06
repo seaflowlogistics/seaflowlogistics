@@ -24,20 +24,19 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-    const { user, logout } = useAuth();
+    const { user, logout, hasRole } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
         logout();
         navigate('/');
     };
-    const userRole = user?.role || '';
 
-    // Role definitions matches the new simple roles: Admin, Accountant, Clearance, All
-    const hasFullAccess = ['Administrator', 'All'].includes(userRole);
-    const isClearanceMember = ['Clearance'].includes(userRole);
-    const isAccountantMember = ['Accountant'].includes(userRole);
-    const isDocumentationMember = ['Documentation'].includes(userRole);
+    // Role definitions
+    const hasFullAccess = hasRole('Administrator');
+    const isClearanceMember = hasRole('Clearance');
+    const isAccountantMember = hasRole('Accountant');
+    const isDocumentationMember = hasRole('Documentation');
 
 
     // Computed Permissions
@@ -170,7 +169,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                             <div className="flex items-center gap-3 mb-3 px-2">
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-gray-800 truncate">{user?.username}</p>
-                                    <p className="text-xs text-gray-500 truncate">{user?.role}</p>
+                                    <p className="text-xs text-gray-500 truncate">
+                                        {Array.isArray(user?.role) ? user?.role.join(', ') : user?.role}
+                                    </p>
                                 </div>
                             </div>
                             <button
