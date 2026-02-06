@@ -1,1 +1,0 @@
-ALTER TABLE shipments ADD COLUMN IF NOT EXISTS cargo_type VARCHAR(100);

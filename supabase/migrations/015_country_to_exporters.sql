@@ -1,2 +1,0 @@
-
-ALTER TABLE exporters ADD COLUMN IF NOT EXISTS country VARCHAR(100);

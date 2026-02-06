@@ -1,1 +1,0 @@
-ALTER TABLE delivery_notes ADD COLUMN IF NOT EXISTS documents JSONB DEFAULT '[]';

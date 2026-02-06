@@ -188,21 +188,35 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
                 const expenseTransportation = parseFloat(normalizedRow['transportation'] || '0');
                 const expenseLiner = parseFloat(normalizedRow['liner'] || '0');
 
-                // Insert Shipment
+                // Insert Shipment (Refactored: Removed structural redundancy - cbm)
                 await pool.query(
                     `INSERT INTO shipments (
                                 id, customer, status, progress, 
                                 sender_name, receiver_name, weight, price, transport_mode,
-                                invoice_no, invoice_items, customs_r_form, bl_awb_no, container_no, container_type, cbm,
+                                invoice_no, invoice_items, customs_r_form, origin,
                                 expense_macl, expense_mpl, expense_mcs, expense_transportation, expense_liner, date
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
                     [
                         id, customer, status, progress,
                         exporter, consignee, weight, price, transport_mode,
-                        invoiceNo, invoiceItems, customsRForm, blAwbNo, containerNo, containerType, cbm,
+                        invoiceNo, invoiceItems, customsRForm, origin,
                         expenseMacl, expenseMpl, expenseMcs, expenseTransportation, expenseLiner, dateVal
                     ]
                 );
+
+                // Insert into normalized tables
+                if (blAwbNo) {
+                    await pool.query(
+                        'INSERT INTO shipment_bls (shipment_id, master_bl) VALUES ($1, $2)',
+                        [id, blAwbNo]
+                    );
+                }
+                if (containerNo) {
+                    await pool.query(
+                        'INSERT INTO shipment_containers (shipment_id, container_no, container_type) VALUES ($1, $2, $3)',
+                        [id, containerNo, containerType]
+                    );
+                }
 
                 // Auto-Generate Invoice record
                 const invoiceId = `INV-${new Date().getFullYear()}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}-${successCount}`;
@@ -598,7 +612,7 @@ router.post('/', authenticateToken, shipmentUpload, async (req, res) => {
                 sender_name, sender_address, receiver_name, receiver_address,
                 weight, dimensions, price,
                 date, expected_delivery_date, transport_mode,
-                driver, vehicle_id, service, billing_contact, shipment_type, packages
+                driver, vehicle_id, service, billing_contact, shipment_type, origin
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
             RETURNING *
         `;
@@ -608,8 +622,7 @@ router.post('/', authenticateToken, shipmentUpload, async (req, res) => {
             sender_name, sender_address, receiver_name, receiver_address,
             safeWeight, dimensions, safePrice,
             date, expected_delivery_date, transport_mode,
-            driver || null, vehicle_id || null, service, billing_contact, shipment_type,
-            packages ? JSON.stringify(packages) : '[]'
+            driver || null, vehicle_id || null, service, billing_contact, shipment_type, origin
         ];
 
         const shipmentResult = await pool.query(shipmentQuery, shipmentValues);
@@ -690,13 +703,12 @@ router.put('/:id', authenticateToken, async (req, res) => {
             receiver_name, receiver_address,
             description, weight, dimensions, price,
             date, expected_delivery_date, transport_mode,
-            invoice_no, invoice_items, customs_r_form, bl_awb_no, container_no, container_type, cbm, no_of_pkgs,
+            invoice_no, invoice_items, customs_r_form, no_of_pkgs,
             expense_macl, expense_mpl, expense_mcs, expense_transportation, expense_liner,
-            house_bl, vessel, delivery_agent,
+            vessel,
             office, cargo_type, unloaded_date,
             shipment_type, billing_contact, service,
-            job_invoice_no,
-            packages
+            job_invoice_no
         } = req.body;
 
 
@@ -735,19 +747,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
                  invoice_no = COALESCE($16, invoice_no),
                  invoice_items = COALESCE($17, invoice_items),
                  customs_r_form = COALESCE($18, customs_r_form),
-                 bl_awb_no = COALESCE($19, bl_awb_no),
-                 container_no = COALESCE($20, container_no),
-                 container_type = COALESCE($21, container_type),
-                 cbm = COALESCE($22, cbm),
-                 expense_macl = COALESCE($23, expense_macl),
-                 expense_mpl = COALESCE($24, expense_mpl),
-                 expense_mcs = COALESCE($25, expense_mcs),
-                 expense_transportation = COALESCE($26, expense_transportation),
-                 expense_liner = COALESCE($27, expense_liner),
-                 shipment_type = COALESCE($28, shipment_type),
-                 billing_contact = COALESCE($29, billing_contact),
-                 service = COALESCE($30, service),
-                 packages = COALESCE($31, packages),
+                 expense_macl = COALESCE($19, expense_macl),
+                 expense_mpl = COALESCE($20, expense_mpl),
+                 expense_mcs = COALESCE($21, expense_mcs),
+                 expense_transportation = COALESCE($22, expense_transportation),
+                 expense_liner = COALESCE($23, expense_liner),
+                 shipment_type = COALESCE($24, shipment_type),
+                 billing_contact = COALESCE($25, billing_contact),
+                 service = COALESCE($26, service),
+                 unloaded_date = COALESCE($27, unloaded_date),
                  
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = $15
@@ -758,11 +766,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
                 weight ?? null, dimensions ?? null, price ?? null,
                 date ?? null, expected_delivery_date ?? null, transport_mode ?? null,
                 id,
-                invoice_no ?? null, invoice_items ?? null, customs_r_form ?? null, bl_awb_no ?? null,
-                container_no ?? null, container_type ?? null, cbm ?? null,
+                invoice_no ?? null, invoice_items ?? null, customs_r_form ?? null,
                 expense_macl ?? null, expense_mpl ?? null, expense_mcs ?? null, expense_transportation ?? null, expense_liner ?? null,
-                shipment_type ?? null, billing_contact ?? null, service ?? null,
-                packages ? JSON.stringify(packages) : null
+                shipment_type ?? null, billing_contact ?? null, service ?? null, unloaded_date ?? null
             ]
         );
 

@@ -1,3 +1,0 @@
-ALTER TABLE shipment_documents 
-ADD COLUMN IF NOT EXISTS uploaded_by UUID REFERENCES users(id) ON DELETE SET NULL,
-ADD COLUMN IF NOT EXISTS uploaded_by_name VARCHAR(255);

@@ -1,1 +1,0 @@
-ALTER TABLE shipments ADD COLUMN IF NOT EXISTS unloaded_date TIMESTAMP;
