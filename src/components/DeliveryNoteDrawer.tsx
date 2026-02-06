@@ -24,12 +24,14 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
     });
 
     const [commonDetails, setCommonDetails] = useState({
+
         unloadingDate: '',
         comments: ''
     });
 
     useEffect(() => {
         if (isOpen) {
+
             setStep(1); // Reset step
         }
     }, [isOpen, selectedSchedules]);
