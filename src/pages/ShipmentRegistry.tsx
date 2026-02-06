@@ -1321,27 +1321,33 @@ const ShipmentRegistry: React.FC = () => {
                                             <Lock className="w-4 h-4" /> Approval Pending
                                         </span>
                                     ) : (
-                                        <button
-                                            onClick={() => setActiveTab('Payments')}
-                                            className="px-5 py-2.5 bg-black text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200 animate-pulse"
-                                        >
-                                            Go to Payments <ChevronRight className="w-4 h-4" />
-                                        </button>
+                                        user?.role !== 'Accountant' && (
+                                            <button
+                                                onClick={() => setActiveTab('Payments')}
+                                                className="px-5 py-2.5 bg-black text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200 animate-pulse"
+                                            >
+                                                Go to Payments <ChevronRight className="w-4 h-4" />
+                                            </button>
+                                        )
                                     )
                                 ) : isAllScheduled ? (
-                                    <button
-                                        onClick={() => handleOpenPopup('schedule', selectedJob, selectedJob.clearance_schedule)}
-                                        className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
-                                    >
-                                        <Calendar className="w-4 h-4" /> Clearance Scheduled
-                                    </button>
+                                    user?.role !== 'Accountant' && (
+                                        <button
+                                            onClick={() => handleOpenPopup('schedule', selectedJob, selectedJob.clearance_schedule)}
+                                            className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
+                                        >
+                                            <Calendar className="w-4 h-4" /> Clearance Scheduled
+                                        </button>
+                                    )
                                 ) : isDocComplete ? (
-                                    <button
-                                        onClick={() => handleOpenPopup('schedule', selectedJob)}
-                                        className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                                    >
-                                        <Calendar className="w-4 h-4" /> Schedule Clearance
-                                    </button>
+                                    user?.role !== 'Accountant' && (
+                                        <button
+                                            onClick={() => handleOpenPopup('schedule', selectedJob)}
+                                            className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                        >
+                                            <Calendar className="w-4 h-4" /> Schedule Clearance
+                                        </button>
+                                    )
                                 ) : null
                             ) : (
                                 <span className="px-5 py-2.5 bg-gray-100 text-gray-400 text-sm font-bold rounded-lg flex items-center gap-2 cursor-default border border-gray-200">
