@@ -50,7 +50,7 @@ interface JobFormData {
 const ShipmentRegistry: React.FC = () => {
     // State
     const { user, hasRole } = useAuth();
-    const canEdit = hasRole('Administrator') || hasRole('Clearance') || hasRole('Documentation');
+    const canEdit = hasRole('Administrator') || hasRole('Documentation');
     const location = useLocation();
     // const navigate = useNavigate(); // Unused for now
     const [jobs, setJobs] = useState<any[]>([]);
@@ -1459,7 +1459,7 @@ const ShipmentRegistry: React.FC = () => {
                             ) : (
                                 <>
                                     <div className="absolute top-6 right-6">
-                                        {user?.role !== 'Accountant' && (
+                                        {canEdit && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'jobDetails' ? null : 'jobDetails'); }}
                                                 className="text-slate-400 hover:text-white transition-colors"
@@ -1470,7 +1470,7 @@ const ShipmentRegistry: React.FC = () => {
                                         )}
                                         {openMenu === 'jobDetails' && (
                                             <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                                {user?.role !== 'Accountant' && (
+                                                {canEdit && (
                                                     <button
                                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
                                                         onClick={handleEditJobDetails}

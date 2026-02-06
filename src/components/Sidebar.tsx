@@ -40,7 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
 
     // Computed Permissions
-    const showRegistry = hasFullAccess || isClearanceMember || isAccountantMember || isDocumentationMember; // Everyone needs registry? Previously isClearance included Accountant. 
+    const showRegistry = hasFullAccess || isClearanceMember || isAccountantMember || isDocumentationMember;
     // Accountants need registry to click Payment icons usually.
 
     const showClearanceSchedule = hasFullAccess || isClearanceMember; // NOT Accountant
