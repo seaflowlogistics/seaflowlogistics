@@ -1450,13 +1450,15 @@ const ShipmentRegistry: React.FC = () => {
                             ) : (
                                 <>
                                     <div className="absolute top-6 right-6">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'jobDetails' ? null : 'jobDetails'); }}
-                                            className="text-slate-400 hover:text-white transition-colors"
-                                            title="Options"
-                                        >
-                                            <MoreHorizontal className="w-6 h-6" />
-                                        </button>
+                                        {user?.role !== 'Accountant' && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'jobDetails' ? null : 'jobDetails'); }}
+                                                className="text-slate-400 hover:text-white transition-colors"
+                                                title="Options"
+                                            >
+                                                <MoreHorizontal className="w-6 h-6" />
+                                            </button>
+                                        )}
                                         {openMenu === 'jobDetails' && (
                                             <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
                                                 {user?.role !== 'Accountant' && (
@@ -1508,13 +1510,15 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-200 relative">
                             <div className="absolute top-6 right-6 flex gap-2">
                                 <div className="relative">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'invoice' ? null : 'invoice'); }}
-                                        className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
-                                        title="Options"
-                                    >
-                                        <MoreHorizontal className="w-6 h-6" />
-                                    </button>
+                                    {user?.role !== 'Accountant' && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'invoice' ? null : 'invoice'); }}
+                                            className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
+                                            title="Options"
+                                        >
+                                            <MoreHorizontal className="w-6 h-6" />
+                                        </button>
+                                    )}
                                     {openMenu === 'invoice' && (
                                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
                                             {user?.role !== 'Accountant' && (
@@ -1556,13 +1560,15 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-200 relative">
                             <div className="absolute top-6 right-6 flex gap-2">
                                 <div className="relative">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'bl' ? null : 'bl'); }}
-                                        className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
-                                        title="Manage BL/AWB"
-                                    >
-                                        <MoreHorizontal className="w-6 h-6" />
-                                    </button>
+                                    {user?.role !== 'Accountant' && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'bl' ? null : 'bl'); }}
+                                            className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
+                                            title="Manage BL/AWB"
+                                        >
+                                            <MoreHorizontal className="w-6 h-6" />
+                                        </button>
+                                    )}
                                     {openMenu === 'bl' && (
                                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
                                             {user?.role !== 'Accountant' && (
