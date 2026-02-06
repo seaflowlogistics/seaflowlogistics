@@ -739,17 +739,17 @@ const ShipmentRegistry: React.FC = () => {
 
     const renderCreateForm = () => (
         <div className="flex flex-col h-full bg-white animate-fade-in-up">
-            {/* Header */}
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
-                <div>
-                    <h2 className="text-xl font-bold text-gray-900">{isEditingJob ? 'Edit Job' : 'Register New Job'}</h2>
-                    <p className="text-sm text-gray-500">{isEditingJob ? 'Update job details.' : 'Enter shipment details to create a new registry entry.'}</p>
+            {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900">{isEditingJob ? 'Edit Job' : 'Register New Job'}</h2>
+                        <p className="text-sm text-gray-500">{isEditingJob ? 'Update job details.' : 'Enter shipment details to create a new registry entry.'}</p>
+                    </div>
+                    <button onClick={() => { setViewMode(isEditingJob ? 'details' : 'empty'); setIsEditingJob(false); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600">
+                        <X className="w-5 h-5" />
+                    </button>
                 </div>
-                <button onClick={() => { setViewMode(isEditingJob ? 'details' : 'empty'); setIsEditingJob(false); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600">
-                    <X className="w-5 h-5" />
-                </button>
-            </div>
-
+            )}
             {/* Form Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
 
@@ -1130,7 +1130,7 @@ const ShipmentRegistry: React.FC = () => {
 
         const handleMarkCompleted = async () => {
             // Role Check
-            if (!user || (!hasRole('Administrator') && !hasRole('Accountant'))) {
+            if (!user || (!hasRole('Administrator') && !hasRole('Accountant') && !hasRole('All'))) {
                 alert("Only Accountants or Administrators can mark a job as Completed.");
                 return;
             }
@@ -1310,28 +1310,30 @@ const ShipmentRegistry: React.FC = () => {
                             {!isJobCompleted ? (
                                 isDeliveryNoteIssued ? (
                                     isAccountsComplete ? (
-                                        <button
-                                            onClick={handleMarkCompleted}
-                                            className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
-                                        >
-                                            <Check className="w-4 h-4" /> Mark Completed
-                                        </button>
+                                        user?.role !== 'Clearance' && user?.role !== 'Documentation' && (
+                                            <button
+                                                onClick={handleMarkCompleted}
+                                                className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
+                                            >
+                                                <Check className="w-4 h-4" /> Mark Completed
+                                            </button>
+                                        )
                                     ) : selectedJob.has_pending_payments ? (
                                         <span className="px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-lg flex items-center gap-2 cursor-default shadow-lg shadow-amber-200">
                                             <Lock className="w-4 h-4" /> Approval Pending
                                         </span>
                                     ) : (
-                                        user?.role !== 'Accountant' && (
+                                        user?.role !== 'Accountant' && user?.role !== 'Documentation' && (
                                             <button
                                                 onClick={() => setActiveTab('Payments')}
-                                                className="px-5 py-2.5 bg-black text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200 animate-pulse"
+                                                className="px-5 py-2.5 bg-black text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-gray-200"
                                             >
                                                 Go to Payments <ChevronRight className="w-4 h-4" />
                                             </button>
                                         )
                                     )
                                 ) : isAllScheduled ? (
-                                    user?.role !== 'Accountant' && (
+                                    user?.role !== 'Accountant' && user?.role !== 'Documentation' && (
                                         <button
                                             onClick={() => handleOpenPopup('schedule', selectedJob, selectedJob.clearance_schedule)}
                                             className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
@@ -1340,7 +1342,7 @@ const ShipmentRegistry: React.FC = () => {
                                         </button>
                                     )
                                 ) : isDocComplete ? (
-                                    user?.role !== 'Accountant' && (
+                                    user?.role !== 'Accountant' && user?.role !== 'Documentation' && (
                                         <button
                                             onClick={() => handleOpenPopup('schedule', selectedJob)}
                                             className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
@@ -1459,7 +1461,7 @@ const ShipmentRegistry: React.FC = () => {
                             ) : (
                                 <>
                                     <div className="absolute top-6 right-6">
-                                        {user?.role !== 'Accountant' && (
+                                        {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'jobDetails' ? null : 'jobDetails'); }}
                                                 className="text-slate-400 hover:text-white transition-colors"
@@ -1470,7 +1472,7 @@ const ShipmentRegistry: React.FC = () => {
                                         )}
                                         {openMenu === 'jobDetails' && (
                                             <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                                {user?.role !== 'Accountant' && (
+                                                {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
                                                     <button
                                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
                                                         onClick={handleEditJobDetails}
