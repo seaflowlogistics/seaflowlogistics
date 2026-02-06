@@ -1430,7 +1430,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Registered Date</label>
                                             <p className="font-medium text-slate-200 py-2">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {(hasRole('Administrator') || hasRole('Accountant')) || hasRole('All') && (
+                                        {user?.role !== 'Administrator' && user?.role !== 'Accountant' && user?.role !== 'All' && (
                                             <div>
                                                 <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Job Invoice No.</label>
                                                 <input
@@ -1506,7 +1506,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Registered Date</p>
                                             <p className="font-medium text-slate-200">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {(hasRole('Administrator') || hasRole('Accountant')) && (
+                                        {user?.role !== 'Administrator' && user?.role !== 'Accountant' && (
                                             <div>
                                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Job Invoice</p>
                                                 <p className="font-medium text-slate-200">{selectedJob.job_invoice_no || selectedJob.invoice_id || selectedJob.invoice?.invoice_no || <span className="opacity-50 italic">Not Generated</span>}</p>
@@ -1532,7 +1532,7 @@ const ShipmentRegistry: React.FC = () => {
                                     )}
                                     {openMenu === 'invoice' && (
                                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                            {user?.role !== 'Accountant' && (
+                                            {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
                                                 <button
                                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
                                                     onClick={() => { handleOpenPopup('invoice', selectedJob); setOpenMenu(null); }}
