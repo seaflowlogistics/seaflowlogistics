@@ -202,11 +202,14 @@ const DeliveryNotes: React.FC = () => {
 
     const handleViewDetails = async (note: DeliveryNote, tab: 'document' | 'manage' = 'manage') => {
         try {
+            console.log('Fetching details for:', note.id);
             const response = await deliveryNotesAPI.getById(note.id);
+            console.log('Details received:', response.data);
             setSelectedNote(response.data);
             setActiveTab(tab);
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            console.error('Failed to view details:', err);
+            alert(`Failed to open delivery note details: ${err.response?.data?.error || err.message}`);
         }
     };
 
