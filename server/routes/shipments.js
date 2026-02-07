@@ -108,8 +108,7 @@ router.get('/export', authenticateToken, async (req, res) => {
         `;
 
         const result = await pool.query(query);
-
-
+        const rows = result.rows;
 
         console.log(`Exporting ${rows.length} rows`);
         res.json(rows);
