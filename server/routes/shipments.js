@@ -82,7 +82,48 @@ router.get('/export', authenticateToken, async (req, res) => {
                 '' as "CBM", 
                 -- Fetch packages from shipment_bls (aggregated) 
                 -- Fetch packages from shipment_bls (aggregated),
-                (SELECT STRING_AGG(packages, ',')FROM clearance_schedules WHERE job_id = s.id) as "Packages",
+                (SELECT CASE WHEN SUM(NULLIF(p->>'cbm','')::numeric) IS NULL THEN '-' ELSE TO_CHAR(SUM(NULLIF(p->>'cbm','')::numeric), 'FM999G999G999D000') END
+  FROM clearance_schedules cs
+  CROSS JOIN LATERAL jsonb_array_elements(cs.packages) AS c
+  CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
+  WHERE cs.job_id = s.id
+) AS "CBM",
+
+-- Weight (sum over all nested packages)
+(
+  SELECT
+    CASE
+      WHEN SUM(NULLIF(p->>'weight','')::numeric) IS NULL THEN '-'
+      ELSE TO_CHAR(SUM(NULLIF(p->>'weight','')::numeric), 'FM999G999G999D00')
+    END
+  FROM clearance_schedules cs
+  CROSS JOIN LATERAL jsonb_array_elements(cs.packages) AS c
+  CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
+  WHERE cs.job_id = s.id
+) AS "Weight",
+
+-- Packages (sum pkg_count grouped by pkg_type, output like: "2 PKG, 2000 CARTONS")
+(
+  SELECT
+    COALESCE(
+      STRING_AGG(
+        (tot.total_count)::text || ' ' || tot.pkg_type,
+        ', '
+        ORDER BY tot.pkg_type
+      ),
+      '-'
+    )
+  FROM (
+    SELECT
+      p->>'pkg_type' AS pkg_type,
+      SUM(NULLIF(p->>'pkg_count','')::numeric) AS total_count
+    FROM clearance_schedules cs
+    CROSS JOIN LATERAL jsonb_array_elements(cs.packages) AS c
+    CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
+    WHERE cs.job_id = s.id
+    GROUP BY p->>'pkg_type'
+  ) tot
+) AS "Packages",
                 -- Clearing Status
                 s.status as "Clearing Status",
                 -- Cleared Date (Issued Delivery Note Date)
