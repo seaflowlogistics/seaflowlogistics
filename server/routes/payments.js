@@ -335,6 +335,7 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
         try {
             await broadcastNotification('Accountant', notifTitle, notifMsg, 'action', notifLink);
             await broadcastNotification('Administrator', notifTitle, notifMsg, 'action', notifLink);
+
         } catch (noteError) {
             console.error('Notification error:', noteError);
         }
