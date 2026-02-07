@@ -79,7 +79,7 @@ router.get('/export', authenticateToken, async (req, res) => {
 
                 (SELECT CASE WHEN SUM(NULLIF(p->>'cbm','')::numeric) IS NULL THEN '-' ELSE TO_CHAR(SUM(NULLIF(p->>'cbm','')::numeric), 'FM999G999G999D000') END
   FROM clearance_schedules cs
-  CROSS JOIN LATERAL jsonb_array_elements(cs.packages) AS c
+  CROSS JOIN LATERAL jsonb_array_elements(cs.packages::jsonb) AS c
   CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
   WHERE cs.shipment_id = s.id
 ) AS "CBM",
@@ -92,7 +92,7 @@ router.get('/export', authenticateToken, async (req, res) => {
       ELSE TO_CHAR(SUM(NULLIF(p->>'weight','')::numeric), 'FM999G999G999D00')
     END
   FROM clearance_schedules cs
-  CROSS JOIN LATERAL jsonb_array_elements(cs.packages) AS c
+  CROSS JOIN LATERAL jsonb_array_elements(cs.packages::jsonb) AS c
   CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
   WHERE cs.shipment_id = s.id
 ) AS "Weight",
@@ -113,7 +113,7 @@ router.get('/export', authenticateToken, async (req, res) => {
       p->>'pkg_type' AS pkg_type,
       SUM(NULLIF(p->>'pkg_count','')::numeric) AS total_count
     FROM clearance_schedules cs
-    CROSS JOIN LATERAL jsonb_array_elements(cs.packages) AS c
+    CROSS JOIN LATERAL jsonb_array_elements(cs.packages::jsonb) AS c
     CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
     WHERE cs.shipment_id = s.id
     GROUP BY p->>'pkg_type'
