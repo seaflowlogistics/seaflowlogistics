@@ -50,6 +50,53 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
     }
 });
 
+// Delete single notification
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        await pool.query(
+            'DELETE FROM notifications WHERE id = $1 AND user_id = $2',
+            [req.params.id, req.user.id]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+        res.status(500).json({ error: 'Failed to delete notification' });
+    }
+});
+
+// Delete batch notifications
+router.post('/delete-batch', authenticateToken, async (req, res) => {
+    try {
+        const { ids } = req.body;
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'No IDs provided' });
+        }
+
+        await pool.query(
+            'DELETE FROM notifications WHERE id = ANY($1) AND user_id = $2',
+            [ids, req.user.id]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting notifications batch:', error);
+        res.status(500).json({ error: 'Failed to delete notifications' });
+    }
+});
+
+// Delete all notifications
+router.delete('/delete-all', authenticateToken, async (req, res) => {
+    try {
+        await pool.query(
+            'DELETE FROM notifications WHERE user_id = $1',
+            [req.user.id]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting all notifications:', error);
+        res.status(500).json({ error: 'Failed to delete notifications' });
+    }
+});
+
 // Mark all as read
 router.put('/read-all', authenticateToken, async (req, res) => {
     try {

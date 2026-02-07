@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { notificationsAPI } from '../services/api';
-import { Bell, Check, ExternalLink } from 'lucide-react';
+import { Bell, Check, ExternalLink, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Notifications: React.FC = () => {
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
     const fetchNotifications = async () => {
         try {
             setLoading(true);
             const response = await notificationsAPI.getAll();
             setNotifications(response.data);
+            setSelectedIds([]); // Clear selection on refresh
         } catch (error) {
             console.error('Failed to fetch notifications', error);
         } finally {
@@ -43,12 +45,48 @@ const Notifications: React.FC = () => {
         }
     };
 
+    const handleDeleteAll = async () => {
+        if (!window.confirm('Are you sure you want to delete ALL notifications?')) return;
+        try {
+            await notificationsAPI.deleteAll();
+            setNotifications([]);
+            setSelectedIds([]);
+        } catch (error) {
+            console.error('Failed to delete all', error);
+        }
+    };
+
+    const handleDeleteSelected = async () => {
+        if (!window.confirm(`Delete ${selectedIds.length} selected notifications?`)) return;
+        try {
+            await notificationsAPI.deleteBatch(selectedIds);
+            setNotifications(prev => prev.filter(n => !selectedIds.includes(n.id)));
+            setSelectedIds([]);
+        } catch (error) {
+            console.error('Failed to delete selected', error);
+        }
+    };
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedIds(notifications.map(n => n.id));
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    const handleSelect = (id: number) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+        );
+    };
+
     const handleClick = async (notification: any) => {
+        // Only mark read/navigate if not clicking checkbox or delete actions
         if (!notification.is_read) {
             await handleMarkAsRead(notification.id);
         }
         if (notification.link) {
-            // Check if link is absolute or relative
             if (notification.link.startsWith('/')) {
                 navigate(notification.link);
             } else {
@@ -60,20 +98,44 @@ const Notifications: React.FC = () => {
     return (
         <Layout>
             <div className="max-w-4xl mx-auto">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         <Bell className="w-6 h-6" />
                         Notifications
                     </h1>
-                    {notifications.some(n => !n.is_read) && (
-                        <button
-                            onClick={handleMarkAllRead}
-                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                        >
-                            <Check className="w-4 h-4" />
-                            Mark all as read
-                        </button>
-                    )}
+
+                    <div className="flex items-center gap-3">
+                        {notifications.length > 0 && (
+                            <>
+                                {selectedIds.length > 0 && (
+                                    <button
+                                        onClick={handleDeleteSelected}
+                                        className="px-3 py-1.5 bg-red-50 text-red-600 rounded text-sm hover:bg-red-100 flex items-center gap-1"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete ({selectedIds.length})
+                                    </button>
+                                )}
+
+                                {notifications.some(n => !n.is_read) && (
+                                    <button
+                                        onClick={handleMarkAllRead}
+                                        className="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded text-sm flex items-center gap-1"
+                                    >
+                                        <Check className="w-4 h-4" />
+                                        Mark all read
+                                    </button>
+                                )}
+
+                                <button
+                                    onClick={handleDeleteAll}
+                                    className="px-3 py-1.5 text-gray-500 hover:bg-gray-100 rounded text-sm hover:text-red-500 transition-colors"
+                                >
+                                    Delete All
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {loading ? (
@@ -85,38 +147,67 @@ const Notifications: React.FC = () => {
                         <p className="text-gray-500">You're all caught up!</p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {notifications.map((notification) => (
-                            <div
-                                key={notification.id}
-                                onClick={() => handleClick(notification)}
-                                className={`
-                                    p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md
-                                    ${notification.is_read
-                                        ? 'bg-white border-gray-100 text-gray-600'
-                                        : 'bg-blue-50 border-blue-100 text-gray-900 notification-unread'
-                                    }
-                                `}
-                            >
-                                <div className="flex justify-between items-start gap-4">
-                                    <div className="flex-1">
-                                        <h4 className={`font-medium mb-1 ${!notification.is_read && 'text-blue-700'}`}>
-                                            {notification.title}
-                                            {!notification.is_read && (
-                                                <span className="ml-2 inline-block w-2 h-2 rounded-full bg-blue-600"></span>
-                                            )}
-                                        </h4>
-                                        <p className="text-sm mb-2">{notification.message}</p>
-                                        <span className="text-xs text-gray-400">
-                                            {new Date(notification.created_at).toLocaleString()}
-                                        </span>
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                        {/* Header for Select All */}
+                        <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center gap-4">
+                            <input
+                                type="checkbox"
+                                className="rounded text-blue-600 focus:ring-blue-500"
+                                checked={selectedIds.length === notifications.length && notifications.length > 0}
+                                onChange={handleSelectAll}
+                            />
+                            <span className="text-xs font-semibold text-gray-500 uppercase">
+                                {selectedIds.length > 0 ? `${selectedIds.length} Selected` : 'Select All'}
+                            </span>
+                        </div>
+
+                        <div className="divide-y divide-gray-100">
+                            {notifications.map((notification) => (
+                                <div
+                                    key={notification.id}
+                                    className={`
+                                        flex items-start gap-4 p-4 transition-colors hover:bg-gray-50
+                                        ${notification.is_read ? 'bg-white' : 'bg-blue-50/50'}
+                                    `}
+                                >
+                                    <div className="pt-1">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded text-blue-600 focus:ring-blue-500"
+                                            checked={selectedIds.includes(notification.id)}
+                                            onChange={(e) => {
+                                                e.stopPropagation();
+                                                handleSelect(notification.id);
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
                                     </div>
-                                    {notification.link && (
-                                        <ExternalLink className="w-4 h-4 text-gray-400" />
-                                    )}
+
+                                    <div
+                                        className="flex-1 cursor-pointer"
+                                        onClick={() => handleClick(notification)}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className={`font-medium mb-0.5 ${!notification.is_read ? 'text-blue-700' : 'text-gray-800'}`}>
+                                                    {notification.title}
+                                                    {!notification.is_read && (
+                                                        <span className="ml-2 inline-block w-2 h-2 rounded-full bg-blue-600"></span>
+                                                    )}
+                                                </h4>
+                                                <p className="text-sm text-gray-600 mb-1">{notification.message}</p>
+                                                <span className="text-xs text-gray-400">
+                                                    {new Date(notification.created_at).toLocaleString()}
+                                                </span>
+                                            </div>
+                                            {notification.link && (
+                                                <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

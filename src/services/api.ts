@@ -246,6 +246,9 @@ export const notificationsAPI = {
     getAll: () => api.get('/notifications'),
     markRead: (id: number) => api.put(`/notifications/${id}/read`),
     markAllRead: () => api.put('/notifications/read-all'),
+    delete: (id: number) => api.delete(`/notifications/${id}`),
+    deleteBatch: (ids: number[]) => api.post('/notifications/delete-batch', { ids }),
+    deleteAll: () => api.delete('/notifications/delete-all'),
 };
 
 export default api;
