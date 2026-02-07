@@ -261,7 +261,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching delivery note details:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message });
     }
 });
 
