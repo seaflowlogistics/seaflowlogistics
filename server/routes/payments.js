@@ -278,7 +278,7 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
         // Validate Job Clearance Status
         // Payments can only be sent to accounts if the Job is Cleared (progress == 100)
         const validationQuery = `
-            SELECT DISTINCT s.id, s.progress, s.status, s.customer
+            SELECT s.id, s.progress, s.status, s.customer, jp.payment_type
             FROM job_payments jp
             JOIN shipments s ON jp.job_id = s.id
             WHERE jp.id = ANY($1)
@@ -288,7 +288,7 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
         const incompleteJobs = valRes.rows.filter(job => job.progress < 100 && job.status !== 'Cleared');
 
         if (incompleteJobs.length > 0) {
-            const names = incompleteJobs.map(j => `Job ${j.id} (${j.customer})`).join(', ');
+            const names = [...new Set(incompleteJobs.map(j => `Job ${j.id} (${j.customer})`))].join(', ');
             return res.status(400).json({
                 error: `Cannot send to accounts. The following jobs are not yet cleared: ${names}. Please issue Delivery Notes for all BLs first.`
             });
@@ -318,10 +318,24 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
         }
 
         // Notify Accountants
+        const isNoPayment = valRes.rows.some(r => r.payment_type === 'No Payment');
+
+        let notifTitle = isNoPayment ? 'No Payment Request' : 'Payment Approval Request';
+        let notifLink = '/payments';
+        let notifMsg = `New payments have been sent for approval by ${req.user.username}.`;
+
+        if (jobsInBatch.length === 1) {
+            const jobId = jobsInBatch[0];
+            notifLink = `/registry?selectedJobId=${jobId}`;
+            notifMsg = isNoPayment
+                ? `No payment requested for Job ${jobId} by ${req.user.username}.`
+                : `New payments for Job ${jobId} sent for approval by ${req.user.username}.`;
+        }
+
         try {
-            await broadcastNotification('Accountant', 'Payment Approval Request', `New payments have been sent for approval by ${req.user.username}.`, 'action', '/payments');
-            await broadcastNotification('Administrator', 'Payment Approval Request', `New payments have been sent for approval by ${req.user.username}.`, 'action', '/payments');
-            await broadcastNotification('All', 'Payment Approval Request', `New payments have been sent for approval by ${req.user.username}.`, 'action', '/payments');
+            await broadcastNotification('Accountant', notifTitle, notifMsg, 'action', notifLink);
+            await broadcastNotification('Administrator', notifTitle, notifMsg, 'action', notifLink);
+            await broadcastNotification('All', notifTitle, notifMsg, 'action', notifLink);
         } catch (noteError) {
             console.error('Notification error:', noteError);
         }

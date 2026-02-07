@@ -68,19 +68,21 @@ const ShipmentRegistry: React.FC = () => {
     const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
     const [jobDetailsForm, setJobDetailsForm] = useState<any>({});
 
-    // Handle incoming navigation from Dashboard
+    // Handle incoming navigation from Dashboard and Notifications
     useEffect(() => {
-        if (location.state?.selectedJobId && jobs.length > 0) {
-            const jobToSelect = jobs.find(j => j.id === location.state.selectedJobId);
+        const searchParams = new URLSearchParams(location.search);
+        const queryJobId = searchParams.get('selectedJobId');
+        const stateJobId = location.state?.selectedJobId;
+        const targetJobId = queryJobId || stateJobId;
+
+        if (targetJobId && jobs.length > 0) {
+            const jobToSelect = jobs.find(j => j.id === targetJobId);
             if (jobToSelect) {
                 setSelectedJob(jobToSelect);
                 setViewMode('details');
-                // Optional: Clear state to prevent re-selection issues if needed, 
-                // but usually fine as long as we don't clear selection elsewhere unexpectedly.
-                // navigate(location.pathname, { replace: true, state: {} });
             }
         }
-    }, [jobs, location.state]);
+    }, [jobs, location.state, location.search]);
 
     // Drawer State
     const [isBLDrawerOpen, setIsBLDrawerOpen] = useState(false);
