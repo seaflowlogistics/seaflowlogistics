@@ -14,11 +14,16 @@ export const createNotification = async (userId, title, message, type = 'info', 
 
 export const broadcastNotification = async (role, title, message, type = 'info', link = null) => {
     try {
-        // Find users with role (if role is provided, otherwise all users? User said 'admin' and 'respective user')
-        // If role is 'Administrator', send to all admins.
-        const res = await pool.query('SELECT id FROM users WHERE role = $1', [role]);
-        for (const user of res.rows) {
-            await createNotification(user.id, title, message, type, link);
+        if (role === 'All') {
+            const res = await pool.query('SELECT id FROM users');
+            for (const user of res.rows) {
+                await createNotification(user.id, title, message, type, link);
+            }
+        } else {
+            const res = await pool.query('SELECT id FROM users WHERE role = $1', [role]);
+            for (const user of res.rows) {
+                await createNotification(user.id, title, message, type, link);
+            }
         }
     } catch (error) {
         console.error('Error broadcasting notification:', error);

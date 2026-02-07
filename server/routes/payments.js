@@ -114,6 +114,15 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Payment not found' });
         }
 
+        const updatedPayment = result.rows[0];
+
+        // Notify Requester (e.g., Clearance) if status changed by someone else (e.g., Accountant)
+        if (updatedPayment.requested_by && updatedPayment.requested_by !== req.user.id) {
+            try {
+                await createNotification(updatedPayment.requested_by, 'Payment Status Updated', `Payment for Job ${updatedPayment.job_id} status updated to ${status}.`, 'info', `/registry?selectedJobId=${updatedPayment.job_id}`);
+            } catch (e) { console.error(e); }
+        }
+
         // Audit Log
         await pool.query(
             'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
@@ -216,6 +225,48 @@ router.post('/', authenticateToken, async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Create payment error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// No Payment Request
+router.post('/no-payment', authenticateToken, async (req, res) => {
+    try {
+        const { job_id } = req.body;
+        const requested_by = req.user.id;
+
+        if (!job_id) {
+            return res.status(400).json({ error: 'Job ID is required' });
+        }
+
+        // Check if job exists
+        // Check if "No Payment" already exists?
+        // Insert record
+        const result = await pool.query(
+            `INSERT INTO job_payments (job_id, payment_type, vendor, amount, bill_ref_no, paid_by, requested_by, status)
+             VALUES ($1, 'No Payment', 'No Payment', 0, 'N/A', 'N/A', $2, 'Confirm with clearance')
+             RETURNING *`,
+            [job_id, requested_by]
+        );
+
+        // Notify Accountants
+        try {
+            await broadcastNotification('Accountant', 'No Payment Request', `No payment requested for Job ${job_id} by ${req.user.username}.`, 'action', '/payments');
+            await broadcastNotification('Administrator', 'No Payment Request', `No payment requested for Job ${job_id} by ${req.user.username}.`, 'action', '/payments');
+            await broadcastNotification('All', 'No Payment Request', `No payment requested for Job ${job_id} by ${req.user.username}.`, 'action', '/payments');
+        } catch (noteError) {
+            console.error('Notification error:', noteError);
+        }
+
+        // Audit Log
+        await pool.query(
+            'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
+            [req.user.id, 'NO_PAYMENT_REQUEST', `No Payment requested`, 'SHIPMENT', job_id]
+        );
+
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error('No payment request error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
