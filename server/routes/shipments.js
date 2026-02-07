@@ -81,8 +81,8 @@ router.get('/export', authenticateToken, async (req, res) => {
                 -- CBM
                 '' as "CBM", 
                 -- Fetch packages from shipment_bls (aggregated) 
-                -- Fetch packages from shipment_bls (aggregated) 
-                (SELECT STRING_AGG(packages::text, '|||') FROM shipment_bls WHERE shipment_id = s.id) as packages,
+                -- Fetch packages from shipment_bls (aggregated),
+                (SELECT STRING_AGG(packages,',')FROM shipment_containers WHERE shipment_id = s.id) as "Packages",
                 -- Clearing Status
                 s.status as "Clearing Status",
                 -- Cleared Date (Issued Delivery Note Date)
@@ -109,46 +109,7 @@ router.get('/export', authenticateToken, async (req, res) => {
 
         const result = await pool.query(query);
 
-        // Post-process to calculate packages count and stringify details
-        const rows = result.rows.map(row => {
-            let allPkgs = [];
-            let totalPkgs = 0;
-            let pkgDetailsStr = '';
 
-            // Handle packages being from subquery (string with ||| delimiter)
-            if (row.packages) {
-                const pkgStrings = row.packages.toString().split('|||');
-
-                pkgStrings.forEach(pStr => {
-                    try {
-                        let p = JSON.parse(pStr);
-                        // JSON might be array or object
-                        if (Array.isArray(p)) {
-                            allPkgs = [...allPkgs, ...p];
-                        } else if (typeof p === 'object' && p !== null) {
-                            allPkgs.push(p);
-                        }
-                    } catch (e) {
-                        // ignore parse errors
-                    }
-                });
-            }
-
-            // Calculate total and formatted string
-            if (allPkgs.length > 0) {
-                totalPkgs = allPkgs.reduce((acc, p) => acc + (parseInt(p.count) || 0), 0);
-                pkgDetailsStr = allPkgs.map(p => `${p.count}x ${p.pkg_type || p.type}`).join(', ');
-            }
-
-            // Assign formatted values
-            row["No. of Packages"] = totalPkgs.toString();
-            row["Packages Details"] = pkgDetailsStr;
-
-            // Remove raw packages content
-            delete row.packages;
-
-            return row;
-        });
 
         console.log(`Exporting ${rows.length} rows`);
         res.json(rows);
