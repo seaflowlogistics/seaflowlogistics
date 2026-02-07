@@ -340,6 +340,17 @@ const ShipmentRegistry: React.FC = () => {
         }
     };
 
+    const handleUpdateJobStatus = async (status: string) => {
+        if (!window.confirm(`Mark job as ${status}?`)) return;
+        try {
+            await shipmentsAPI.update(selectedJob.id, { status });
+            alert(`Job marked as ${status}`);
+            const res = await shipmentsAPI.getById(selectedJob.id);
+            setSelectedJob(res.data);
+            setJobs(prev => prev.map(j => j.id === res.data.id ? res.data : j));
+        } catch (e) { console.error(e); alert("Failed to update status"); }
+    };
+
     const handleNoPayment = async () => {
         if (!window.confirm("Confirm no payment for this job?")) return;
         try {
@@ -1958,14 +1969,42 @@ const ShipmentRegistry: React.FC = () => {
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-gray-900">Payments</h3>
                     <div className="flex items-center gap-2">
-                        {user?.role !== 'Accountant' && !jobPayments.some((p: any) => p.payment_type === 'No Payment') && (
-                            <button
-                                onClick={handleNoPayment}
-                                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 font-medium rounded-lg transition-colors shadow-sm"
-                            >
-                                No Payment
-                            </button>
-                        )}
+                        {(() => {
+                            const noPaymentReq = jobPayments.find((p: any) => p.payment_type === 'No Payment');
+                            if (noPaymentReq) {
+                                if (noPaymentReq.status === 'Confirmed') {
+                                    return (
+                                        <button
+                                            onClick={() => handleUpdateJobStatus('Completed')}
+                                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm"
+                                        >
+                                            Mark as Completed
+                                        </button>
+                                    );
+                                } else if (noPaymentReq.status === 'Confirm with clearance') {
+                                    return (
+                                        <span className="px-4 py-2 bg-purple-100 text-purple-700 font-bold rounded-lg border border-purple-200">
+                                            Approval Pending
+                                        </span>
+                                    );
+                                } else if (noPaymentReq.status === 'Awaiting Clearance') {
+                                    return (
+                                        <span className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-lg border border-orange-200 animate-pulse">
+                                            Clearance Verification Pending
+                                        </span>
+                                    );
+                                } else { return null; }
+                            } else {
+                                return user?.role !== 'Accountant' && (
+                                    <button
+                                        onClick={handleNoPayment}
+                                        className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 font-medium rounded-lg transition-colors shadow-sm"
+                                    >
+                                        No Payment
+                                    </button>
+                                );
+                            }
+                        })()}
                         {jobPayments.some((p: any) => p.status === 'Draft') && user?.role !== 'Accountant' && (
                             <div className="relative group/btn">
                                 <button
