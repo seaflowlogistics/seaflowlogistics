@@ -138,7 +138,7 @@ const DeliveryNotes: React.FC = () => {
             setLoading(true);
             const formData = new FormData();
             formData.append('comments', detailsForm.comments);
-            formData.append('unloading_date', detailsForm.unloading_date);
+            // formData.append('unloading_date', detailsForm.unloading_date);
             formData.append('mark_delivered', String(detailsForm.mark_delivered));
 
             if (fileToUpload) {
@@ -601,20 +601,10 @@ const DeliveryNotes: React.FC = () => {
                     ></textarea>
                 </div>
 
-                <div className="mb-6">
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Unloading Date</label>
-                    <div className="relative">
-                        <input
-                            type="date"
-                            className="w-full text-sm border border-gray-200 rounded-lg p-2 pl-3 focus:outline-none focus:ring-2 focus:ring-gray-100"
-                            value={detailsForm.unloading_date}
-                            onChange={(e) => setDetailsForm(prev => ({ ...prev, unloading_date: e.target.value }))}
-                        />
-                    </div>
-                </div>
+
 
                 <div className="mb-6">
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Signed Delivery Note (Upload)</label>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Signed Delivery Note (Upload) <span className="text-gray-400 font-normal normal-case">()</span></label>
                     <div className="flex items-center gap-4">
                         <label className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors">
                             <Upload className="w-4 h-4" />
