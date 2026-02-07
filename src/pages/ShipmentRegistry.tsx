@@ -641,28 +641,15 @@ const ShipmentRegistry: React.FC = () => {
         try {
             if (!confirm('Download all jobs (including completed)?')) return;
             setLoading(true);
-            // Fetch all jobs, including completed
-            const response = await shipmentsAPI.getAll({ status: 'All' });
-            const allJobs = response.data;
 
-            // Transform data for Excel
-            const excelData = allJobs.map((job: any) => ({
-                'Job ID': job.id,
-                'Status': job.status,
-                'Customer': job.customer,
-                'Consignee': job.receiver_name,
-                'Exporter': job.sender_name,
-                'Transport Mode': job.transport_mode,
-                'Service': job.service,
-                'BL/AWB': job.bl_awb_no || (job.bls && job.bls.map((b: any) => b.master_bl).join(', ')) || '',
-                'Weight': job.weight,
-                'No of Pkgs': job.no_of_pkgs,
-                'Date': new Date(job.created_at).toLocaleDateString(),
-                'ETA': job.expected_delivery_date ? new Date(job.expected_delivery_date).toLocaleDateString() : '',
-                'Job Invoice No': job.invoice_id || '',
-                'Shipment Invoice No': job.invoice_no || '',
-                'Payment Status': job.payment_status || 'Pending'
-            }));
+            // Fetch export data from backend (pre-formatted)
+            const response = await shipmentsAPI.export();
+            const excelData = response.data;
+
+            if (!excelData || excelData.length === 0) {
+                alert("No data to export");
+                return;
+            }
 
             // Create Worksheet
             const ws = XLSX.utils.json_to_sheet(excelData);

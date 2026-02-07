@@ -60,6 +60,70 @@ const generateShipmentId = async (transportMode) => {
     return `${prefixChar}${year}-${String(nextNum).padStart(3, '0')}`;
 };
 
+// Export Shipments (Full Details)
+router.get('/export', authenticateToken, async (req, res) => {
+    try {
+        const query = `
+            SELECT
+                s.id as "Job ID",
+                COALESCE(s.customer, s.receiver_name) as "Customer",
+                s.sender_name as "Exporter",
+                s.invoice_no as "Shipment Invoice No",
+                s.invoice_items as "Invoice Items",
+                s.customs_r_form as "Customs R Form",
+                -- Aggregated BLs
+                (SELECT STRING_AGG(master_bl, ', ') FROM shipment_bls WHERE shipment_id = s.id) as "BL/AWB Number",
+                -- Aggregated Containers
+                (SELECT STRING_AGG(container_no, ', ') FROM shipment_containers WHERE shipment_id = s.id) as "Container Number",
+                (SELECT STRING_AGG(container_type, ', ') FROM shipment_containers WHERE shipment_id = s.id) as "Container Type",
+                -- CBM
+                '' as "CBM", 
+                COALESCE(s.no_of_pkgs::text, '') as "No. of Packages",
+                s.packages as "Packages Details",
+                -- Clearing Status
+                s.status as "Clearing Status",
+                -- Cleared Date (Issued Delivery Note Date)
+                (
+                    SELECT TO_CHAR(dn.created_at, 'YYYY-MM-DD')
+                    FROM delivery_notes dn
+                    JOIN delivery_note_items dni ON dn.id = dni.delivery_note_id
+                    WHERE dni.job_id = s.id
+                    ORDER BY dn.created_at DESC
+                    LIMIT 1
+                ) as "Cleared Date",
+                s.job_invoice_no as "Job Invoice No",
+                -- Expenses
+                s.expense_macl as "MACL",
+                s.expense_mpl as "MPL",
+                s.expense_mcs as "MCS",
+                s.expense_transportation as "Transportation",
+                s.expense_liner as "Liner"
+
+            FROM shipments s
+            ORDER BY s.created_at DESC
+        `;
+
+        const result = await pool.query(query);
+
+        // Post-process to stringify packages if needed or leave as is (frontend will handle Object to string)
+        const rows = result.rows.map(row => {
+            // Basic format for packages if it's an array
+            if (Array.isArray(row['Packages Details'])) {
+                row['Packages Details'] = row['Packages Details'].map(p => `${p.count}x ${p.pkg_type || p.type}`).join(', ');
+            } else if (typeof row['Packages Details'] === 'object') {
+                row['Packages Details'] = JSON.stringify(row['Packages Details']);
+            }
+            return row;
+        });
+
+        res.json(rows);
+
+    } catch (error) {
+        console.error('Export error:', error);
+        res.status(500).json({ error: 'Export failed' });
+    }
+});
+
 // Import Shipments from Excel/CSV
 router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All', 'Documentation']), upload.single('file'), async (req, res) => {
     if (!req.file) {
