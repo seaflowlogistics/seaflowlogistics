@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 
-import { deliveryNotesAPI, API_BASE_URL } from '../services/api';
+import { deliveryNotesAPI, consigneesAPI, API_BASE_URL } from '../services/api';
 
 import seaflowHeader from '../assets/seaflow-header.jpg';
 import seaflowFooter from '../assets/seaflow-footer.jpg';
@@ -43,7 +43,14 @@ interface DeliveryNoteVehicle {
     vehicle_type?: string;
 }
 
-
+interface Consignee {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    code: string;
+}
 
 interface DeliveryNote {
     id: string;
@@ -81,7 +88,7 @@ const DeliveryNotes: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState('All statuses');
 
     const [deliveryNotes, setDeliveryNotes] = useState<DeliveryNote[]>([]);
-
+    const [consignees, setConsignees] = useState<Consignee[]>([]);
     const [loading, setLoading] = useState(true);
 
     // State for split view and tabs
@@ -165,9 +172,12 @@ const DeliveryNotes: React.FC = () => {
 
     const fetchNotes = async () => {
         try {
-            const notesRes = await deliveryNotesAPI.getAll();
+            const [notesRes, consigneesRes] = await Promise.all([
+                deliveryNotesAPI.getAll(),
+                consigneesAPI.getAll()
+            ]);
             setDeliveryNotes(notesRes.data);
-
+            setConsignees(consigneesRes.data);
         } catch (error) {
             console.error('Failed to fetch delivery notes', error);
         } finally {
@@ -288,7 +298,8 @@ const DeliveryNotes: React.FC = () => {
                         <div className="border border-gray-800 p-3 mb-4 grid grid-cols-2 gap-8">
                             <div>
                                 <p className="mb-1"><span className="font-bold">Customer:</span> {selectedNote?.consignee}</p>
-
+                                <p className="mb-1"><span className="font-bold">Phone:</span> {consignees.find(c => c.name === selectedNote?.consignee)?.phone || selectedNote?.consignee_phone || '-'}</p>
+                                <p className="mb-1"><span className="font-bold">Email:</span> {consignees.find(c => c.name === selectedNote?.consignee)?.email || selectedNote?.consignee_email || '-'}</p>
                             </div>
                             <div>
                                 <div>
