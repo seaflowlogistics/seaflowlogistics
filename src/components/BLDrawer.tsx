@@ -287,16 +287,16 @@ const BLDrawer: React.FC<BLDrawerProps> = ({ isOpen, onClose, onSave, initialDat
                                                     {/* Packages within Container */}
                                                     <div className="pl-2">
                                                         <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-gray-400 uppercase mb-2">
-                                                            <div className={isLCL ? "col-span-3" : "col-span-4"}>Count</div>
-                                                            <div className={isLCL ? "col-span-4" : "col-span-7"}>Type</div>
-                                                            {isLCL && <div className="col-span-4">CBM</div>}
+                                                            <div className="col-span-3">Count</div>
+                                                            <div className="col-span-4">Type</div>
+                                                            <div className="col-span-4">{isLCL ? 'CBM' : 'Weight'}</div>
                                                             <div className="col-span-1"></div>
                                                         </div>
 
                                                         <div className="space-y-2 mb-2">
                                                             {container.packages?.map((pkg: any, pIdx: number) => (
                                                                 <div key={pIdx} className="grid grid-cols-12 gap-2 items-center">
-                                                                    <div className={isLCL ? "col-span-3" : "col-span-4"}>
+                                                                    <div className="col-span-3">
                                                                         <input
                                                                             type="text"
                                                                             value={pkg.pkg_count}
@@ -305,7 +305,7 @@ const BLDrawer: React.FC<BLDrawerProps> = ({ isOpen, onClose, onSave, initialDat
                                                                             placeholder="0"
                                                                         />
                                                                     </div>
-                                                                    <div className={isLCL ? "col-span-4" : "col-span-7"}>
+                                                                    <div className="col-span-4">
                                                                         <select
                                                                             value={pkg.pkg_type}
                                                                             onChange={(e) => handlePackageChange(cIdx, pIdx, 'pkg_type', e.target.value)}
@@ -314,17 +314,25 @@ const BLDrawer: React.FC<BLDrawerProps> = ({ isOpen, onClose, onSave, initialDat
                                                                             {PACKAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                                                         </select>
                                                                     </div>
-                                                                    {isLCL && (
-                                                                        <div className="col-span-4">
+                                                                    <div className="col-span-4">
+                                                                        {isLCL ? (
                                                                             <input
                                                                                 type="text"
                                                                                 value={pkg.cbm}
                                                                                 onChange={(e) => handlePackageChange(cIdx, pIdx, 'cbm', e.target.value)}
                                                                                 className="w-full py-1 px-2 text-xs border rounded"
-                                                                                placeholder="0.00"
+                                                                                placeholder="CBM"
                                                                             />
-                                                                        </div>
-                                                                    )}
+                                                                        ) : (
+                                                                            <input
+                                                                                type="text"
+                                                                                value={pkg.weight}
+                                                                                onChange={(e) => handlePackageChange(cIdx, pIdx, 'weight', e.target.value)}
+                                                                                className="w-full py-1 px-2 text-xs border rounded"
+                                                                                placeholder="Weight"
+                                                                            />
+                                                                        )}
+                                                                    </div>
                                                                     <div className="col-span-1 text-right">
                                                                         <button onClick={() => handleRemovePackage(cIdx, pIdx)} className="text-gray-400 hover:text-red-500">
                                                                             <X className="w-3 h-3" />

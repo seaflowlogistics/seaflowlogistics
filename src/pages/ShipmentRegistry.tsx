@@ -1796,16 +1796,18 @@ const ShipmentRegistry: React.FC = () => {
                                                     return (
                                                         <div className="space-y-3">
                                                             {/* Header Row */}
-                                                            <div className="grid grid-cols-3 gap-4 pb-2 border-b border-gray-200">
+                                                            <div className="grid grid-cols-4 gap-4 pb-2 border-b border-gray-200">
                                                                 <div className="text-xs font-bold text-gray-500 uppercase">Count</div>
                                                                 <div className="text-xs font-bold text-gray-500 uppercase">CBM</div>
+                                                                <div className="text-xs font-bold text-gray-500 uppercase">Weight</div>
                                                                 <div className="text-xs font-bold text-gray-500 uppercase">Type</div>
                                                             </div>
                                                             {/* Items */}
                                                             {displayPackages.map((pkg: any, idx: number) => (
-                                                                <div key={idx} className="grid grid-cols-3 gap-4 items-center">
+                                                                <div key={idx} className="grid grid-cols-4 gap-4 items-center">
                                                                     <div className="font-bold text-gray-900 text-sm">{pkg.pkg_count || 0}</div>
-                                                                    <div className="font-medium text-gray-700 text-sm">{pkg.cbm || (pkg.weight ? `${pkg.weight} KG` : '-')}</div>
+                                                                    <div className="font-medium text-gray-700 text-sm">{pkg.cbm || '-'}</div>
+                                                                    <div className="font-medium text-gray-700 text-sm">{pkg.weight || '-'}</div>
                                                                     <div className="font-bold text-gray-900 text-sm uppercase">{pkg.pkg_type || 'PKG'}</div>
                                                                 </div>
                                                             ))}
