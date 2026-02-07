@@ -340,6 +340,21 @@ const ShipmentRegistry: React.FC = () => {
         }
     };
 
+    const handleNoPayment = async () => {
+        if (!window.confirm("Confirm no payment for this job?")) return;
+        try {
+            setLoading(true);
+            await paymentsAPI.noPayment(selectedJob.id);
+            alert("No Payment request sent to accounts.");
+            loadPayments(selectedJob.id);
+        } catch (e) {
+            console.error(e);
+            alert("Failed to send request");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSendToAccounts = async () => {
         const draftIds = jobPayments.filter((p: any) => p.status === 'Draft').map((p: any) => p.id);
         if (draftIds.length === 0) return;
@@ -354,6 +369,29 @@ const ShipmentRegistry: React.FC = () => {
             alert('Failed to send payments to accounts');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleClearanceConfirmation = async (paymentId: string, confirm: boolean) => {
+        if (!confirm) {
+            // Logic for 'No'? Maybe reject?
+            if (!window.confirm("Reject this confirmation request? This will revert the status.")) return;
+            try {
+                // Revert to Draft or something? Or 'Rejected'?
+                // Let's assume revert to Draft so they can edit or delete.
+                await paymentsAPI.updateStatus(paymentId, 'Draft');
+                loadPayments(selectedJob.id);
+            } catch (e) { console.error(e); }
+            return;
+        }
+
+        try {
+            await paymentsAPI.updateStatus(paymentId, 'Confirmed');
+            alert("Payment Confirmed.");
+            loadPayments(selectedJob.id);
+        } catch (e) {
+            console.error(e);
+            alert("Failed to confirm");
         }
     };
 
@@ -1887,33 +1925,73 @@ const ShipmentRegistry: React.FC = () => {
 
         return (
             <div className="p-8 font-sans">
+                {/* Clearance Confirmation Alerts */}
+                {(hasRole('Clearance') || hasRole('Administrator')) && jobPayments.filter((p: any) => p.status === 'Awaiting Clearance').map((p: any) => (
+                    <div key={p.id} className="bg-orange-50 border-l-4 border-orange-500 p-4 mb-6 rounded-r shadow-sm flex justify-between items-center animate-pulse">
+                        <div>
+                            <h4 className="font-bold text-orange-900 flex items-center gap-2">
+                                <Check className="w-5 h-5" />
+                                Payment Confirmation Required
+                            </h4>
+                            <p className="text-sm text-orange-800 mt-1">
+                                Accountant has requested confirmation for <strong>{p.payment_type}</strong> (Amount: {p.amount > 0 ? p.amount : 'No Payment'}).
+                                <br />Please confirm if this is correct.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => handleClearanceConfirmation(p.id, true)}
+                                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded shadow-sm hover:shadow text-sm transition-all"
+                            >
+                                YES, Confirm
+                            </button>
+                            <button
+                                onClick={() => handleClearanceConfirmation(p.id, false)}
+                                className="px-6 py-2 bg-white border border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-gray-700 font-bold rounded shadow-sm text-sm transition-all"
+                            >
+                                NO
+                            </button>
+                        </div>
+                    </div>
+                ))}
+
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-gray-900">Payments</h3>
-                    {jobPayments.some((p: any) => p.status === 'Draft') && user?.role !== 'Accountant' && (
-                        <div className="relative group/btn">
+                    <div className="flex items-center gap-2">
+                        {user?.role !== 'Accountant' && !jobPayments.some((p: any) => p.payment_type === 'No Payment') && (
                             <button
-                                onClick={handleSendToAccounts}
-                                disabled={!isJobCleared}
-                                className={`px-4 py-2 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2 ${isJobCleared
-                                    ? 'bg-indigo-600 hover:bg-indigo-700'
-                                    : 'bg-gray-400 cursor-not-allowed'
-                                    }`}
+                                onClick={handleNoPayment}
+                                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 font-medium rounded-lg transition-colors shadow-sm"
                             >
-                                {isJobCleared && (
-                                    <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-200 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-100"></span>
-                                    </span>
-                                )}
-                                Send to Accounts ({jobPayments.filter((p: any) => p.status === 'Draft').length})
+                                No Payment
                             </button>
-                            {!isJobCleared && (
-                                <div className="absolute bottom-full mb-2 hidden group-hover/btn:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10 text-center left-1/2 -translate-x-1/2">
-                                    Delivery Note must be issued for all BLs to complete clearance before sending to accounts.
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        )}
+                        {jobPayments.some((p: any) => p.status === 'Draft') && user?.role !== 'Accountant' && (
+                            <div className="relative group/btn">
+                                <button
+                                    onClick={handleSendToAccounts}
+                                    disabled={!isJobCleared}
+                                    className={`px-4 py-2 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2 ${isJobCleared
+                                        ? 'bg-indigo-600 hover:bg-indigo-700'
+                                        : 'bg-gray-400 cursor-not-allowed'
+                                        }`}
+                                >
+                                    {isJobCleared && (
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-200 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-100"></span>
+                                        </span>
+                                    )}
+                                    Send to Accounts ({jobPayments.filter((p: any) => p.status === 'Draft').length})
+                                </button>
+                                {!isJobCleared && (
+                                    <div className="absolute bottom-full mb-2 hidden group-hover/btn:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10 text-center left-1/2 -translate-x-1/2">
+                                        Delivery Note must be issued for all BLs to complete clearance before sending to accounts.
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-8">
@@ -1972,6 +2050,14 @@ const ShipmentRegistry: React.FC = () => {
                                                 ) : payment.status === 'Draft' ? (
                                                     <span className="px-2 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500 border border-gray-200">
                                                         Draft
+                                                    </span>
+                                                ) : payment.status === 'Confirm with clearance' ? (
+                                                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                                        In Review
+                                                    </span>
+                                                ) : payment.status === 'Awaiting Clearance' ? (
+                                                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200 animate-pulse">
+                                                        Action Required
                                                     </span>
                                                 ) : (
                                                     <span className="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-200">

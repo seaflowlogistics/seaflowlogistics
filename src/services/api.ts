@@ -225,6 +225,7 @@ export const paymentsAPI = {
     delete: (id: number | string) => api.delete(`/payments/${id}`),
     sendBatch: (paymentIds: string[]) => api.post('/payments/send-batch', { paymentIds }),
     processBatch: (data: any) => api.post('/payments/process-batch', data),
+    noPayment: (job_id: string | number) => api.post('/payments/no-payment', { job_id }),
 };
 
 // Payment Items Settings API

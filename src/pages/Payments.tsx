@@ -28,7 +28,7 @@ const Payments = () => {
     const fetchPayments = async () => {
         try {
             setLoading(true);
-            const statusFilter = activeTab === 'pending' ? 'Pending,Approved' : 'Paid';
+            const statusFilter = activeTab === 'pending' ? 'Pending,Approved,Confirm with clearance,Awaiting Clearance' : 'Paid';
             const response = await paymentsAPI.getListing({
                 search: searchTerm,
                 page,
@@ -53,6 +53,18 @@ const Payments = () => {
         } catch (error) {
             console.error('Failed to approve payment', error);
             alert('Failed to approve payment');
+        }
+    };
+
+    const handleConfirmClearance = async (id: string) => {
+        if (!confirm('Request confirmation from Clearance team?')) return;
+        try {
+            await paymentsAPI.updateStatus(id, 'Awaiting Clearance');
+            alert('Request sent to Clearance team.');
+            fetchPayments();
+        } catch (error) {
+            console.error(error);
+            alert('Failed to update status');
         }
     };
 
@@ -257,6 +269,17 @@ const Payments = () => {
                                                                 <CheckCircle className="w-3 h-3" />
                                                                 Approved
                                                             </span>
+                                                        ) : item.status === 'Awaiting Clearance' ? (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-1 rounded-full">
+                                                                Waiting Clearance
+                                                            </span>
+                                                        ) : item.status === 'Confirm with clearance' ? (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleConfirmClearance(item.id); }}
+                                                                className="text-xs font-bold text-orange-600 hover:text-orange-800 transition-colors bg-orange-50 px-2 py-1 rounded uppercase tracking-wide border border-orange-200"
+                                                            >
+                                                                Confirm with Clearance
+                                                            </button>
                                                         ) : (
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); handleApprove(item.id); }}
