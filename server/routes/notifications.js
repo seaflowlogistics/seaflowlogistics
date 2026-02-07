@@ -53,10 +53,16 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
 // Delete single notification
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        await pool.query(
-            'DELETE FROM notifications WHERE id = $1 AND user_id = $2',
-            [req.params.id, req.user.id]
-        );
+        const isAdmin = ['Administrator', 'All'].includes(req.user.role);
+
+        if (isAdmin) {
+            await pool.query('DELETE FROM notifications WHERE id = $1', [req.params.id]);
+        } else {
+            await pool.query(
+                'DELETE FROM notifications WHERE id = $1 AND user_id = $2',
+                [req.params.id, req.user.id]
+            );
+        }
         res.json({ success: true });
     } catch (error) {
         console.error('Error deleting notification:', error);
@@ -72,10 +78,19 @@ router.post('/delete-batch', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'No IDs provided' });
         }
 
-        await pool.query(
-            'DELETE FROM notifications WHERE id = ANY($1) AND user_id = $2',
-            [ids, req.user.id]
-        );
+        const isAdmin = ['Administrator', 'All'].includes(req.user.role);
+
+        if (isAdmin) {
+            await pool.query(
+                'DELETE FROM notifications WHERE id = ANY($1)',
+                [ids]
+            );
+        } else {
+            await pool.query(
+                'DELETE FROM notifications WHERE id = ANY($1) AND user_id = $2',
+                [ids, req.user.id]
+            );
+        }
         res.json({ success: true });
     } catch (error) {
         console.error('Error deleting notifications batch:', error);
@@ -83,9 +98,14 @@ router.post('/delete-batch', authenticateToken, async (req, res) => {
     }
 });
 
-// Delete all notifications
+// Delete all notifications (for user)
 router.delete('/delete-all', authenticateToken, async (req, res) => {
     try {
+        // Even for admin, delete-all probably implies "Clear My Feed". 
+        // But since Admin feed includes everyone, "Delete All" would wipe the DB.
+        // Given the feature is hidden, I'll stricter it to user_id for safety unless requested otherwise.
+        // But to be consistent with "Admin sees all", if they could click it, they might expect all gone.
+        // I will leave it matched to user_id for safety for now as it is unused.
         await pool.query(
             'DELETE FROM notifications WHERE user_id = $1',
             [req.user.id]
