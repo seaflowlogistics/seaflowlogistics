@@ -234,7 +234,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-// No Payment Request
+// No Payment Request - Creates Draft 'No Payment' record
 router.post('/no-payment', authenticateToken, async (req, res) => {
     try {
         const { job_id } = req.body;
@@ -244,29 +244,19 @@ router.post('/no-payment', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Job ID is required' });
         }
 
-        // Check if job exists
         // Check if "No Payment" already exists?
-        // Insert record
+        // Insert record as 'Draft'
         const result = await pool.query(
             `INSERT INTO job_payments (job_id, payment_type, vendor, amount, bill_ref_no, paid_by, requested_by, status)
-             VALUES ($1, 'No Payment', 'No Payment', 0, 'N/A', 'N/A', $2, 'Confirm with clearance')
+             VALUES ($1, 'No Payment', 'No Payment', 0, 'N/A', 'Company', $2, 'Draft')
              RETURNING *`,
             [job_id, requested_by]
         );
 
-        // Notify Accountants
-        try {
-            await broadcastNotification('Accountant', 'No Payment Request', `No payment requested for Job ${job_id} by ${req.user.username}.`, 'action', '/payments');
-            await broadcastNotification('Administrator', 'No Payment Request', `No payment requested for Job ${job_id} by ${req.user.username}.`, 'action', '/payments');
-            await broadcastNotification('All', 'No Payment Request', `No payment requested for Job ${job_id} by ${req.user.username}.`, 'action', '/payments');
-        } catch (noteError) {
-            console.error('Notification error:', noteError);
-        }
-
         // Audit Log
         await pool.query(
             'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
-            [req.user.id, 'NO_PAYMENT_REQUEST', `No Payment requested`, 'SHIPMENT', job_id]
+            [req.user.id, 'NO_PAYMENT_DRAFT', `No Payment Draft Created`, 'SHIPMENT', job_id]
         );
 
         res.status(201).json(result.rows[0]);
@@ -305,7 +295,7 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
         }
 
         const result = await pool.query(
-            "UPDATE job_payments SET status = 'Pending' WHERE id = ANY($1) AND status = 'Draft' RETURNING *",
+            "UPDATE job_payments SET status = (CASE WHEN payment_type = 'No Payment' THEN 'Confirm with clearance' ELSE 'Pending' END) WHERE id = ANY($1) AND status = 'Draft' RETURNING *",
             [paymentIds]
         );
 

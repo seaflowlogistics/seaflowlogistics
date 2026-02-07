@@ -345,7 +345,7 @@ const ShipmentRegistry: React.FC = () => {
         try {
             setLoading(true);
             await paymentsAPI.noPayment(selectedJob.id);
-            alert("No Payment request sent to accounts.");
+            alert("No Payment Draft Created. Please click 'Send to Accounts' to submit.");
             loadPayments(selectedJob.id);
         } catch (e) {
             console.error(e);
