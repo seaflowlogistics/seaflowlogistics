@@ -77,9 +77,9 @@ router.get('/export', authenticateToken, async (req, res) => {
                 (SELECT STRING_AGG(container_no, ', ') FROM shipment_containers WHERE shipment_id = s.id) as "Container Number",
                 (SELECT STRING_AGG(container_type, ', ') FROM shipment_containers WHERE shipment_id = s.id) as "Container Type",
                 -- CBM
+                -- CBM
                 '' as "CBM", 
-                COALESCE(s.no_of_pkgs::text, '') as "No. of Packages",
-                s.packages as "Packages Details",
+                s.packages,
                 -- Clearing Status
                 s.status as "Clearing Status",
                 -- Cleared Date (Issued Delivery Note Date)
@@ -105,14 +105,36 @@ router.get('/export', authenticateToken, async (req, res) => {
 
         const result = await pool.query(query);
 
-        // Post-process to stringify packages if needed or leave as is (frontend will handle Object to string)
+        // Post-process to calculate packages count and stringify details
         const rows = result.rows.map(row => {
             // Basic format for packages if it's an array
-            if (Array.isArray(row['Packages Details'])) {
-                row['Packages Details'] = row['Packages Details'].map(p => `${p.count}x ${p.pkg_type || p.type}`).join(', ');
-            } else if (typeof row['Packages Details'] === 'object') {
-                row['Packages Details'] = JSON.stringify(row['Packages Details']);
+            let pkgs = row.packages;
+            let totalPkgs = 0;
+            let pkgDetailsStr = '';
+
+            if (typeof pkgs === 'string') {
+                try {
+                    pkgs = JSON.parse(pkgs);
+                } catch (e) {
+                    pkgs = [];
+                }
             }
+
+            if (Array.isArray(pkgs)) {
+                totalPkgs = pkgs.reduce((acc, p) => acc + (parseInt(p.count) || 0), 0);
+                pkgDetailsStr = pkgs.map(p => `${p.count}x ${p.pkg_type || p.type}`).join(', ');
+            } else if (typeof pkgs === 'object' && pkgs !== null) {
+                // Fallback if it's a single object or weird format
+                pkgDetailsStr = JSON.stringify(pkgs);
+            }
+
+            // Assign formatted values
+            row["No. of Packages"] = totalPkgs.toString();
+            row["Packages Details"] = pkgDetailsStr;
+
+            // Remove raw packages object
+            delete row.packages;
+
             return row;
         });
 
