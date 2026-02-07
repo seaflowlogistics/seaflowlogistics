@@ -228,11 +228,11 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
         const itemsResult = await pool.query(`
             SELECT dni.*, 
-            COALESCE(cs.bl_awb, s.bl_awb_no) as bl_awb_no, 
+            COALESCE(cs.bl_awb, (SELECT string_agg(COALESCE(sb.master_bl, sb.house_bl), ', ') FROM shipment_bls sb WHERE sb.shipment_id = s.id)) as bl_awb_no, 
             s.sender_name, 
-            COALESCE(cs.packages, NULLIF(CAST(s.packages AS VARCHAR), '[]'), s.invoice_items) as packages, 
-            COALESCE(cs.container_type, s.container_type) as package_type, 
-            COALESCE(cs.container_no, s.container_no) as container_no,
+            COALESCE(cs.packages, (SELECT string_agg(sc.packages::text, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id), s.invoice_items) as packages, 
+            COALESCE(cs.container_type, (SELECT string_agg(sc.container_type, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id)) as package_type, 
+            COALESCE(cs.container_no, (SELECT string_agg(sc.container_no, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id)) as container_no,
             cs.port as schedule_port
             FROM delivery_note_items dni
             LEFT JOIN clearance_schedules cs ON dni.schedule_id = cs.id
