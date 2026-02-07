@@ -2043,6 +2043,10 @@ const ShipmentRegistry: React.FC = () => {
                                                     <span className="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
                                                         Paid
                                                     </span>
+                                                ) : payment.status === 'Confirmed' ? (
+                                                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
+                                                        Confirmed
+                                                    </span>
                                                 ) : payment.status === 'Approved' ? (
                                                     <span className="px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
                                                         Approved
