@@ -76,17 +76,12 @@ router.get('/export', authenticateToken, async (req, res) => {
                 -- Aggregated Containers
                 (SELECT STRING_AGG(container_no, ', ') FROM shipment_containers WHERE shipment_id = s.id) as "Container Number",
                 (SELECT STRING_AGG(container_type, ', ') FROM shipment_containers WHERE shipment_id = s.id) as "Container Type",
-                -- CBM
-                -- CBM
-                -- CBM
-                '' as "CBM", 
-                -- Fetch packages from shipment_bls (aggregated) 
-                -- Fetch packages from shipment_bls (aggregated),
+
                 (SELECT CASE WHEN SUM(NULLIF(p->>'cbm','')::numeric) IS NULL THEN '-' ELSE TO_CHAR(SUM(NULLIF(p->>'cbm','')::numeric), 'FM999G999G999D000') END
   FROM clearance_schedules cs
   CROSS JOIN LATERAL jsonb_array_elements(cs.packages) AS c
   CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
-  WHERE cs.job_id = s.id
+  WHERE cs.shipment_id = s.id
 ) AS "CBM",
 
 -- Weight (sum over all nested packages)
@@ -99,7 +94,7 @@ router.get('/export', authenticateToken, async (req, res) => {
   FROM clearance_schedules cs
   CROSS JOIN LATERAL jsonb_array_elements(cs.packages) AS c
   CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
-  WHERE cs.job_id = s.id
+  WHERE cs.shipment_id = s.id
 ) AS "Weight",
 
 -- Packages (sum pkg_count grouped by pkg_type, output like: "2 PKG, 2000 CARTONS")
@@ -120,7 +115,7 @@ router.get('/export', authenticateToken, async (req, res) => {
     FROM clearance_schedules cs
     CROSS JOIN LATERAL jsonb_array_elements(cs.packages) AS c
     CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
-    WHERE cs.job_id = s.id
+    WHERE cs.shipment_id = s.id
     GROUP BY p->>'pkg_type'
   ) tot
 ) AS "Packages",
