@@ -945,7 +945,13 @@ const DeliveryNotes: React.FC = () => {
                                                 <td className="py-4 px-6">
                                                     <div className="flex flex-wrap gap-1">
                                                         {note.job_ids?.slice(0, 3).map((job, idx) => (
-                                                            <span key={idx} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium border border-gray-200">
+                                                            <span key={idx}
+                                                                className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium border border-gray-200 cursor-pointer hover:text-blue-600 hover:border-blue-300"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate('/registry', { state: { selectedJobId: job } });
+                                                                }}
+                                                            >
                                                                 {job}
                                                             </span>
                                                         ))}
