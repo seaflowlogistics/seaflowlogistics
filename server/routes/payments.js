@@ -1,7 +1,7 @@
 import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { broadcastNotification, broadcastToAll } from '../utils/notify.js';
+import { broadcastNotification, broadcastToAll, createNotification } from '../utils/notify.js';
 
 const router = express.Router();
 
@@ -128,6 +128,11 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
             'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
             [req.user.id, 'UPDATE_PAYMENT_STATUS', `Updated payment status to ${status}`, 'PAYMENT', id]
         );
+
+        // Update Job Progress if Confirmed
+        if (status === 'Confirmed') {
+            await pool.query('UPDATE shipments SET progress = 75 WHERE id = $1', [updatedPayment.job_id]);
+        }
 
         res.json(result.rows[0]);
     } catch (error) {
