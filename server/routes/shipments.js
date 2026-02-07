@@ -94,7 +94,8 @@ router.get('/export', authenticateToken, async (req, res) => {
                     ORDER BY dn.created_at DESC
                     LIMIT 1
                 ) as "Cleared Date",
-                s.job_invoice_no as "Job Invoice No",
+                -- Job Invoice No from invoices table
+                (SELECT id FROM invoices WHERE shipment_id = s.id LIMIT 1) as "Job Invoice No",
                 -- Expenses
                 s.expense_macl as "MACL",
                 s.expense_mpl as "MPL",
