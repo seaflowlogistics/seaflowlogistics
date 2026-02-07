@@ -12,9 +12,11 @@ import {
 
     ClipboardList,
     CreditCard,
-    LogOut
+    LogOut,
+    Bell
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { notificationsAPI } from '../services/api';
 import seaflowLogo from '../assets/seaflow-logo.jpg';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,6 +33,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         logout();
         navigate('/');
     };
+
+    const [unreadCount, setUnreadCount] = React.useState(0);
+
+    React.useEffect(() => {
+        const fetchUnread = async () => {
+            try {
+                const res = await notificationsAPI.getAll();
+                const unread = res.data.filter((n: any) => !n.is_read).length;
+                setUnreadCount(unread);
+            } catch (e) {
+                console.error('Failed to fetch notifications count');
+            }
+        };
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 60000); // Poll every minute
+        return () => clearInterval(interval);
+    }, []);
 
     // Role definitions
     const hasFullAccess = hasRole('Administrator');
@@ -54,6 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+        { icon: Bell, label: 'Notifications', path: '/notifications' },
     ];
 
     if (showRegistry) {
@@ -135,7 +155,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                                     isActive ? 'nav-link-active' : 'nav-link'
                                 }
                             >
-                                <item.icon className="w-5 h-5" />
+                                <div className="relative">
+                                    <item.icon className="w-5 h-5" />
+                                    {item.label === 'Notifications' && unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] text-white">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </div>
                                 <span className="font-medium">{item.label}</span>
                             </NavLink>
                         ))}

@@ -16,6 +16,7 @@ import ChangePassword from './pages/ChangePassword';
 import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './pages/ForgotPassword';
 import Payments from './pages/Payments';
+import Notifications from './pages/Notifications';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -138,6 +139,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Logs />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             }
           />

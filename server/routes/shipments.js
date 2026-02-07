@@ -8,7 +8,7 @@ import fs from 'fs';
 import { generateInvoicePDF } from '../utils/invoiceGenerator.js';
 import XLSX from 'xlsx';
 import { logActivity } from '../utils/logger.js';
-import { broadcastNotification, createNotification } from '../utils/notify.js';
+import { broadcastNotification, createNotification, broadcastToAll } from '../utils/notify.js';
 import multer from 'multer';
 
 
@@ -663,11 +663,8 @@ router.post('/', authenticateToken, shipmentUpload, async (req, res) => {
 
         // Notifications
         try {
-            // Notify Admins
-            await broadcastNotification('Administrator', 'New Job Created', `A new job ${id} has been created by ${req.user.username}.`, 'info', `/registry?id=${id}`);
-
-            // Notify Creator
-            await createNotification(req.user.id, 'Job Created Successfully', `You created job ${id}.`, 'success', `/registry?id=${id}`);
+            // Notify All Users
+            await broadcastToAll('New Job Created', `New Job ${id} created by ${req.user.username}`, 'info', `/registry?selectedJobId=${id}`);
         } catch (noteError) {
             console.error('Notification error:', noteError);
         }
