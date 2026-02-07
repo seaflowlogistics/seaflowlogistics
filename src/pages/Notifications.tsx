@@ -45,16 +45,7 @@ const Notifications: React.FC = () => {
         }
     };
 
-    const handleDeleteAll = async () => {
-        if (!window.confirm('Are you sure you want to delete ALL notifications?')) return;
-        try {
-            await notificationsAPI.deleteAll();
-            setNotifications([]);
-            setSelectedIds([]);
-        } catch (error) {
-            console.error('Failed to delete all', error);
-        }
-    };
+
 
     const handleDeleteSelected = async () => {
         if (!window.confirm(`Delete ${selectedIds.length} selected notifications?`)) return;
@@ -127,12 +118,7 @@ const Notifications: React.FC = () => {
                                     </button>
                                 )}
 
-                                <button
-                                    onClick={handleDeleteAll}
-                                    className="px-3 py-1.5 text-gray-500 hover:bg-gray-100 rounded text-sm hover:text-red-500 transition-colors"
-                                >
-                                    Delete All
-                                </button>
+
                             </>
                         )}
                     </div>
