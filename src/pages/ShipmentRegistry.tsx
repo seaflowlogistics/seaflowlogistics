@@ -1430,7 +1430,9 @@ const ShipmentRegistry: React.FC = () => {
                             {!isJobCompleted ? (
                                 isDeliveryNoteIssued ? (
                                     isAccountsComplete ? (
-                                        user?.role !== 'Clearance' && user?.role !== 'Documentation' && (
+                                        // Mark Completed Button logic
+                                        // Restricted for Clearance and Documentation
+                                        hasRole('Administrator') || hasRole('All') || hasRole('Accountant') && (
                                             <button
                                                 onClick={handleMarkCompleted}
                                                 className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
@@ -1443,7 +1445,9 @@ const ShipmentRegistry: React.FC = () => {
                                             <Lock className="w-4 h-4" /> Approval Pending
                                         </span>
                                     ) : (
-                                        user?.role !== 'Accountant' && user?.role !== 'Documentation' && (
+                                        // Go to Payments Button logic
+                                        // Restricted for Accountant and Documentation
+                                        hasRole('Administrator') || hasRole('All') || hasRole('Clearance') && (
                                             <button
                                                 onClick={() => setActiveTab('Payments')}
                                                 className="px-5 py-2.5 bg-black text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-gray-200"
@@ -1453,7 +1457,9 @@ const ShipmentRegistry: React.FC = () => {
                                         )
                                     )
                                 ) : isAllScheduled ? (
-                                    user?.role !== 'Accountant' && user?.role !== 'Documentation' && (
+                                    // Clearance Scheduled Button logic
+                                    // Restricted for Accountant and Documentation
+                                    hasRole('Administrator') || hasRole('All') || hasRole('Clearance') && (
                                         <button
                                             onClick={() => handleOpenPopup('schedule', selectedJob, selectedJob.clearance_schedule)}
                                             className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
@@ -1462,7 +1468,9 @@ const ShipmentRegistry: React.FC = () => {
                                         </button>
                                     )
                                 ) : isDocComplete ? (
-                                    user?.role !== 'Accountant' && (
+                                    // Schedule Clearance Button logic
+                                    // Restricted for Accountant and Documentation
+                                    hasRole('Administrator') || hasRole('All') || hasRole('Clearance') && (
                                         <button
                                             onClick={() => handleOpenPopup('schedule', selectedJob)}
                                             className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
@@ -1470,7 +1478,11 @@ const ShipmentRegistry: React.FC = () => {
                                             <Calendar className="w-4 h-4" /> Schedule Clearance
                                         </button>
                                     )
-                                ) : null
+                                ) : hasRole('Documentation') ? (
+                                    null
+                                ) : (
+                                    null
+                                )
                             ) : (
                                 <span className="px-5 py-2.5 bg-gray-100 text-gray-400 text-sm font-bold rounded-lg flex items-center gap-2 cursor-default border border-gray-200">
                                     <Lock className="w-4 h-4" /> Job Closed
