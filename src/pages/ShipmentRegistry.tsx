@@ -1152,8 +1152,8 @@ const ShipmentRegistry: React.FC = () => {
         const isClearanceComplete = isDocComplete && (selectedJob.status === 'Cleared' || selectedJob.status === 'Completed' || (selectedJob.progress && parseInt(selectedJob.progress) === 100) || isDeliveryNoteIssued);
 
         // Stage 3: Accounts (75%)
-        // Rule: Clearance Complete AND All payments processed (is_fully_paid)
-        const isPaymentComplete = selectedJob.is_fully_paid; // Calculated by backend (total > 0 && total == paid)
+        // Rule: Clearance Complete AND All payments processed (is_fully_paid) OR Manually set to 75% via No Payment Confirmation
+        const isPaymentComplete = selectedJob.is_fully_paid || (selectedJob.progress && parseInt(selectedJob.progress) >= 75);
         const isAccountsComplete = isClearanceComplete && isPaymentComplete;
 
         // Stage 4: Completed (100%)
