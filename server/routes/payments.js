@@ -274,6 +274,8 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
         // Notify Accountants
         try {
             await broadcastNotification('Accountant', 'Payment Approval Request', `New payments have been sent for approval by ${req.user.username}.`, 'action', '/payments');
+            await broadcastNotification('Administrator', 'Payment Approval Request', `New payments have been sent for approval by ${req.user.username}.`, 'action', '/payments');
+            await broadcastNotification('All', 'Payment Approval Request', `New payments have been sent for approval by ${req.user.username}.`, 'action', '/payments');
         } catch (noteError) {
             console.error('Notification error:', noteError);
         }
@@ -403,7 +405,7 @@ router.post('/process-batch', authenticateToken, async (req, res) => {
         // Notify Completed
         for (const job of completedJobs) {
             try {
-                await broadcastToAll('Job Completed', `Job ${job.id} (${job.customer}) is now Completed.`, 'success', `/registry?id=${job.id}`);
+                await broadcastToAll('Job Completed', `Job ${job.id} (${job.customer}) is now Completed.`, 'success', `/registry?selectedJobId=${job.id}`);
                 await pool.query(
                     'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
                     [req.user.id, 'JOB_COMPLETED', `Job marked as Completed`, 'SHIPMENT', job.id]

@@ -793,6 +793,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
         // Specific Activity Logging
         if (req.body.status === 'Completed') {
             await logActivity(req.user.id, 'JOB_COMPLETED', `Job marked as Completed`, 'SHIPMENT', id);
+            try {
+                await broadcastToAll('Job Completed', `Job ${id} (${updatedShipment.customer}) is now Completed.`, 'success', `/registry?selectedJobId=${id}`);
+            } catch (ne) { console.error('Notification error', ne); }
         } else if (req.body.invoice_no) {
             // Heuristic: If invoice_no is being sent, it's likely a Shipment Invoice update
             await logActivity(req.user.id, 'UPDATE_SHIPMENT_INVOICE', `Shipment Invoice ${req.body.invoice_no} details updated`, 'SHIPMENT', id);
