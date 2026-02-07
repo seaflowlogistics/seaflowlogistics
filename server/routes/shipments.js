@@ -81,7 +81,8 @@ router.get('/export', authenticateToken, async (req, res) => {
                 -- CBM
                 '' as "CBM", 
                 -- Fetch packages from shipment_bls (aggregated) 
-                (SELECT STRING_AGG(packages::text, '|||') FROM shipment_bls WHERE shipment_id = s.id) as packages,
+                -- Reverting to s.packages as primary source
+                s.packages,
                 -- Clearing Status
                 s.status as "Clearing Status",
                 -- Cleared Date (Issued Delivery Note Date)
@@ -148,11 +149,12 @@ router.get('/export', authenticateToken, async (req, res) => {
             return row;
         });
 
+        console.log(`Exporting ${rows.length} rows`);
         res.json(rows);
 
     } catch (error) {
-        console.error('Export error:', error);
-        res.status(500).json({ error: 'Export failed' });
+        console.error('Export error FULL:', error);
+        res.status(500).json({ error: 'Export failed: ' + error.message });
     }
 });
 
