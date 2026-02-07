@@ -604,7 +604,7 @@ const DeliveryNotes: React.FC = () => {
 
 
                 <div className="mb-6">
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Signed Delivery Note (Upload) <span className="text-gray-400 font-normal normal-case">()</span></label>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Signed Delivery Note (Upload) <span className="text-gray-400 font-normal normal-case"></span></label>
                     <div className="flex items-center gap-4">
                         <label className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors">
                             <Upload className="w-4 h-4" />
