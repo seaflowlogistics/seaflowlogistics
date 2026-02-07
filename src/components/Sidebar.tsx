@@ -64,7 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
     const showClearanceSchedule = hasFullAccess || isClearanceMember; // NOT Accountant
 
-    const showDeliveryNotes = hasFullAccess || isClearanceMember || isAccountantMember || isDocumentationMember; // Keeping previous behavior (Accountant had access via isClearance)
+    const showDeliveryNotes = hasFullAccess || isClearanceMember || isAccountantMember; // Keeping previous behavior (Accountant had access via isClearance)
 
     const showPayments = hasFullAccess || isAccountantMember;
 
