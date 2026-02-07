@@ -403,7 +403,7 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error updating delivery note:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message });
     } finally {
         client.release();
     }
