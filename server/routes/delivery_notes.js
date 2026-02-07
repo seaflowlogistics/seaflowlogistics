@@ -2,8 +2,10 @@ import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import baseUpload from '../utils/upload.js';
+import { logActivity } from '../utils/logger.js';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
 
 const upload = multer({
