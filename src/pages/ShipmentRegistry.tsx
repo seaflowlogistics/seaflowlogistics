@@ -17,6 +17,9 @@ import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 import BLDrawer from '../components/BLDrawer';
 import SearchableSelect from '../components/SearchableSelect';
 import ShipmentInvoiceDrawer from '../components/ShipmentInvoiceDrawer';
+// @ts-ignore
+import * as XLSX from 'xlsx';
+import { Upload } from 'lucide-react';
 
 
 
@@ -631,6 +634,83 @@ const ShipmentRegistry: React.FC = () => {
             alert('Failed to create job: ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleExportJobs = async () => {
+        try {
+            if (!confirm('Download all jobs (including completed)?')) return;
+            setLoading(true);
+            // Fetch all jobs, including completed
+            const response = await shipmentsAPI.getAll({ status: 'All' });
+            const allJobs = response.data;
+
+            // Transform data for Excel
+            const excelData = allJobs.map((job: any) => ({
+                'Job ID': job.id,
+                'Status': job.status,
+                'Customer': job.customer,
+                'Consignee': job.receiver_name,
+                'Exporter': job.sender_name,
+                'Transport Mode': job.transport_mode,
+                'Service': job.service,
+                'BL/AWB': job.bl_awb_no || (job.bls && job.bls.map((b: any) => b.master_bl).join(', ')) || '',
+                'Weight': job.weight,
+                'No of Pkgs': job.no_of_pkgs,
+                'Date': new Date(job.created_at).toLocaleDateString(),
+                'ETA': job.expected_delivery_date ? new Date(job.expected_delivery_date).toLocaleDateString() : '',
+                'Job Invoice No': job.invoice_id || '',
+                'Shipment Invoice No': job.invoice_no || '',
+                'Payment Status': job.payment_status || 'Pending'
+            }));
+
+            // Create Worksheet
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Shipments");
+
+            // Generate File
+            XLSX.writeFile(wb, `Shipments_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+        } catch (error) {
+            console.error("Export failed", error);
+            alert("Failed to export jobs");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleImportClick = () => {
+        document.getElementById('import-file-input')?.click();
+    };
+
+    const handleImportFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!confirm(`Import jobs from ${file.name}?`)) {
+            event.target.value = ''; // Reset
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            setLoading(true);
+            const res = await shipmentsAPI.import(formData);
+            alert(`Import Successful! \nSuccess: ${res.data.success} \nFailed: ${res.data.failed}`);
+            if (res.data.errors && res.data.errors.length > 0) {
+                console.warn("Import Errors:", res.data.errors);
+                alert("Some rows failed. Check console for details.");
+            }
+            loadJobs();
+        } catch (error: any) {
+            console.error("Import failed", error);
+            alert("Import failed: " + (error.response?.data?.error || error.message));
+        } finally {
+            setLoading(false);
+            event.target.value = ''; // Reset
         }
     };
 
@@ -2447,9 +2527,34 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="flex justify-between items-center mb-5">
                             <h2 className="text-xl font-bold text-gray-900 tracking-tight">Inbox</h2>
 
-                            <button onClick={handleCreateClick} className="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all shadow-md">
-                                <Plus className="w-5 h-5" />
-                            </button>
+                            {(hasRole('Administrator') || hasRole('All') || hasRole('Documentation')) && (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="file"
+                                        id="import-file-input"
+                                        accept=".xlsx, .xls, .csv"
+                                        className="hidden"
+                                        onChange={handleImportFileChange}
+                                    />
+                                    <button
+                                        onClick={handleExportJobs}
+                                        className="w-8 h-8 flex items-center justify-center bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-all shadow-md"
+                                        title="Export All Jobs"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={handleImportClick}
+                                        className="w-8 h-8 flex items-center justify-center bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-md"
+                                        title="Import Jobs"
+                                    >
+                                        <Upload className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={handleCreateClick} className="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all shadow-md">
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                         <div className="relative group">
                             <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
@@ -2491,7 +2596,9 @@ const ShipmentRegistry: React.FC = () => {
                             <h3 className="text-xl font-bold text-gray-900 mb-2">Nothing here yet</h3>
                             <p className="text-gray-500 max-w-sm mb-8">
                                 To view a job, select a job from the inbox.<br />
-                                To add a new job, click the + button to create manually, or use the upload icon for Excel import.
+                                {(hasRole('Administrator') || hasRole('All') || hasRole('Documentation')) && (
+                                    <>To add a new job, click the + button to create manually, or use the upload icon for Excel import.</>
+                                )}
                             </p>
                         </div>
                     )}

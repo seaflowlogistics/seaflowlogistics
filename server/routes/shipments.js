@@ -61,7 +61,7 @@ const generateShipmentId = async (transportMode) => {
 };
 
 // Import Shipments from Excel/CSV
-router.post('/import', authenticateToken, upload.single('file'), async (req, res) => {
+router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All', 'Documentation']), upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
@@ -564,7 +564,7 @@ const shipmentUpload = upload.fields([
 ]);
 
 // Create new shipment
-router.post('/', authenticateToken, shipmentUpload, async (req, res) => {
+router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Documentation']), shipmentUpload, async (req, res) => {
     try {
         const {
             sender_name, sender_address,
