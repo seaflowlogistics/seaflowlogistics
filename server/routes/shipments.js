@@ -81,8 +81,8 @@ router.get('/export', authenticateToken, async (req, res) => {
                 -- CBM
                 '' as "CBM", 
                 -- Fetch packages from shipment_bls (aggregated) 
-                -- Reverting to s.packages as primary source
-                s.packages,
+                -- Fetch packages from shipment_bls (aggregated) 
+                (SELECT STRING_AGG(packages::text, '|||') FROM shipment_bls WHERE shipment_id = s.id) as packages,
                 -- Clearing Status
                 s.status as "Clearing Status",
                 -- Cleared Date (Issued Delivery Note Date)
