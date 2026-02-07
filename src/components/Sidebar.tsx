@@ -155,15 +155,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                                     isActive ? 'nav-link-active' : 'nav-link'
                                 }
                             >
-                                <div className="relative">
-                                    <item.icon className="w-5 h-5" />
-                                    {item.label === 'Notifications' && unreadCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] text-white">
-                                            {unreadCount > 9 ? '9+' : unreadCount}
-                                        </span>
-                                    )}
-                                </div>
-                                <span className="font-medium">{item.label}</span>
+                                <item.icon className="w-5 h-5" />
+                                <span className="font-medium flex-1">{item.label}</span>
+                                {item.label === 'Notifications' && unreadCount > 0 && (
+                                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
                             </NavLink>
                         ))}
                     </nav>
