@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import {
     Search, Printer, ChevronDown,
     X, Download, Upload,
@@ -80,6 +81,7 @@ interface DeliveryNote {
 }
 
 const DeliveryNotes: React.FC = () => {
+    const navigate = useNavigate();
     const { hasRole } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [recordsPerPage, setRecordsPerPage] = useState('50 records');
@@ -555,7 +557,12 @@ const DeliveryNotes: React.FC = () => {
                     {selectedNote?.items?.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-start bg-gray-50 p-3 rounded border border-gray-100">
                             <div>
-                                <p className="font-bold text-gray-900 text-sm">{item.job_id}</p>
+                                <p
+                                    className="font-bold text-gray-900 text-sm cursor-pointer hover:text-blue-600 hover:underline"
+                                    onClick={() => navigate('/registry', { state: { selectedJobId: item.job_id } })}
+                                >
+                                    {item.job_id}
+                                </p>
                                 <p className="text-xs text-gray-500">{selectedNote?.consignee}</p>
                                 <p className="text-[10px] text-gray-400 mt-1">Packages: {item.packages || 'N/A'}</p>
                             </div>
