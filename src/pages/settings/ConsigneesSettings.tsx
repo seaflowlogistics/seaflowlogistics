@@ -9,6 +9,7 @@ const ConsigneesSettings: React.FC = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [importing, setImporting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [viewType, setViewType] = useState<'Individual' | 'Company'>('Individual');
 
     // Form State
     const [formData, setFormData] = useState({
@@ -130,10 +131,15 @@ const ConsigneesSettings: React.FC = () => {
         }
     };
 
-    const filteredConsignees = consignees.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.code && c.code.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredConsignees = consignees.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.code && c.code.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        // Default to 'Individual' if not set
+        const type = c.type || 'Individual';
+
+        return matchesSearch && type === viewType;
+    });
 
     return (
         <div className="flex-1 flex flex-col h-full bg-white">
@@ -195,6 +201,30 @@ const ConsigneesSettings: React.FC = () => {
                 </div>
             </div>
 
+            {/* View Type Tabs */}
+            <div className="px-8 mb-4 border-b border-gray-200">
+                <div className="flex gap-6">
+                    <button
+                        onClick={() => setViewType('Individual')}
+                        className={`pb-3 text-sm font-medium transition-colors relative ${viewType === 'Individual'
+                            ? 'text-black border-b-2 border-black'
+                            : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        Individual
+                    </button>
+                    <button
+                        onClick={() => setViewType('Company')}
+                        className={`pb-3 text-sm font-medium transition-colors relative ${viewType === 'Company'
+                            ? 'text-black border-b-2 border-black'
+                            : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        Company
+                    </button>
+                </div>
+            </div>
+
             {/* Content List */}
             <div className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar">
                 {loading ? (
@@ -214,8 +244,13 @@ const ConsigneesSettings: React.FC = () => {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-black text-white text-xs uppercase tracking-wider">
-                                    <th className="py-3 px-4 font-semibold w-1/3">Name</th>
-                                    <th className="py-3 px-4 font-semibold">Code</th>
+                                    <th className="py-3 px-4 font-semibold w-1/3">
+                                        {viewType === 'Individual' ? 'Name' : 'Company Name'}
+                                    </th>
+                                    <th className="py-3 px-4 font-semibold">
+                                        {viewType === 'Individual' ? 'ID / Passport' : 'Reg No'}
+                                    </th>
+                                    {viewType === 'Company' && <th className="py-3 px-4 font-semibold">GST Tin</th>}
                                     <th className="py-3 px-4 font-semibold">Phone</th>
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
@@ -224,7 +259,10 @@ const ConsigneesSettings: React.FC = () => {
                                 {filteredConsignees.map((item) => (
                                     <tr key={item.id} className="hover:bg-gray-50 transition-colors group text-sm">
                                         <td className="py-3 px-4 font-semibold text-gray-900">{item.name}</td>
-                                        <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.code || '-'}</td>
+                                        <td className="py-3 px-4 text-gray-600 font-mono text-xs">
+                                            {viewType === 'Individual' ? (item.passport_id || '-') : (item.company_reg_no || '-')}
+                                        </td>
+                                        {viewType === 'Company' && <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.gst_tin || '-'}</td>}
                                         <td className="py-3 px-4 text-gray-600 font-mono">{item.phone || '-'}</td>
                                         <td className="py-3 px-4 text-right flex justify-end gap-2">
                                             <button
