@@ -372,7 +372,7 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
 
                     await pool.query(
                         'INSERT INTO shipment_bls (shipment_id, master_bl, packages) VALUES ($1, $2, $3)',
-                        [id, blNumber.split(',')[0].trim(), blContent] // Take first BL if comma separated
+                        [id, String(blNumber).split(',')[0].trim(), blContent] // Take first BL if comma separated
                     );
 
                     // 2. Insert Containers (Real Tables)
