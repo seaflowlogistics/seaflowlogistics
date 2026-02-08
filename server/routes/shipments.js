@@ -347,7 +347,18 @@ router.get('/', authenticateToken, async (req, res) => {
     try {
         const { search, status } = req.query;
         let query = `
-            SELECT s.*, i.id as invoice_id, i.status as payment_status 
+            SELECT s.*, 
+            i.id as invoice_id, 
+            i.status as payment_status,
+            i.created_at as invoice_date,
+            (
+                SELECT dn.created_at 
+                FROM delivery_notes dn 
+                JOIN delivery_note_items dni ON dn.id = dni.delivery_note_id 
+                WHERE dni.job_id = s.id 
+                ORDER BY dn.created_at ASC 
+                LIMIT 1
+            ) as cleared_at
             FROM shipments s
             LEFT JOIN invoices i ON s.id = i.shipment_id
         `;
