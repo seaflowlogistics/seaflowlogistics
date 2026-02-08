@@ -273,6 +273,7 @@ const ShipmentRegistry: React.FC = () => {
     // Form State (for Register New Job)
     const [isEditingJob, setIsEditingJob] = useState(false);
     const [billingType, setBillingType] = useState('Individual');
+    const [consigneeType, setConsigneeType] = useState<'Individual' | 'Company'>('Individual');
     const [formData, setFormData] = useState<JobFormData>({
         service: 'Clearance',
         consignee: '',
@@ -886,16 +887,37 @@ const ShipmentRegistry: React.FC = () => {
                 {/* Section B: Consignee */}
                 <div className="form-group relative z-30">
                     <div className="mt-4">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Consignee</label>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-semibold text-gray-700">Consignee</label>
+                            {/* Type Toggle */}
+                            <div className="flex bg-gray-100 rounded-lg p-0.5">
+                                <button
+                                    type="button"
+                                    onClick={() => { setConsigneeType('Individual'); setFormData(prev => ({ ...prev, consignee: '' })); }}
+                                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${consigneeType === 'Individual' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Individual
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setConsigneeType('Company'); setFormData(prev => ({ ...prev, consignee: '' })); }}
+                                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${consigneeType === 'Company' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Company
+                                </button>
+                            </div>
+                        </div>
                         <SearchableSelect
-                            options={consigneesList.map((c: any) => ({
-                                id: c.id,
-                                label: c.name,
-                                value: c.name
-                            }))}
+                            options={consigneesList
+                                .filter((c: any) => (c.type || 'Individual') === consigneeType)
+                                .map((c: any) => ({
+                                    id: c.id,
+                                    label: c.name,
+                                    value: c.name
+                                }))}
                             value={formData.consignee}
                             onChange={(val) => setFormData(prev => ({ ...prev, consignee: val }))}
-                            placeholder="Select Consignee"
+                            placeholder={`Select ${consigneeType}`}
                             required
                         />
                     </div>
