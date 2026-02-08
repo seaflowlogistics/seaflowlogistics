@@ -22,7 +22,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // Create single consignee
 router.post('/', authenticateToken, async (req, res) => {
-    const { name, email, phone, address, code } = req.body;
+    const { name, email, phone, address, code, type, passport_id, company_reg_no, gst_tin } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -30,8 +30,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'INSERT INTO consignees (name, email, phone, address, code) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [name, email, phone, address, code]
+            'INSERT INTO consignees (name, email, phone, address, code, type, passport_id, company_reg_no, gst_tin) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+            [name, email, phone, address, code, type || 'Individual', passport_id, company_reg_no, gst_tin]
         );
 
         await logActivity(req.user.id, 'CREATE_CONSIGNEE', `Created consignee: ${name}`, 'CONSIGNEE', result.rows[0].id);
@@ -105,7 +105,7 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 // Update consignee
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { name, email, phone, address, code } = req.body;
+    const { name, email, phone, address, code, type, passport_id, company_reg_no, gst_tin } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -113,8 +113,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'UPDATE consignees SET name = $1, email = $2, phone = $3, address = $4, code = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
-            [name, email, phone, address, code, id]
+            'UPDATE consignees SET name = $1, email = $2, phone = $3, address = $4, code = $5, type = $6, passport_id = $7, company_reg_no = $8, gst_tin = $9, updated_at = CURRENT_TIMESTAMP WHERE id = $10 RETURNING *',
+            [name, email, phone, address, code, type || 'Individual', passport_id, company_reg_no, gst_tin, id]
         );
 
         if (result.rows.length === 0) {

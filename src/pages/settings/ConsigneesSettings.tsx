@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Users, FileUp, Plus, Trash2, Search, X, Edit2 } from 'lucide-react';
 import { consigneesAPI } from '../../services/api';
@@ -14,9 +13,13 @@ const ConsigneesSettings: React.FC = () => {
     // Form State
     const [formData, setFormData] = useState({
         name: '',
-
+        type: 'Individual',
+        passport_id: '',
+        company_reg_no: '',
+        email: '',
+        address: '',
         phone: '',
-
+        gst_tin: '',
         code: ''
     });
 
@@ -36,6 +39,20 @@ const ConsigneesSettings: React.FC = () => {
         fetchConsignees();
     }, []);
 
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            type: 'Individual',
+            passport_id: '',
+            company_reg_no: '',
+            email: '',
+            address: '',
+            phone: '',
+            gst_tin: '',
+            code: ''
+        });
+    };
+
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -46,7 +63,7 @@ const ConsigneesSettings: React.FC = () => {
             }
             setShowAddModal(false);
             setEditingId(null);
-            setFormData({ name: '', phone: '', code: '' });
+            resetForm();
             fetchConsignees();
         } catch (error) {
             console.error('Failed to save consignee', error);
@@ -56,11 +73,16 @@ const ConsigneesSettings: React.FC = () => {
 
     const handleEdit = (consignee: any) => {
         setEditingId(consignee.id);
+        const type = consignee.type || 'Individual';
         setFormData({
             name: consignee.name || '',
-
+            type: type,
+            passport_id: consignee.passport_id || '',
+            company_reg_no: consignee.company_reg_no || '',
+            email: consignee.email || '',
+            address: consignee.address || '',
             phone: consignee.phone || '',
-
+            gst_tin: consignee.gst_tin || '',
             code: consignee.code || ''
         });
         setShowAddModal(true);
@@ -69,7 +91,7 @@ const ConsigneesSettings: React.FC = () => {
     const closeModal = () => {
         setShowAddModal(false);
         setEditingId(null);
-        setFormData({ name: '', phone: '', code: '' });
+        resetForm();
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,7 +184,7 @@ const ConsigneesSettings: React.FC = () => {
                     <button
                         onClick={() => {
                             setEditingId(null);
-                            setFormData({ name: '', phone: '', code: '' });
+                            resetForm();
                             setShowAddModal(true);
                         }}
                         className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
@@ -194,7 +216,6 @@ const ConsigneesSettings: React.FC = () => {
                                 <tr className="bg-black text-white text-xs uppercase tracking-wider">
                                     <th className="py-3 px-4 font-semibold w-1/3">Name</th>
                                     <th className="py-3 px-4 font-semibold">Code</th>
-
                                     <th className="py-3 px-4 font-semibold">Phone</th>
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
@@ -204,7 +225,6 @@ const ConsigneesSettings: React.FC = () => {
                                     <tr key={item.id} className="hover:bg-gray-50 transition-colors group text-sm">
                                         <td className="py-3 px-4 font-semibold text-gray-900">{item.name}</td>
                                         <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.code || '-'}</td>
-
                                         <td className="py-3 px-4 text-gray-600 font-mono">{item.phone || '-'}</td>
                                         <td className="py-3 px-4 text-right flex justify-end gap-2">
                                             <button
@@ -241,39 +261,107 @@ const ConsigneesSettings: React.FC = () => {
                             </button>
                         </div>
                         <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
+                            {/* Type Toggle */}
+                            <div className="flex p-1 bg-gray-100 rounded-lg w-fit">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, type: 'Individual' })}
+                                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${formData.type === 'Individual' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Individual
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, type: 'Company' })}
+                                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${formData.type === 'Company' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Company
+                                </button>
+                            </div>
+
+                            {/* Name */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Company / Name *</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {formData.type === 'Individual' ? 'Name' : 'Company Name'} *
+                                </label>
                                 <input
                                     required
                                     type="text"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="e.g. Acme Corp"
                                 />
                             </div>
+
+                            {/* ID / Reg No */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Code / ID</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {formData.type === 'Individual' ? 'ID / Passport Number' : 'Company Registration Number'}
+                                </label>
                                 <input
                                     type="text"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
-                                    value={formData.code}
-                                    onChange={e => setFormData({ ...formData, code: e.target.value })}
-                                    placeholder="e.g. C1001"
+                                    value={formData.type === 'Individual' ? formData.passport_id : formData.company_reg_no}
+                                    onChange={e => formData.type === 'Individual' ? setFormData({ ...formData, passport_id: e.target.value }) : setFormData({ ...formData, company_reg_no: e.target.value })}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
 
+                            {/* GST (Company Only) */}
+                            {formData.type === 'Company' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">GST Tin</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                        value={formData.gst_tin}
+                                        onChange={e => setFormData({ ...formData, gst_tin: e.target.value })}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Email & Phone */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                        value={formData.email}
+                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        {formData.type === 'Individual' ? 'Contact Number' : 'Phone'}
+                                    </label>
                                     <input
                                         type="text"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                                         value={formData.phone}
                                         onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                        placeholder="+1 234..."
                                     />
                                 </div>
+                            </div>
+
+                            {/* Address */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                <textarea
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all resize-none h-20"
+                                    value={formData.address}
+                                    onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                />
+                            </div>
+
+                            {/* Internal Code (Optional) */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Internal Code (Optional)</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                    value={formData.code}
+                                    onChange={e => setFormData({ ...formData, code: e.target.value })}
+                                />
                             </div>
 
                             <div className="pt-2 flex justify-end gap-3">
