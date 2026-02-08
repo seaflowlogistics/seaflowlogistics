@@ -69,6 +69,7 @@ router.get('/export', authenticateToken, async (req, res) => {
                 s.customer as "Customer",
                 s.receiver_name as "Consignee",
                 s.billing_contact as "Billing Contact",
+                s.service as "Service",
                 s.sender_name as "Exporter",
                 s.invoice_no as "Shipment Invoice No",
                 s.invoice_items as "Invoice Items",
@@ -235,6 +236,7 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                 const consignee = normalizedRow['consignee'] || normalizedRow['receiver_name'] || normalizedRow['receiver'] || 'Unknown';
                 const billingContact = normalizedRow['billing contact'] || normalizedRow['billing_contact'] || consignee || 'Unknown';
                 const exporter = normalizedRow['exporter'] || normalizedRow['sender_name'] || 'Unknown';
+                const service = normalizedRow['service'] || 'Clearance';
                 const shipmentInvoiceNo = normalizedRow['shipment invoice no'] || normalizedRow['invoice_no'];
                 const invoiceItems = normalizedRow['invoice items'] || normalizedRow['invoice_items'];
                 const customsRForm = normalizedRow['customs r form'] || normalizedRow['customs_r_form'];
@@ -277,12 +279,14 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                             expense_macl = $8, expense_mpl = $9, expense_mcs = $10,
                             expense_transportation = $11, expense_liner = $12,
                             billing_contact = $13,
-                            date = $14
-                         WHERE id = $15`,
+                            service = $14,
+                            date = $15
+                         WHERE id = $16`,
                         [customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status,
                             macl, mpl, mcs, transport, liner,
                             billingContact,
+                            service,
                             dateVal,
                             id]
                     );
@@ -294,12 +298,12 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                             customs_r_form, status,
                             expense_macl, expense_mpl, expense_mcs, 
                             expense_transportation, expense_liner, 
-                            billing_contact, transport_mode, date, created_at
+                            billing_contact, service, transport_mode, date, created_at
                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())`,
                         [id, customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status,
                             macl, mpl, mcs, transport, liner,
-                            billingContact, transportMode, dateVal]
+                            billingContact, service, transportMode, dateVal]
                     );
                 }
 
