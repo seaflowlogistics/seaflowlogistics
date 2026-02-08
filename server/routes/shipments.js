@@ -66,7 +66,8 @@ router.get('/export', authenticateToken, async (req, res) => {
         const query = `
             SELECT
                 s.id as "Job ID",
-                COALESCE(s.customer, s.receiver_name) as "Customer",
+                s.customer as "Customer",
+                s.receiver_name as "Consignee",
                 s.sender_name as "Exporter",
                 s.invoice_no as "Shipment Invoice No",
                 s.invoice_items as "Invoice Items",
@@ -229,7 +230,8 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                 }
 
                 // --- 2. Map Basic Fields ---
-                const customer = normalizedRow['customer'] || normalizedRow['client'] || 'Unknown'; // COALESCE(s.customer, s.receiver_name)
+                const customer = normalizedRow['customer'] || normalizedRow['client'] || 'Unknown';
+                const consignee = normalizedRow['consignee'] || normalizedRow['receiver'] || 'Unknown';
                 const exporter = normalizedRow['exporter'] || normalizedRow['sender_name'] || 'Unknown';
                 const shipmentInvoiceNo = normalizedRow['shipment invoice no'] || normalizedRow['invoice_no'];
                 const invoiceItems = normalizedRow['invoice items'] || normalizedRow['invoice_items'];
@@ -268,13 +270,13 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     // UPDATE basic fields
                     await pool.query(
                         `UPDATE shipments SET 
-                            customer = $1, sender_name = $2, invoice_no = $3, invoice_items = $4, 
-                            customs_r_form = $5, status = $6,
-                            expense_macl = $7, expense_mpl = $8, expense_mcs = $9,
-                            expense_transportation = $10, expense_liner = $11,
-                            date = $12
-                         WHERE id = $13`,
-                        [customer, exporter, shipmentInvoiceNo, invoiceItems,
+                            customer = $1, receiver_name = $2, sender_name = $3, invoice_no = $4, invoice_items = $5, 
+                            customs_r_form = $6, status = $7,
+                            expense_macl = $8, expense_mpl = $9, expense_mcs = $10,
+                            expense_transportation = $11, expense_liner = $12,
+                            date = $13
+                         WHERE id = $14`,
+                        [customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status,
                             macl, mpl, mcs, transport, liner,
                             dateVal,
@@ -284,13 +286,13 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     // INSERT new shipment
                     await pool.query(
                         `INSERT INTO shipments (
-                            id, customer, sender_name, invoice_no, invoice_items, 
+                            id, customer, receiver_name, sender_name, invoice_no, invoice_items, 
                             customs_r_form, status,
                             expense_macl, expense_mpl, expense_mcs, 
                             expense_transportation, expense_liner,
                             created_at, transport_mode, date
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), $13, $14)`,
-                        [id, customer, exporter, shipmentInvoiceNo, invoiceItems,
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), $14, $15)`,
+                        [id, customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status,
                             macl, mpl, mcs, transport, liner, transportMode, dateVal]
                     );
@@ -382,6 +384,35 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                             [id, c.container_no, c.container_type, JSON.stringify(c.packages)]
                         );
                     }
+                }
+
+                // --- 4. Handle Invoice ---
+                try {
+                    const existingInvoice = await pool.query('SELECT id FROM invoices WHERE shipment_id = $1', [id]);
+                    const priceVal = parseFloat(normalizedRow['price'] || normalizedRow['value'] || normalizedRow['amount'] || '0');
+
+                    if (existingInvoice.rows.length > 0) {
+                        // Invoice exists. 
+                        // If user provided a specific Job Invoice No in excel, try to update the existing invoice ID to match it.
+                        if (jobInvoiceNo && existingInvoice.rows[0].id !== jobInvoiceNo) {
+                            await pool.query('UPDATE invoices SET id = $1 WHERE shipment_id = $2', [jobInvoiceNo, id]);
+                        }
+                    } else {
+                        // Create New Invoice
+                        let invoiceId = jobInvoiceNo;
+                        if (!invoiceId) {
+                            // Generate strictly unique ID if possible, or random fallback
+                            invoiceId = `INV-${new Date().getFullYear()}${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
+                        }
+
+                        await pool.query(
+                            'INSERT INTO invoices (id, shipment_id, amount, status) VALUES ($1, $2, $3, $4)',
+                            [invoiceId, id, priceVal, 'Pending']
+                        );
+                    }
+                } catch (invErr) {
+                    // Non-fatal error (e.g. duplicate invoice ID), just log it
+                    console.warn(`Invoice processing error for Shipment ${id}:`, invErr.message);
                 }
 
                 importedShipments.push(id);
