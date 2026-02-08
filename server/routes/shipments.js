@@ -155,7 +155,7 @@ router.get('/export', authenticateToken, async (req, res) => {
     }
 });
 
-// Import Shipments from Excel/CSV
+// Import Shipments from Excel/CSV (Matches Export Format)
 router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All', 'Documentation']), upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
@@ -167,9 +167,9 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
         const workbook = XLSX.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        // Assuming row 1 is Title, Row 2 is Header. 
-        // We use range:1 (skip 0) to get correct headers.
-        const data = XLSX.utils.sheet_to_json(sheet, { range: 1 });
+
+        // Use default header parsing (Keys will be the header row strings)
+        const data = XLSX.utils.sheet_to_json(sheet); // Defaults to header at row 0
 
         // Remove the uploaded file after parsing
         fs.unlinkSync(filePath);
@@ -179,7 +179,6 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
         let failureCount = 0;
         let errors = [];
 
-        // Pre-calculate IDs to avoid N+1 Selects
         // Pre-calculate IDs to avoid N+1 Selects
         const date = new Date();
         const year = date.getFullYear();
@@ -208,111 +207,167 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
 
         for (const row of data) {
             try {
-                // Normalize keys to lowercase
+                // Normalize keys to lowercase for easier matching
                 const normalizedRow = {};
                 Object.keys(row).forEach(key => {
                     normalizedRow[key.toLowerCase().trim()] = row[key];
                 });
 
-                const shipmentNo = normalizedRow['shipment no'] || normalizedRow['shipment_no'] || normalizedRow['id'];
-                let id = shipmentNo;
+                // --- 1. Identify Shipment ID ---
+                let id = normalizedRow['job id'] || normalizedRow['id'] || normalizedRow['shipment no'];
+
+                // Transport Mode (Default SEA)
+                // Try to infer from ID char if valid, else default
+                let transportMode = 'SEA';
+                if (id && id.startsWith('A')) transportMode = 'AIR';
+
+                // If no ID, generate one
                 if (!id) {
-                    const transportMode = normalizedRow['transport_mode'] || normalizedRow['transport mode'] || 'SEA';
-                    const prefixChar = (String(transportMode).toUpperCase() === 'SEA') ? 'S' : 'A';
+                    const prefixChar = (transportMode === 'SEA') ? 'S' : 'A';
                     id = `${prefixChar}${year}-${String(nextIdNum).padStart(3, '0')}`;
                     nextIdNum++;
                 }
-                const status = 'New';
-                const progress = 0;
 
-                // Expected Headers mapping
-                const customer = normalizedRow['customer'] || normalizedRow['client'] || normalizedRow['exporter'] || 'Unknown';
-                const consignee = normalizedRow['consignee'] || normalizedRow['receiver'] || 'Unknown';
-                const exporter = normalizedRow['exporter'] || normalizedRow['shipper'] || normalizedRow['sender'] || 'Unknown';
-                const transport_mode = normalizedRow['transport mode'] || normalizedRow['mode'] || 'SEA';
-                const description = normalizedRow['description'] || normalizedRow['goods'] || 'Import Goods';
-                const weight = normalizedRow['g.w'] || normalizedRow['gw'] || normalizedRow['weight'] || '0';
+                // --- 2. Map Basic Fields ---
+                const customer = normalizedRow['customer'] || normalizedRow['client'] || 'Unknown'; // COALESCE(s.customer, s.receiver_name)
+                const exporter = normalizedRow['exporter'] || normalizedRow['sender_name'] || 'Unknown';
+                const shipmentInvoiceNo = normalizedRow['shipment invoice no'] || normalizedRow['invoice_no'];
+                const invoiceItems = normalizedRow['invoice items'] || normalizedRow['invoice_items'];
+                const customsRForm = normalizedRow['customs r form'] || normalizedRow['customs_r_form'];
+                const jobInvoiceNo = normalizedRow['job invoice no'] || normalizedRow['job_invoice_no'];
+                const status = normalizedRow['clearing status'] || normalizedRow['status'] || 'New';
 
-                // Date Parsing
-                let dateVal = new Date();
-                const rawDate = normalizedRow['date'] || normalizedRow['clearance date'] || normalizedRow['eta'];
-                if (rawDate) {
-                    if (typeof rawDate === 'number') {
-                        dateVal = new Date(Math.round((rawDate - 25569) * 86400 * 1000));
-                    } else if (typeof rawDate === 'string') {
-                        if (rawDate.includes('.')) { // DD.MM.YYYY
-                            const parts = rawDate.split('.');
-                            if (parts.length === 3) dateVal = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                        } else {
-                            dateVal = new Date(rawDate);
-                        }
+                // Expenses
+                const macl = parseFloat(normalizedRow['macl'] || '0');
+                const mpl = parseFloat(normalizedRow['mpl'] || '0');
+                const mcs = parseFloat(normalizedRow['mcs'] || '0');
+                const transport = parseFloat(normalizedRow['transportation'] || '0');
+                const liner = parseFloat(normalizedRow['liner'] || '0');
+
+                // Check if shipment exists
+                const existingCheck = await pool.query('SELECT id FROM shipments WHERE id = $1', [id]);
+                const isUpdate = existingCheck.rows.length > 0;
+
+                if (isUpdate) {
+                    // UPDATE basic fields
+                    await pool.query(
+                        `UPDATE shipments SET 
+                            customer = $1, sender_name = $2, invoice_no = $3, invoice_items = $4, 
+                            customs_r_form = $5, job_invoice_no = $6, status = $7,
+                            expense_macl = $8, expense_mpl = $9, expense_mcs = $10,
+                            expense_transportation = $11, expense_liner = $12
+                         WHERE id = $13`,
+                        [customer, exporter, shipmentInvoiceNo, invoiceItems,
+                            customsRForm, jobInvoiceNo, status,
+                            macl, mpl, mcs, transport, liner,
+                            id]
+                    );
+                } else {
+                    // INSERT new shipment
+                    await pool.query(
+                        `INSERT INTO shipments (
+                            id, customer, sender_name, invoice_no, invoice_items, 
+                            customs_r_form, job_invoice_no, status,
+                            expense_macl, expense_mpl, expense_mcs, 
+                            expense_transportation, expense_liner,
+                            created_at, transport_mode
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), $14)`,
+                        [id, customer, exporter, shipmentInvoiceNo, invoiceItems,
+                            customsRForm, jobInvoiceNo, status,
+                            macl, mpl, mcs, transport, liner, transportMode]
+                    );
+                }
+
+                // --- 3. Handle BL/AWB & Packages & Containers ---
+                // The export format aggregates BLs, Containers, and Packages.
+                // We will try to reconstruct a SINGLE Master BL entry with the details provided.
+                // A more complex import would require multiple rows per shipment or complex parsing.
+                // Here we assume 1 main BL per row for simplicity, or we skip if data is missing.
+
+                const blNumber = normalizedRow['bl/awb number'];
+                const containerNumbers = normalizedRow['container number']; // "CONT1, CONT2"
+                const containerTypes = normalizedRow['container type'];     // "FCL 20, FCL 40"
+                const cbmStr = normalizedRow['cbm'];
+                const weightStr = normalizedRow['weight'];
+                const packagesStr = normalizedRow['packages']; // "10 PKG, 20 BOX"
+
+                if (blNumber) {
+                    // Remove existing BLs/Containers to do a clean replace? 
+                    // Or Upsert? Replacing is safer for sync behavior requested("update tables").
+                    // CAUTION: This deletes existing data for the shipment.
+                    await pool.query('DELETE FROM shipment_bls WHERE shipment_id = $1', [id]);
+                    await pool.query('DELETE FROM shipment_containers WHERE shipment_id = $1', [id]);
+
+                    // Construct Packages Array
+                    let packagesList = [];
+                    // Parse "10 PKG, 20 BOX"
+                    if (packagesStr && packagesStr !== '-') {
+                        const parts = packagesStr.split(',');
+                        parts.forEach(part => {
+                            const match = part.trim().match(/^(\d+)\s+(.+)$/);
+                            if (match) {
+                                packagesList.push({
+                                    pkg_count: match[1],
+                                    pkg_type: match[2], // e.g. "PKG" or "CARTONS"
+                                    cbm: '', // Distribute CBM/Weight? Hard to guess.
+                                    weight: ''
+                                });
+                            }
+                        });
+                    }
+                    if (packagesList.length === 0) {
+                        // Default if regex fails but data exists
+                        packagesList.push({ pkg_count: '0', pkg_type: 'PKG', cbm: '', weight: '' });
+                    }
+
+                    // Assign CBM/Weight to the first package as a fallback store
+                    if (packagesList.length > 0) {
+                        if (cbmStr && cbmStr !== '-') packagesList[0].cbm = cbmStr.toString();
+                        if (weightStr && weightStr !== '-') packagesList[0].weight = weightStr.toString();
+                    }
+
+                    // Handle Containers
+                    let containersData = [];
+                    if (containerNumbers && containerNumbers !== '-') {
+                        const cNos = containerNumbers.split(',').map(s => s.trim());
+                        const cTypes = (containerTypes || '').split(',').map(s => s.trim());
+
+                        cNos.forEach((cNo, idx) => {
+                            const cType = cTypes[idx] || 'FCL 20'; // Default
+                            // We put all packages in the FIRST container for simplicity, 
+                            // OR split them? Splitting is impossible without more data.
+                            // Strategy: Put full package list in first container, empty in others.
+                            const cPkgs = (idx === 0) ? packagesList : [];
+
+                            containersData.push({
+                                container_no: cNo,
+                                container_type: cType,
+                                packages: cPkgs
+                            });
+                        });
+                    }
+
+                    // 1. Insert BL
+                    // We store the FULL structure in the BL 'packages' column for safe keeping
+                    // If containers exist, we store them inside the 'packages' column as content (same as `routes/shipments.js` line 573 logic)
+                    const blContent = (containersData.length > 0) ? JSON.stringify(containersData) : JSON.stringify(packagesList);
+
+                    await pool.query(
+                        'INSERT INTO shipment_bls (shipment_id, master_bl, packages) VALUES ($1, $2, $3)',
+                        [id, blNumber.split(',')[0].trim(), blContent] // Take first BL if comma separated
+                    );
+
+                    // 2. Insert Containers (Real Tables)
+                    for (const c of containersData) {
+                        await pool.query(
+                            'INSERT INTO shipment_containers (shipment_id, container_no, container_type, packages) VALUES ($1, $2, $3, $4)',
+                            [id, c.container_no, c.container_type, JSON.stringify(c.packages)]
+                        );
                     }
                 }
 
-                const price = parseFloat(normalizedRow['price'] || normalizedRow['value'] || normalizedRow['amount'] || '0');
-                const origin = normalizedRow['origin'] || exporter;
-                const destination = normalizedRow['destination'] || consignee;
-
-                // New Excel Columns
-                const invoiceNo = normalizedRow['invoice no'] || normalizedRow['invoice_no'] || null;
-                const invoiceItems = normalizedRow['invoice # items'] || normalizedRow['invoice items'] || normalizedRow['items'] || null;
-                const customsRForm = normalizedRow['customs r form'] || normalizedRow['customs_r_form'] || null;
-                const blAwbNo = normalizedRow['bl/awb no'] || normalizedRow['bl awb no'] || normalizedRow['bl_awb_no'] || null;
-                const containerNo = normalizedRow['container no'] || normalizedRow['container_no'] || null;
-                const containerType = normalizedRow['container type'] || normalizedRow['container_type'] || null;
-                const cbm = parseFloat(normalizedRow['cbm'] || '0');
-                const noOfPkg = normalizedRow['no. of pkg'] || normalizedRow['no of pkg'] || normalizedRow['packages'] || null;
-
-                // Expenses
-                const expenseMacl = parseFloat(normalizedRow['macl'] || '0');
-                const expenseMpl = parseFloat(normalizedRow['mpl'] || '0');
-                const expenseMcs = parseFloat(normalizedRow['mcs'] || '0');
-                const expenseTransportation = parseFloat(normalizedRow['transportation'] || '0');
-                const expenseLiner = parseFloat(normalizedRow['liner'] || '0');
-
-                // Insert Shipment (Refactored: Removed structural redundancy - cbm)
-                await pool.query(
-                    `INSERT INTO shipments (
-                                id, customer, status, progress, 
-                                sender_name, receiver_name, weight, price, transport_mode,
-                                invoice_no, invoice_items, customs_r_form, origin,
-                                expense_macl, expense_mpl, expense_mcs, expense_transportation, expense_liner, date
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
-                    [
-                        id, customer, status, progress,
-                        exporter, consignee, weight, price, transport_mode,
-                        invoiceNo, invoiceItems, customsRForm, origin,
-                        expenseMacl, expenseMpl, expenseMcs, expenseTransportation, expenseLiner, dateVal
-                    ]
-                );
-
-                // Insert into normalized tables
-                if (blAwbNo) {
-                    await pool.query(
-                        'INSERT INTO shipment_bls (shipment_id, master_bl) VALUES ($1, $2)',
-                        [id, blAwbNo]
-                    );
-                }
-                if (containerNo) {
-                    await pool.query(
-                        'INSERT INTO shipment_containers (shipment_id, container_no, container_type) VALUES ($1, $2, $3)',
-                        [id, containerNo, containerType]
-                    );
-                }
-
-                // Auto-Generate Invoice record
-                const invoiceId = `INV-${new Date().getFullYear()}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}-${successCount}`;
-
-                // Bulk: Skip PDF generation for performance
-                let invoicePath = null;
-
-                await pool.query(
-                    'INSERT INTO invoices (id, shipment_id, amount, status, file_path) VALUES ($1, $2, $3, $4, $5)',
-                    [invoiceId, id, price, 'Pending', invoicePath]
-                );
-
-                successCount++;
                 importedShipments.push(id);
+                successCount++;
 
             } catch (rowError) {
                 console.error('Error importing row:', row, rowError);
