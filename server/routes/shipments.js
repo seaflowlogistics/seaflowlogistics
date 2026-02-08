@@ -80,7 +80,7 @@ router.get('/export', authenticateToken, async (req, res) => {
                 (SELECT STRING_AGG(container_no, ', ') FROM shipment_containers WHERE shipment_id = s.id) as "Container Number",
                 (SELECT STRING_AGG(container_type, ', ') FROM shipment_containers WHERE shipment_id = s.id) as "Container Type",
 
-                (SELECT CASE WHEN SUM(NULLIF(p->>'cbm','')::numeric) IS NULL THEN '-' ELSE TO_CHAR(SUM(NULLIF(p->>'cbm','')::numeric), 'FM999G999G999D000') END
+                (SELECT CASE WHEN SUM(NULLIF(REPLACE(p->>'cbm', ',', ''), '')::numeric) IS NULL THEN '-' ELSE TO_CHAR(SUM(NULLIF(REPLACE(p->>'cbm', ',', ''), '')::numeric), 'FM999G999G999D000') END
   FROM shipment_bls sb
   CROSS JOIN LATERAL jsonb_array_elements(sb.packages::jsonb) AS c
   CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
@@ -91,8 +91,8 @@ router.get('/export', authenticateToken, async (req, res) => {
 (
   SELECT
     CASE
-      WHEN SUM(NULLIF(p->>'weight','')::numeric) IS NULL THEN '-'
-      ELSE TO_CHAR(SUM(NULLIF(p->>'weight','')::numeric), 'FM999G999G999D00')
+      WHEN SUM(NULLIF(REPLACE(p->>'weight', ',', ''), '')::numeric) IS NULL THEN '-'
+      ELSE TO_CHAR(SUM(NULLIF(REPLACE(p->>'weight', ',', ''), '')::numeric), 'FM999G999G999D00')
     END
   FROM shipment_bls sb
   CROSS JOIN LATERAL jsonb_array_elements(sb.packages::jsonb) AS c
@@ -114,7 +114,7 @@ router.get('/export', authenticateToken, async (req, res) => {
   FROM (
     SELECT
       p->>'pkg_type' AS pkg_type,
-      SUM(NULLIF(p->>'pkg_count','')::numeric) AS total_count
+      SUM(NULLIF(REPLACE(p->>'pkg_count', ',', ''), '')::numeric) AS total_count
     FROM shipment_bls sb
     CROSS JOIN LATERAL jsonb_array_elements(sb.packages::jsonb) AS c
     CROSS JOIN LATERAL jsonb_array_elements(c->'packages') AS p
