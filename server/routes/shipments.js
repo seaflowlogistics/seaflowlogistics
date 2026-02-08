@@ -295,7 +295,7 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                             expense_macl, expense_mpl, expense_mcs, 
                             expense_transportation, expense_liner, 
                             billing_contact, transport_mode, date, created_at
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())`,
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())`,
                         [id, customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status,
                             macl, mpl, mcs, transport, liner,
