@@ -1468,7 +1468,7 @@ const ShipmentRegistry: React.FC = () => {
                                 ) : isAllScheduled ? (
                                     // Clearance Scheduled Button logic
                                     // Restricted for Accountant and Documentation
-                                    hasRole('Administrator') || hasRole('All') || hasRole('Clearance') && (
+                                    (
                                         <button
                                             onClick={() => handleOpenPopup('schedule', selectedJob, selectedJob.clearance_schedule)}
                                             className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
@@ -1479,7 +1479,7 @@ const ShipmentRegistry: React.FC = () => {
                                 ) : isDocComplete ? (
                                     // Schedule Clearance Button logic
                                     // Restricted for Accountant and Documentation
-                                    hasRole('Administrator') || hasRole('All') || hasRole('Clearance') && (
+                                    (
                                         <button
                                             onClick={() => handleOpenPopup('schedule', selectedJob)}
                                             className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
