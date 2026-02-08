@@ -237,6 +237,22 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                 const jobInvoiceNo = normalizedRow['job invoice no'] || normalizedRow['job_invoice_no'];
                 const status = normalizedRow['clearing status'] || normalizedRow['status'] || 'New';
 
+                // Date Parsing
+                let dateVal = new Date();
+                const rawDate = normalizedRow['date'] || normalizedRow['clearance date'] || normalizedRow['eta'];
+                if (rawDate) {
+                    if (typeof rawDate === 'number') {
+                        dateVal = new Date(Math.round((rawDate - 25569) * 86400 * 1000));
+                    } else if (typeof rawDate === 'string') {
+                        if (rawDate.includes('.')) { // DD.MM.YYYY
+                            const parts = rawDate.split('.');
+                            if (parts.length === 3) dateVal = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                        } else {
+                            dateVal = new Date(rawDate);
+                        }
+                    }
+                }
+
                 // Expenses
                 const macl = parseFloat(normalizedRow['macl'] || '0');
                 const mpl = parseFloat(normalizedRow['mpl'] || '0');
@@ -255,11 +271,13 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                             customer = $1, sender_name = $2, invoice_no = $3, invoice_items = $4, 
                             customs_r_form = $5, status = $6,
                             expense_macl = $7, expense_mpl = $8, expense_mcs = $9,
-                            expense_transportation = $10, expense_liner = $11
-                         WHERE id = $12`,
+                            expense_transportation = $10, expense_liner = $11,
+                            date = $12
+                         WHERE id = $13`,
                         [customer, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status,
                             macl, mpl, mcs, transport, liner,
+                            dateVal,
                             id]
                     );
                 } else {
@@ -270,11 +288,11 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                             customs_r_form, status,
                             expense_macl, expense_mpl, expense_mcs, 
                             expense_transportation, expense_liner,
-                            created_at, transport_mode
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), $13)`,
+                            created_at, transport_mode, date
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), $13, $14)`,
                         [id, customer, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status,
-                            macl, mpl, mcs, transport, liner, transportMode]
+                            macl, mpl, mcs, transport, liner, transportMode, dateVal]
                     );
                 }
 
