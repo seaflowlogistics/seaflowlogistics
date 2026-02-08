@@ -230,8 +230,8 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                 }
 
                 // --- 2. Map Basic Fields ---
-                const customer = normalizedRow['customer'] || normalizedRow['client'] || 'Unknown';
-                const consignee = normalizedRow['consignee'] || normalizedRow['receiver'] || 'Unknown';
+                const customer = normalizedRow['customer'] || normalizedRow['customer'] || 'Unknown';
+                const consignee = normalizedRow['consignee'] || normalizedRow['receiver_name'] || 'Unknown';
                 const exporter = normalizedRow['exporter'] || normalizedRow['sender_name'] || 'Unknown';
                 const shipmentInvoiceNo = normalizedRow['shipment invoice no'] || normalizedRow['invoice_no'];
                 const invoiceItems = normalizedRow['invoice items'] || normalizedRow['invoice_items'];
