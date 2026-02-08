@@ -253,12 +253,12 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     await pool.query(
                         `UPDATE shipments SET 
                             customer = $1, sender_name = $2, invoice_no = $3, invoice_items = $4, 
-                            customs_r_form = $5, job_invoice_no = $6, status = $7,
-                            expense_macl = $8, expense_mpl = $9, expense_mcs = $10,
-                            expense_transportation = $11, expense_liner = $12
-                         WHERE id = $13`,
+                            customs_r_form = $5, status = $6,
+                            expense_macl = $7, expense_mpl = $8, expense_mcs = $9,
+                            expense_transportation = $10, expense_liner = $11
+                         WHERE id = $12`,
                         [customer, exporter, shipmentInvoiceNo, invoiceItems,
-                            customsRForm, jobInvoiceNo, status,
+                            customsRForm, status,
                             macl, mpl, mcs, transport, liner,
                             id]
                     );
@@ -267,13 +267,13 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     await pool.query(
                         `INSERT INTO shipments (
                             id, customer, sender_name, invoice_no, invoice_items, 
-                            customs_r_form, job_invoice_no, status,
+                            customs_r_form, status,
                             expense_macl, expense_mpl, expense_mcs, 
                             expense_transportation, expense_liner,
                             created_at, transport_mode
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), $14)`,
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), $13)`,
                         [id, customer, exporter, shipmentInvoiceNo, invoiceItems,
-                            customsRForm, jobInvoiceNo, status,
+                            customsRForm, status,
                             macl, mpl, mcs, transport, liner, transportMode]
                     );
                 }
