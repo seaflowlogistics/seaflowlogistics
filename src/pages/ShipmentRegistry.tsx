@@ -1078,50 +1078,7 @@ const ShipmentRegistry: React.FC = () => {
             <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-gray-400" />
                 Documents
-                {canEdit && (
-                    <button
-                        onClick={async () => {
-                            if (window.confirm(selectedJob.no_documents ? 'Mark documents as required?' : 'Mark as "No Documents Needed"?')) {
-                                try {
-                                    await shipmentsAPI.update(selectedJob.id, { no_documents: !selectedJob.no_documents });
-                                    const res = await shipmentsAPI.getById(selectedJob.id);
-                                    setSelectedJob(res.data);
-                                    setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
-                                } catch (e) {
-                                    console.error(e);
-                                    alert('Failed to update status');
-                                }
-                            }
-                        }}
-                        className={`ml-auto text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors flex items-center gap-2 ${selectedJob.no_documents
-                            ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-                            }`}
-                    >
-                        {selectedJob.no_documents ? (
-                            <>
-                                <Check className="w-3 h-3" /> No Documents
-                            </>
-                        ) : (
-                            <>
-                                <X className="w-3 h-3" /> No Documents
-                            </>
-                        )}
-                    </button>
-                )}
             </h3>
-
-            {selectedJob.no_documents && (
-                <div className="mb-6 p-4 bg-amber-50 border border-amber-100 rounded-lg text-amber-800 text-sm flex items-center gap-3">
-                    <div className="p-2 bg-amber-100 rounded-full">
-                        <Check className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <div>
-                        <p className="font-bold">Documents Skipped</p>
-                        <p className="text-amber-700/80 text-xs mt-0.5">This job is marked as not requiring documents for clearance processing.</p>
-                    </div>
-                </div>
-            )}
 
             <div className="overflow-x-auto mb-8">
                 <table className="w-full text-sm text-left">
@@ -1273,8 +1230,8 @@ const ShipmentRegistry: React.FC = () => {
         const isDeliveryNoteIssued = deliveryNotes.length > 0;
 
         // Stage 1: Documentation (25%)
-        // Rule: Documents uploaded OR No Documents Needed, AND details filled (Invoice, BL/AWB, Containers if Sea)
-        const hasDocuments = (selectedJob.documents && selectedJob.documents.length > 0) || selectedJob.no_documents;
+        // Rule: Documents uploaded AND details filled (Invoice, BL/AWB, Containers if Sea)
+        const hasDocuments = selectedJob.documents && selectedJob.documents.length > 0;
         const hasInvoiceDetails = !!(selectedJob.invoice_no && selectedJob.invoice_items);
         const hasBLDetails = selectedJob.bls && selectedJob.bls.length > 0;
         const hasContainerDetails = !isSea || (selectedJob.containers && selectedJob.containers.length > 0);
