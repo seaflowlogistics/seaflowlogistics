@@ -22,7 +22,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // Create single exporter
 router.post('/', authenticateToken, async (req, res) => {
-    const { name, email, phone, address, country } = req.body;
+    const { name, country } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -30,8 +30,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'INSERT INTO exporters (name, email, phone, address, country) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [name, email, phone, address, country]
+            'INSERT INTO exporters (name, country) VALUES ($1, $2) RETURNING *',
+            [name, country]
         );
 
         await logActivity(req.user.id, 'CREATE_EXPORTER', `Created exporter: ${name}`, 'EXPORTER', result.rows[0].id);
@@ -46,7 +46,7 @@ router.post('/', authenticateToken, async (req, res) => {
 // Update exporter
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { name, email, phone, address, country } = req.body;
+    const { name, country } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -54,8 +54,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'UPDATE exporters SET name = $1, email = $2, phone = $3, address = $4, country = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
-            [name, email, phone, address, country, id]
+            'UPDATE exporters SET name = $1, country = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *',
+            [name, country, id]
         );
 
         if (result.rows.length === 0) {
@@ -116,18 +116,6 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             const name = normalizedRow['exporter name'] || normalizedRow['name'] || normalizedRow['exporter'] || normalizedRow['company'] || normalizedRow['exporter name company'] ||
                 noSpaceRow['exportername'] || noSpaceRow['name'] || noSpaceRow['exporter'] || noSpaceRow['company'];
 
-            // Phone
-            const phone = normalizedRow['contact no'] || normalizedRow['contact number'] || normalizedRow['phone'] || normalizedRow['mobile'] ||
-                noSpaceRow['contactno'] || noSpaceRow['contactnumber'] || noSpaceRow['phone'] || noSpaceRow['mobile'];
-
-            // Email
-            const email = normalizedRow['mail'] || normalizedRow['email'] || normalizedRow['e-mail'] ||
-                noSpaceRow['mail'] || noSpaceRow['email'];
-
-            // Address
-            const address = normalizedRow['address'] || normalizedRow['location'] ||
-                noSpaceRow['address'] || noSpaceRow['location'];
-
             // Country
             const country = normalizedRow['country'] || noSpaceRow['country'];
 
@@ -142,12 +130,9 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
                 }
 
                 await pool.query(
-                    'INSERT INTO exporters (name, email, phone, address, country) VALUES ($1, $2, $3, $4, $5)',
+                    'INSERT INTO exporters (name, country) VALUES ($1, $2)',
                     [
                         name,
-                        email || null,
-                        phone ? String(phone) : null,
-                        address || null,
                         country || null
                     ]
                 );
