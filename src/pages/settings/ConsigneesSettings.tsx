@@ -17,6 +17,7 @@ const ConsigneesSettings: React.FC = () => {
         type: 'Individual',
         passport_id: '',
         company_reg_no: '',
+        c_number: '',
         email: '',
         address: '',
         phone: '',
@@ -46,6 +47,7 @@ const ConsigneesSettings: React.FC = () => {
             type: 'Individual',
             passport_id: '',
             company_reg_no: '',
+            c_number: '',
             email: '',
             address: '',
             phone: '',
@@ -80,6 +82,7 @@ const ConsigneesSettings: React.FC = () => {
             type: type,
             passport_id: consignee.passport_id || '',
             company_reg_no: consignee.company_reg_no || '',
+            c_number: consignee.c_number || '',
             email: consignee.email || '',
             address: consignee.address || '',
             phone: consignee.phone || '',
@@ -244,14 +247,15 @@ const ConsigneesSettings: React.FC = () => {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-black text-white text-xs uppercase tracking-wider">
-                                    <th className="py-3 px-4 font-semibold w-1/3">
-                                        {viewType === 'Individual' ? 'Name' : 'Company Name'}
+                                    <th className="py-3 px-4 font-semibold w-1/4">
+                                        {viewType === 'Individual' ? 'Name' : 'Name'}
                                     </th>
                                     <th className="py-3 px-4 font-semibold">
-                                        {viewType === 'Individual' ? 'ID / Passport' : 'Reg No'}
+                                        {viewType === 'Individual' ? 'ID Number' : 'Company Registration Number'}
                                     </th>
-                                    {viewType === 'Company' && <th className="py-3 px-4 font-semibold">GST Tin</th>}
-                                    <th className="py-3 px-4 font-semibold">Phone</th>
+                                    {viewType === 'Company' && <th className="py-3 px-4 font-semibold">C Number</th>}
+                                    <th className="py-3 px-4 font-semibold">Phone Number</th>
+                                    <th className="py-3 px-4 font-semibold">Email Address</th>
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -262,8 +266,9 @@ const ConsigneesSettings: React.FC = () => {
                                         <td className="py-3 px-4 text-gray-600 font-mono text-xs">
                                             {viewType === 'Individual' ? (item.passport_id || '-') : (item.company_reg_no || '-')}
                                         </td>
-                                        {viewType === 'Company' && <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.gst_tin || '-'}</td>}
+                                        {viewType === 'Company' && <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.c_number || '-'}</td>}
                                         <td className="py-3 px-4 text-gray-600 font-mono">{item.phone || '-'}</td>
+                                        <td className="py-3 px-4 text-gray-600 font-mono">{item.email || '-'}</td>
                                         <td className="py-3 px-4 text-right flex justify-end gap-2">
                                             <button
                                                 onClick={() => handleEdit(item)}
@@ -343,6 +348,19 @@ const ConsigneesSettings: React.FC = () => {
                                     onChange={e => formData.type === 'Individual' ? setFormData({ ...formData, passport_id: e.target.value }) : setFormData({ ...formData, company_reg_no: e.target.value })}
                                 />
                             </div>
+
+                            {/* C Number (Company Only) */}
+                            {formData.type === 'Company' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer C Number</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                        value={formData.c_number}
+                                        onChange={e => setFormData({ ...formData, c_number: e.target.value })}
+                                    />
+                                </div>
+                            )}
 
                             {/* GST (Company Only) */}
                             {formData.type === 'Company' && (
