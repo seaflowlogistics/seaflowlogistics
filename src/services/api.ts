@@ -107,6 +107,10 @@ export const vesselsAPI = {
     create: (data: any) => api.post('/vessels', data),
     update: (id: string, data: any) => api.put(`/vessels/${id}`, data),
     delete: (id: string) => api.delete(`/vessels/${id}`),
+    deleteAll: () => api.delete('/vessels/delete-all'),
+    import: (formData: FormData) => api.post('/vessels/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 // Analytics API

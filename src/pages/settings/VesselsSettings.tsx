@@ -7,6 +7,38 @@ const VesselsSettings: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [importing, setImporting] = useState(false);
+
+    // ... (rest of state)
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            setImporting(true);
+            const res = await vesselsAPI.import(formData);
+            alert(res.data.message || 'Import successful');
+            if (res.data.errors) {
+                console.warn('Import warnings:', res.data.errors);
+                alert(`Import completed with errors:\n${res.data.errors.join('\n')}`);
+            }
+            fetchVessels();
+        } catch (error: any) {
+            console.error('Import failed', error);
+            alert('Import failed: ' + (error.response?.data?.error || error.message));
+        } finally {
+            setImporting(false);
+            // Reset input
+            e.target.value = '';
+        }
+    };
+
+
+
     const [editingId, setEditingId] = useState<string | null>(null);
 
     // Form State
@@ -106,6 +138,30 @@ const VesselsSettings: React.FC = () => {
                     />
                 </div>
                 <div className="flex gap-3">
+                    <label className={`px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm cursor-pointer ${importing ? 'opacity-50 cursor-wait' : ''}`}>
+                        {/* TODO: Add FileUp icon */}
+                        <span className="w-4 h-4 font-bold flex items-center justify-center">↑</span>
+                        {importing ? 'Importing...' : 'Import Excel'}
+                        <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} disabled={importing} />
+                    </label>
+                    <button
+                        onClick={async () => {
+                            if (window.confirm('Are you sure you want to DELETE ALL vessels? This action cannot be undone.')) {
+                                try {
+                                    await vesselsAPI.deleteAll();
+                                    fetchVessels();
+                                    alert('All vessels deleted successfully');
+                                } catch (error) {
+                                    console.error('Failed to delete all', error);
+                                    alert('Failed to delete all vessels');
+                                }
+                            }
+                        }}
+                        className="px-4 py-2 bg-red-50 text-red-600 font-semibold rounded-lg shadow-sm hover:bg-red-100 transition-colors flex items-center gap-2 text-sm"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        Delete All
+                    </button>
                     <button
                         onClick={() => {
                             setEditingId(null);

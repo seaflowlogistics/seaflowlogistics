@@ -2,6 +2,9 @@ import express from 'express';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { logActivity } from '../utils/logger.js';
+import upload from '../utils/upload.js';
+import XLSX from 'xlsx';
+import fs from 'fs';
 
 const router = express.Router();
 
@@ -76,6 +79,94 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Error deleting vessel:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete all vessels
+router.delete('/delete-all', authenticateToken, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM vessels');
+        await logActivity(req.user.id, 'DELETE_ALL_VESSELS', 'Deleted all vessels', 'VESSEL', 'ALL');
+        res.json({ message: 'All vessels deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting all vessels:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Import from Excel/CSV
+router.post('/import', authenticateToken, upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    try {
+        const workbook = XLSX.readFile(req.file.path);
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet);
+
+        if (data.length === 0) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ error: 'File appears to be empty or contains no data rows.' });
+        }
+
+        let successCount = 0;
+        let errors = [];
+
+        for (const row of data) {
+            const normalizedRow = {};
+
+            Object.keys(row).forEach(key => {
+                const cleanKey = key.toLowerCase().trim()
+                    .replace(/[_\/]/g, ' ')
+                    .replace(/[^a-z0-9 ]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                normalizedRow[cleanKey] = row[key];
+            });
+
+            // Name
+            const name = normalizedRow['name'] || normalizedRow['vessel name'] || normalizedRow['vessel'];
+
+            // Registry No
+            const registry_number = normalizedRow['registry no'] || normalizedRow['registry number'] || normalizedRow['reg no'];
+
+            // Type
+            const type = normalizedRow['type'] || 'Dhoni';
+
+            // Owner No
+            const owner_number = normalizedRow['owner no'] || normalizedRow['owner number'] || normalizedRow['owner contact'] || normalizedRow['owner phone'];
+
+            // Captain No
+            const captain_number = normalizedRow['captain no'] || normalizedRow['captain number'] || normalizedRow['captain contact'] || normalizedRow['captain phone'];
+
+            if (!name) continue;
+
+            try {
+                await pool.query(
+                    'INSERT INTO vessels (name, registry_number, type, owner_number, captain_number) VALUES ($1, $2, $3, $4, $5)',
+                    [name, registry_number || null, type, owner_number || null, captain_number || null]
+                );
+                successCount++;
+            } catch (err) {
+                errors.push(`Failed to import ${name}: ${err.message}`);
+            }
+        }
+
+        fs.unlinkSync(req.file.path);
+
+        await logActivity(req.user.id, 'IMPORT_VESSELS', `Imported ${successCount} vessels`, 'VESSEL', 'BATCH');
+
+        res.json({
+            message: `Imported ${successCount} vessels`,
+            errors: errors.length > 0 ? errors : undefined
+        });
+
+    } catch (error) {
+        console.error('Import error:', error);
+        res.status(500).json({ error: 'Failed to process file: ' + error.message });
     }
 });
 
