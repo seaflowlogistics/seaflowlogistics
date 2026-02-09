@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import shipmentRoutes from './routes/shipments.js';
 import fleetRoutes from './routes/fleet.js';
+import vesselsRoutes from './routes/vessels.js';
 import analyticsRoutes from './routes/analytics.js';
 import usersRoutes from './routes/users.js';
 import logsRoutes from './routes/logs.js';
@@ -67,6 +68,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/shipments', shipmentRoutes);
 app.use('/api/fleet', fleetRoutes);
+app.use('/api/vessels', vesselsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/logs', logsRoutes);

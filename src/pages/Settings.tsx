@@ -8,7 +8,7 @@ import {
 import ConsigneesSettings from './settings/ConsigneesSettings';
 import CustomersSettings from './settings/CustomersSettings';
 import ExportersSettings from './settings/ExportersSettings';
-import VehiclesSettings from './settings/VehiclesSettings';
+import VesselsSettings from './settings/VesselsSettings';
 import DeliveryAgentsSettings from './settings/DeliveryAgentsSettings';
 import VendorsSettings from './settings/VendorsSettings';
 import PaymentItemsSettings from './settings/PaymentItemsSettings';
@@ -20,7 +20,7 @@ const Settings: React.FC = () => {
         { id: 'Consignees', label: 'Consignees', icon: Users },
         { id: 'Customers', label: 'Customers', icon: Users },
         { id: 'Exporters', label: 'Exporters', icon: Briefcase },
-        { id: 'Vehicles', label: 'Vehicles', icon: Briefcase },
+        { id: 'Vessels', label: 'Vessels', icon: Briefcase },
         { id: 'Delivery Agents', label: 'Delivery Agents', icon: Users },
         { id: 'Vendors', label: 'Vendors', icon: Briefcase },
         { id: 'Payment Items', label: 'Payment Items', icon: CreditCard },
@@ -34,8 +34,8 @@ const Settings: React.FC = () => {
                 return <CustomersSettings />;
             case 'Exporters':
                 return <ExportersSettings />;
-            case 'Vehicles':
-                return <VehiclesSettings />;
+            case 'Vessels':
+                return <VesselsSettings />;
             case 'Delivery Agents':
                 return <DeliveryAgentsSettings />;
             case 'Vendors':

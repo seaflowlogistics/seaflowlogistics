@@ -101,6 +101,14 @@ export const fleetAPI = {
     getStats: () => api.get('/fleet/stats/summary'),
 };
 
+// Vessels API
+export const vesselsAPI = {
+    getAll: () => api.get('/vessels'),
+    create: (data: any) => api.post('/vessels', data),
+    update: (id: string, data: any) => api.put(`/vessels/${id}`, data),
+    delete: (id: string) => api.delete(`/vessels/${id}`),
+};
+
 // Analytics API
 export const analyticsAPI = {
     getDashboard: () => api.get('/analytics/dashboard'),
