@@ -1100,11 +1100,11 @@ const ShipmentRegistry: React.FC = () => {
                     >
                         {selectedJob.no_documents ? (
                             <>
-                                <Check className="w-3 h-3" /> No Documents Needed
+                                <Check className="w-3 h-3" /> No Documents
                             </>
                         ) : (
                             <>
-                                <X className="w-3 h-3" /> No Documents Needed
+                                <X className="w-3 h-3" /> No Documents
                             </>
                         )}
                     </button>
