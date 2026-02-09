@@ -189,11 +189,9 @@ const ExportersSettings: React.FC = () => {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-black text-white text-xs uppercase tracking-wider">
-                                    <th className="py-3 px-4 font-semibold w-1/4">Name</th>
+                                    <th className="py-3 px-4 font-semibold">Name</th>
                                     <th className="py-3 px-4 font-semibold">Country</th>
-                                    <th className="py-3 px-4 font-semibold">Email</th>
-                                    <th className="py-3 px-4 font-semibold">Phone</th>
-                                    <th className="py-3 px-4 font-semibold w-1/4">Address</th>
+
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -202,9 +200,7 @@ const ExportersSettings: React.FC = () => {
                                     <tr key={item.id} className="hover:bg-gray-50 transition-colors group text-sm">
                                         <td className="py-3 px-4 font-semibold text-gray-900">{item.name}</td>
                                         <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.country || '-'}</td>
-                                        <td className="py-3 px-4 text-gray-600">{item.email || '-'}</td>
-                                        <td className="py-3 px-4 text-gray-600 font-mono">{item.phone || '-'}</td>
-                                        <td className="py-3 px-4 text-gray-600 text-xs truncate max-w-xs" title={item.address}>{item.address || '-'}</td>
+
                                         <td className="py-3 px-4 text-right flex justify-end gap-2">
                                             <button
                                                 onClick={() => handleEdit(item)}
@@ -225,9 +221,9 @@ const ExportersSettings: React.FC = () => {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
+                    </div >
                 )}
-            </div>
+            </div >
 
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -310,7 +306,7 @@ const ExportersSettings: React.FC = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </div >
     );
 };
 
