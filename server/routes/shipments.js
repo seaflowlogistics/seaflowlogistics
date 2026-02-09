@@ -911,7 +911,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
             vessel,
             office, cargo_type, unloaded_date,
             shipment_type, billing_contact, service,
-            job_invoice_no
+            job_invoice_no,
+            no_documents
         } = req.body;
 
 
@@ -959,7 +960,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
                  billing_contact = COALESCE($25, billing_contact),
                  service = COALESCE($26, service),
                  unloaded_date = COALESCE($27, unloaded_date),
-                 
+                 no_documents = COALESCE($28, no_documents),
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = $15
              RETURNING *`,
@@ -971,7 +972,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
                 id,
                 invoice_no ?? null, invoice_items ?? null, customs_r_form ?? null,
                 expense_macl ?? null, expense_mpl ?? null, expense_mcs ?? null, expense_transportation ?? null, expense_liner ?? null,
-                shipment_type ?? null, billing_contact ?? null, service ?? null, unloaded_date ?? null
+                shipment_type ?? null, billing_contact ?? null, service ?? null, unloaded_date ?? null,
+                no_documents ?? null
             ]
         );
 
