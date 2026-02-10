@@ -404,6 +404,15 @@ const ShipmentRegistry: React.FC = () => {
         try {
             await paymentsAPI.updateStatus(paymentId, 'Confirmed');
             alert("Payment Confirmed.");
+
+            // Also update job status back to 'Payment' so it vanishes from Clearance inbox and goes to Accountant
+            // Only if current status is 'Payment Pending Confirmation'
+            if (selectedJob.status === 'Payment Pending Confirmation') {
+                await shipmentsAPI.update(selectedJob.id, { status: 'Payment' });
+                // Update local state
+                setSelectedJob(prev => ({ ...prev, status: 'Payment' }));
+            }
+
             loadPayments(selectedJob.id);
         } catch (e) {
             console.error(e);
@@ -2102,7 +2111,7 @@ const ShipmentRegistry: React.FC = () => {
         return (
             <div className="p-8 font-sans">
                 {/* Clearance Confirmation Alerts */}
-                {(hasRole('Clearance') || hasRole('Administrator')) && jobPayments.filter((p: any) => p.status === 'Awaiting Clearance').map((p: any) => (
+                {(hasRole('Clearance') || hasRole('Administrator')) && jobPayments.filter((p: any) => p.status === 'Confirm with clearance' || p.status === 'Awaiting Clearance').map((p: any) => (
                     <div key={p.id} className="bg-orange-50 border-l-4 border-orange-500 p-4 mb-6 rounded-r shadow-sm flex justify-between items-center animate-pulse">
                         <div>
                             <h4 className="font-bold text-orange-900 flex items-center gap-2">
@@ -2110,8 +2119,7 @@ const ShipmentRegistry: React.FC = () => {
                                 Payment Confirmation Required
                             </h4>
                             <p className="text-sm text-orange-800 mt-1">
-                                Accountant has requested confirmation for <strong>{p.payment_type}</strong> (Amount: {p.amount > 0 ? p.amount : 'No Payment'}).
-                                <br />Please confirm if this is correct.
+                                Please confirm if this <strong>{p.payment_type}</strong> (Amount: {p.amount > 0 ? p.amount : 'No Payment'}) is correct.
                             </p>
                         </div>
                         <div className="flex gap-3">
@@ -2119,17 +2127,46 @@ const ShipmentRegistry: React.FC = () => {
                                 onClick={() => handleClearanceConfirmation(p.id, true)}
                                 className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded shadow-sm hover:shadow text-sm transition-all"
                             >
-                                YES, Confirm
-                            </button>
-                            <button
-                                onClick={() => handleClearanceConfirmation(p.id, false)}
-                                className="px-6 py-2 bg-white border border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-gray-700 font-bold rounded shadow-sm text-sm transition-all"
-                            >
-                                NO
+                                Confirm Correct
                             </button>
                         </div>
                     </div>
                 ))}
+
+                {/* Accountant Request Confirmation Action */}
+                {(hasRole('Accountant') || hasRole('Administrator')) && jobPayments.filter((p: any) => p.status === 'Confirm with clearance' && selectedJob.status !== 'Payment Pending Confirmation').map((p: any) => (
+                    <div key={p.id} className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r shadow-sm flex justify-between items-center">
+                        <div>
+                            <h4 className="font-bold text-blue-900 flex items-center gap-2">
+                                <Lock className="w-5 h-5" />
+                                No Payment Request
+                            </h4>
+                            <p className="text-sm text-blue-800 mt-1">
+                                Clearance user requested "No Payment". You can process this or request re-confirmation.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm("Send this back to Clearance for confirmation?")) {
+                                        try {
+                                            await shipmentsAPI.update(selectedJob.id, { status: 'Payment Pending Confirmation' });
+                                            alert("Sent to Clearance for Confirmation");
+                                            // Refresh
+                                            const res = await shipmentsAPI.getById(selectedJob.id);
+                                            setSelectedJob(res.data);
+                                            setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
+                                        } catch (e) { console.error(e); alert("Failed to update status"); }
+                                    }
+                                }}
+                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded shadow-sm hover:shadow text-sm transition-all"
+                            >
+                                Request Confirmation
+                            </button>
+                        </div>
+                    </div>
+                ))}
+
 
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-gray-900">Payments</h3>
