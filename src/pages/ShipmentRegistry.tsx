@@ -2593,9 +2593,11 @@ const ShipmentRegistry: React.FC = () => {
                                 Upload Document
                             </button>
                         ) : (
-                            <button onClick={handlePopupSave} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm">
-                                Save Details
-                            </button>
+                            (hasRole('Administrator') || hasRole('All') || hasRole('Clearance')) && (
+                                <button onClick={handlePopupSave} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm">
+                                    Save Details
+                                </button>
+                            )
                         )}
                     </div>
                 </div>
