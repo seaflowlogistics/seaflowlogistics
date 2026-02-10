@@ -1282,9 +1282,12 @@ const ShipmentRegistry: React.FC = () => {
         // Rule: Manually marked as Completed
         const isJobCompleted = selectedJob.status === 'Completed';
 
+        const isSentToAccounts = selectedJob.status === 'Accounts Pending';
+
         let activeStage = 0;
         if (isDocComplete) activeStage = 1;
         if (isClearanceComplete) activeStage = 2;
+        if (isSentToAccounts) activeStage = 3;
         if (isAccountsComplete) activeStage = 3;
         if (isJobCompleted) activeStage = 4;
 
@@ -1300,6 +1303,22 @@ const ShipmentRegistry: React.FC = () => {
                 setSelectedJob(res.data);
                 setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
                 alert("Job Sent to Clearance Successfully");
+            } catch (e) {
+                console.error(e);
+                alert('Failed to update status');
+            }
+        };
+
+        const handleSendToAccounts = async () => {
+            if (!window.confirm("Are you sure you want to send this job to Accounts?")) return;
+            try {
+                await shipmentsAPI.update(selectedJob.id, {
+                    status: 'Accounts Pending'
+                });
+                const res = await shipmentsAPI.getById(selectedJob.id);
+                setSelectedJob(res.data);
+                setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
+                alert("Job Sent to Accounts Successfully");
             } catch (e) {
                 console.error(e);
                 alert('Failed to update status');
@@ -1504,10 +1523,19 @@ const ShipmentRegistry: React.FC = () => {
                                         <span className="px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-lg flex items-center gap-2 cursor-default shadow-lg shadow-amber-200">
                                             <Lock className="w-4 h-4" /> Approval Pending
                                         </span>
+                                    ) : !isSentToAccounts ? (
+                                        (hasRole('Clearance') || hasRole('Administrator') || hasRole('All')) && (
+                                            <button
+                                                onClick={handleSendToAccounts}
+                                                className="px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                                            >
+                                                <Send className="w-4 h-4" /> Send to Accounts
+                                            </button>
+                                        )
                                     ) : (
                                         // Go to Payments Button logic
                                         // Restricted for Accountant and Documentation
-                                        (hasRole('Administrator') || hasRole('All') || hasRole('Clearance')) && (
+                                        (hasRole('Administrator') || hasRole('All') || hasRole('Clearance') || hasRole('Accountant')) && (
                                             <button
                                                 onClick={() => setActiveTab('Payments')}
                                                 className="px-5 py-2.5 bg-black text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-gray-200"
