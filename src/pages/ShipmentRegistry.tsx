@@ -1631,7 +1631,7 @@ const ShipmentRegistry: React.FC = () => {
                             ) : (
                                 <>
                                     <div className="absolute top-6 right-6">
-                                        {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
+                                        {canEdit && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'jobDetails' ? null : 'jobDetails'); }}
                                                 className="text-slate-400 hover:text-white transition-colors"
@@ -1642,7 +1642,7 @@ const ShipmentRegistry: React.FC = () => {
                                         )}
                                         {openMenu === 'jobDetails' && (
                                             <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                                {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
+                                                {canEdit && (
                                                     <button
                                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
                                                         onClick={handleEditJobDetails}
@@ -1691,7 +1691,7 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-200 relative">
                             <div className="absolute top-6 right-6 flex gap-2">
                                 <div className="relative">
-                                    {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
+                                    {canEdit && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'invoice' ? null : 'invoice'); }}
                                             className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
@@ -1702,7 +1702,7 @@ const ShipmentRegistry: React.FC = () => {
                                     )}
                                     {openMenu === 'invoice' && (
                                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                            {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
+                                            {canEdit && (
                                                 <button
                                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
                                                     onClick={() => { handleOpenPopup('invoice', selectedJob); setOpenMenu(null); }}
@@ -1741,7 +1741,7 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-200 relative">
                             <div className="absolute top-6 right-6 flex gap-2">
                                 <div className="relative">
-                                    {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
+                                    {canEdit && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'bl' ? null : 'bl'); }}
                                             className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
@@ -1752,7 +1752,7 @@ const ShipmentRegistry: React.FC = () => {
                                     )}
                                     {openMenu === 'bl' && (
                                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                            {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
+                                            {canEdit && (
                                                 <>
                                                     <button
                                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
@@ -1886,7 +1886,7 @@ const ShipmentRegistry: React.FC = () => {
                                     <Package className="w-5 h-5 text-orange-600" />
                                     Containers
                                 </h3>
-                                {user?.role !== 'Accountant' && user?.role !== 'Clearance' && (
+                                {canEdit && (
                                     <button
                                         onClick={() => setAddingContainer(true)}
                                         className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-bold flex items-center gap-2"
