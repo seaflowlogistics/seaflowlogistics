@@ -1506,13 +1506,14 @@ const ShipmentRegistry: React.FC = () => {
                                         )
                                     ) : (
                                         // Schedule Clearance Button logic
-                                        // Restricted for Accountant and Documentation
-                                        <button
-                                            onClick={() => handleOpenPopup('schedule', selectedJob)}
-                                            className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                                        >
-                                            <Calendar className="w-4 h-4" /> Schedule Clearance
-                                        </button>
+                                        (hasRole('Clearance') || hasRole('Administrator') || hasRole('All')) && (
+                                            <button
+                                                onClick={() => handleOpenPopup('schedule', selectedJob)}
+                                                className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                            >
+                                                <Calendar className="w-4 h-4" /> Schedule Clearance
+                                            </button>
+                                        )
                                     )
                                 ) : hasRole('Documentation') ? (
                                     null
