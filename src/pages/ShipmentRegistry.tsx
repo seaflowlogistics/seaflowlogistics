@@ -53,7 +53,7 @@ interface JobFormData {
 const ShipmentRegistry: React.FC = () => {
     // State
     const { user, hasRole } = useAuth();
-    const canEdit = hasRole('Administrator') || hasRole('Clearance') || hasRole('Documentation');
+    const canEdit = hasRole('Administrator') || hasRole('Documentation');
     const location = useLocation();
     // const navigate = useNavigate(); // Unused for now
     const [jobs, setJobs] = useState<any[]>([]);
@@ -1989,24 +1989,26 @@ const ShipmentRegistry: React.FC = () => {
                                                         <td className="py-3 px-4 text-gray-600">{c.unloaded_date ? new Date(c.unloaded_date).toLocaleDateString() : '-'}</td>
                                                         <td className="py-3 px-4 text-right">
                                                             <div className="flex justify-end gap-2">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setPopupJob(selectedJob);
-                                                                        setPopupData({
-                                                                            container_no: c.container_no,
-                                                                            container_type: c.container_type,
-                                                                            container_details: `${c.container_type} - ${c.container_no}`,
-                                                                            // Fallback to job details if needed, but container specific is key
-                                                                            packages: selectedJob.packages ? selectedJob.packages.map((p: any) => `${p.count} ${p.type}`).join(', ') : (selectedJob.invoice_items || ''),
-                                                                            transport_mode: selectedJob.transport_mode
-                                                                        });
-                                                                        setPopupType('schedule');
-                                                                    }}
-                                                                    className="text-gray-400 hover:text-orange-600 p-1.5 rounded hover:bg-orange-50"
-                                                                    title="Schedule Clearance"
-                                                                >
-                                                                    <Calendar className="w-4 h-4" />
-                                                                </button>
+                                                                {(hasRole('Clearance') || hasRole('Administrator') || hasRole('All')) && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setPopupJob(selectedJob);
+                                                                            setPopupData({
+                                                                                container_no: c.container_no,
+                                                                                container_type: c.container_type,
+                                                                                container_details: `${c.container_type} - ${c.container_no}`,
+                                                                                // Fallback to job details if needed, but container specific is key
+                                                                                packages: selectedJob.packages ? selectedJob.packages.map((p: any) => `${p.count} ${p.type}`).join(', ') : (selectedJob.invoice_items || ''),
+                                                                                transport_mode: selectedJob.transport_mode
+                                                                            });
+                                                                            setPopupType('schedule');
+                                                                        }}
+                                                                        className="text-gray-400 hover:text-orange-600 p-1.5 rounded hover:bg-orange-50"
+                                                                        title="Schedule Clearance"
+                                                                    >
+                                                                        <Calendar className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
                                                                 <button
                                                                     onClick={() => {
                                                                         setEditingContainerId(c.id);
