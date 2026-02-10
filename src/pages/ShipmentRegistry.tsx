@@ -1495,7 +1495,7 @@ const ShipmentRegistry: React.FC = () => {
                                         </button>
                                     )
                                 ) : isDocComplete ? (
-                                    selectedJob.status !== 'Pending Clearance' ? (
+                                    selectedJob.status !== 'Pending Clearance' && selectedJob.status !== 'Clearance Scheduled' ? (
                                         (hasRole('Documentation') || hasRole('Administrator') || hasRole('All')) && (
                                             <button
                                                 onClick={handleSendToClearance}

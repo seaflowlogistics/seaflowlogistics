@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { Search, Calendar, ChevronDown, Pencil, Trash2 } from 'lucide-react';
-import { clearanceAPI, deliveryNotesAPI } from '../services/api';
+import { Search, Calendar, ChevronDown, Pencil, Trash2, Clock } from 'lucide-react';
+import { clearanceAPI, deliveryNotesAPI, shipmentsAPI } from '../services/api';
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 import ClearanceDetailsDrawer from '../components/ClearanceDetailsDrawer';
 import DeliveryNoteDrawer from '../components/DeliveryNoteDrawer';
@@ -24,6 +24,10 @@ const ClearanceSchedule: React.FC = () => {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isDeliveryDrawerOpen, setIsDeliveryDrawerOpen] = useState(false);
 
+    // Pending Jobs State
+    const [pendingJobs, setPendingJobs] = useState<any[]>([]);
+    const [creatingScheduleForJob, setCreatingScheduleForJob] = useState<any>(null);
+
     useEffect(() => {
         const fetchSchedules = async () => {
             setLoading(true);
@@ -35,6 +39,10 @@ const ClearanceSchedule: React.FC = () => {
                     date: date
                 });
                 setSchedules(response.data);
+
+                // Fetch Pending Jobs
+                const pendingRes = await shipmentsAPI.getAll({ status: 'Pending Clearance' });
+                setPendingJobs(pendingRes.data);
             } catch (error) {
                 console.error("Failed to fetch clearance schedules", error);
             } finally {
@@ -49,6 +57,11 @@ const ClearanceSchedule: React.FC = () => {
         return () => clearTimeout(timeoutId);
     }, [searchTerm, clearanceType, transportMode, date]);
 
+    const handleScheduleJob = (job: any) => {
+        setCreatingScheduleForJob(job);
+        setIsDrawerOpen(true);
+    };
+
     const handleEditClick = (schedule: any) => {
         setEditingSchedule(schedule);
         setIsDrawerOpen(true);
@@ -56,12 +69,32 @@ const ClearanceSchedule: React.FC = () => {
 
     const handleSave = async (data: any) => {
         try {
-            if (editingSchedule) {
+            if (creatingScheduleForJob) {
+                await clearanceAPI.create({
+                    job_id: creatingScheduleForJob.id,
+                    ...data
+                });
+
+                // Update Shipment Status to 'Clearance Scheduled'
+                try {
+                    await shipmentsAPI.update(creatingScheduleForJob.id, {
+                        status: 'Clearance Scheduled'
+                    });
+                } catch (statusErr) {
+                    console.error("Failed to update shipment status", statusErr);
+                    // Continue even if status update fails? Ideally yes, but logged.
+                }
+
+                alert('Clearance Scheduled Successfully!');
+                setCreatingScheduleForJob(null);
+            } else if (editingSchedule) {
                 await clearanceAPI.update(editingSchedule.id, data);
                 alert('Clearance Rescheduled Successfully!');
             }
             setEditingSchedule(null);
             setIsDrawerOpen(false);
+
+            // Refund/Reload logic - ideally just re-fetch but reload for safety as per existing code
             window.location.reload();
         } catch (error) {
             console.error('Failed to update clearance', error);
@@ -221,6 +254,72 @@ const ClearanceSchedule: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Pending Clearance Jobs Table */}
+                {pendingJobs.length > 0 && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-xl overflow-hidden shadow-sm mb-8">
+                        <div className="px-6 py-4 border-b border-orange-200 bg-orange-100/50 flex justify-between items-center">
+                            <h3 className="font-bold text-orange-900 flex items-center gap-2">
+                                <Clock className="w-5 h-5" />
+                                Pending Clearance / Job Details
+                            </h3>
+                            <span className="bg-orange-200 text-orange-800 text-xs font-bold px-2 py-1 rounded-full">
+                                {pendingJobs.length} Pending
+                            </span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[1000px]">
+                                <thead>
+                                    <tr className="bg-orange-100/30 text-orange-900 border-b border-orange-200">
+                                        <th className="py-3 px-6 text-left text-xs font-bold uppercase tracking-wider">Job Details</th>
+                                        <th className="py-3 px-6 text-left text-xs font-bold uppercase tracking-wider">Consignee</th>
+                                        <th className="py-3 px-6 text-left text-xs font-bold uppercase tracking-wider">Transport</th>
+                                        <th className="py-3 px-6 text-left text-xs font-bold uppercase tracking-wider">Containers</th>
+                                        <th className="py-3 px-6 text-left text-xs font-bold uppercase tracking-wider">Date Received</th>
+                                        <th className="py-3 px-6 text-center text-xs font-bold uppercase tracking-wider">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-orange-100">
+                                    {pendingJobs.map((job) => (
+                                        <tr key={job.id} className="hover:bg-orange-100/30 transition-colors">
+                                            <td className="py-4 px-6">
+                                                <div className="font-bold text-gray-900">{job.id}</div>
+                                                <div className="text-xs text-gray-500 mt-1">{job.bl_awb_no || (job.bls && job.bls[0]?.master_bl) || '-'}</div>
+                                            </td>
+                                            <td className="py-4 px-6 text-sm text-gray-900">
+                                                <div className="font-medium">{job.consignee || job.receiver_name}</div>
+                                                <div className="text-xs text-gray-500">{job.exporter || job.sender_name}</div>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <span className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-medium">
+                                                    {job.transport_mode}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                {job.containers && job.containers.length > 0 ? (
+                                                    <span className="font-mono">{job.containers.length} Container(s)</span>
+                                                ) : '-'}
+                                            </td>
+                                            <td className="py-4 px-6 text-sm text-gray-500">
+                                                {new Date(job.updated_at || job.created_at).toLocaleDateString()}
+                                            </td>
+                                            <td className="py-4 px-6 text-center">
+                                                {(hasRole('Clearance') || hasRole('Administrator') || hasRole('All')) && (
+                                                    <button
+                                                        onClick={() => handleScheduleJob(job)}
+                                                        className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm inline-flex items-center gap-2"
+                                                    >
+                                                        <Calendar className="w-4 h-4" /> Schedule
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 {/* Table */}
                 <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
@@ -347,11 +446,12 @@ const ClearanceSchedule: React.FC = () => {
                 {isDrawerOpen && (
                     <ScheduleClearanceDrawer
                         isOpen={isDrawerOpen}
-                        onClose={() => { setIsDrawerOpen(false); setEditingSchedule(null); }}
+                        onClose={() => { setIsDrawerOpen(false); setEditingSchedule(null); setCreatingScheduleForJob(null); }}
                         onSave={handleSave}
                         initialData={editingSchedule}
-                        job={editingSchedule}
-                        isReschedule={true}
+                        job={editingSchedule || creatingScheduleForJob}
+                        isReschedule={!!editingSchedule}
+                        title={creatingScheduleForJob ? "Schedule New Clearance" : undefined}
                     />
                 )}
 
