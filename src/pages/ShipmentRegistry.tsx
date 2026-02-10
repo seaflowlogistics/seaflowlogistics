@@ -1368,20 +1368,24 @@ const ShipmentRegistry: React.FC = () => {
                             {/* Quick Actions Icons */}
                             {user?.role !== 'Accountant' && (
                                 <div className="flex items-center gap-2 mb-3">
-                                    <button
-                                        onClick={() => handleOpenPopup('invoice', selectedJob)}
-                                        className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                                        title="Shipment Invoice"
-                                    >
-                                        <FileText className="w-5 h-5" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleOpenPopup('bl', selectedJob)}
-                                        className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                                        title="BL/AWB Details"
-                                    >
-                                        <FileSpreadsheet className="w-5 h-5" />
-                                    </button>
+                                    {user?.role !== 'Clearance' && (
+                                        <>
+                                            <button
+                                                onClick={() => handleOpenPopup('invoice', selectedJob)}
+                                                className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                                title="Shipment Invoice"
+                                            >
+                                                <FileText className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleOpenPopup('bl', selectedJob)}
+                                                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                                                title="BL/AWB Details"
+                                            >
+                                                <FileSpreadsheet className="w-5 h-5" />
+                                            </button>
+                                        </>
+                                    )}
                                     <button
                                         onClick={() => handleOpenPopup('payment', selectedJob)}
                                         className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
@@ -1550,7 +1554,7 @@ const ShipmentRegistry: React.FC = () => {
 
                         {/* Exporter / Consignee Block - Dark Card */}
                         <div className="bg-slate-900 text-white rounded-xl p-8 mb-6 shadow-xl relative group">
-                            {isEditingJobDetails ? (
+                            {isEditingJobDetails ? (user?.role === 'Administrator' || user?.role === 'All' || user?.role === 'Documentation' ? (
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                                         <div>
@@ -1599,7 +1603,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Registered Date</label>
                                             <p className="font-medium text-slate-200 py-2">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {user?.role !== 'Administrator' && user?.role !== 'Accountant' && user?.role !== 'All' && (
+                                        {!hasRole('Administrator') && !hasRole('Accountant') && (
                                             <div>
                                                 <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Job Invoice No.</label>
                                                 <input
@@ -1627,6 +1631,7 @@ const ShipmentRegistry: React.FC = () => {
                                         </button>
                                     </div>
                                 </>
+                            ) : null
                             ) : (
                                 <>
                                     <div className="absolute top-6 right-6">
@@ -1683,7 +1688,8 @@ const ShipmentRegistry: React.FC = () => {
                                         )}
                                     </div>
                                 </>
-                            )}
+                            )
+                            }
                         </div>
 
                         {/* Shipment Invoice Section (4) */}
