@@ -436,19 +436,9 @@ router.post('/process-batch', authenticateToken, async (req, res) => {
                     [req.user.id, 'ALL_PAYMENTS_COMPLETED', `All payments completed`, 'SHIPMENT', jId]
                 );
 
-                // 2. Check if Job is Cleared (Delivery Done)
-                // If Job is Cleared AND All Payments Paid -> Mark Completed
-                const jobRes = await client.query("SELECT status FROM shipments WHERE id = $1", [jId]);
-                if (jobRes.rows.length > 0) {
-                    const currentStatus = jobRes.rows[0].status;
-                    if (currentStatus === 'Cleared') {
-                        await client.query("UPDATE shipments SET status = 'Completed' WHERE id = $1", [jId]);
-
-                        // Add to list for notification
-                        const jobDetails = await client.query("SELECT id, customer FROM shipments WHERE id = $1", [jId]);
-                        if (jobDetails.rows.length > 0) completedJobs.push(jobDetails.rows[0]);
-                    }
-                }
+                // 2. Update Progress to 75% (Accounts Complete)
+                // We do NOT mark as 'Completed' (100%) because that requires manual confirmation of Job Invoice No.
+                await client.query("UPDATE shipments SET progress = 75 WHERE id = $1 AND status != 'Completed'", [jId]);
             }
         }
 

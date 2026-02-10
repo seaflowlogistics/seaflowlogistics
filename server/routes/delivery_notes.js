@@ -143,8 +143,8 @@ router.post('/', authenticateToken, async (req, res) => {
                     await logActivity(req.user.id, 'ALL_PAYMENTS_COMPLETED', `All payments completed`, 'SHIPMENT', jobId);
                 }
 
-                // Always set to 'Cleared' when delivery is done. 'Completed' is a manual step.
-                await client.query('UPDATE shipments SET progress = 100, status = $1 WHERE id = $2', ['Cleared', jobId]);
+                // Set to 'Cleared' (Stage 2). Progress 50%.
+                await client.query('UPDATE shipments SET progress = 50, status = $1 WHERE id = $2', ['Cleared', jobId]);
             } else {
                 // Optional: Set partial progress? e.g. (delivered / total) * 100
                 // preserving 'status' might be better if not complete, or set to 'In Clearance'
