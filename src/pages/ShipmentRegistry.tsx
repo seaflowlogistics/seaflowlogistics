@@ -1230,13 +1230,13 @@ const ShipmentRegistry: React.FC = () => {
         const isDeliveryNoteIssued = deliveryNotes.length > 0;
 
         // Stage 1: Documentation (25%)
-        // Rule: Documents uploaded AND details filled (Invoice, BL/AWB, Containers if Sea)
-        const hasDocuments = selectedJob.documents && selectedJob.documents.length > 0;
+        // Rule: Details filled (Invoice, BL/AWB, Containers if Sea). Documents are optional.
+
         const hasInvoiceDetails = !!(selectedJob.invoice_no && selectedJob.invoice_items);
         const hasBLDetails = selectedJob.bls && selectedJob.bls.length > 0;
         const hasContainerDetails = !isSea || (selectedJob.containers && selectedJob.containers.length > 0);
 
-        const isDocComplete = hasDocuments && hasInvoiceDetails && hasBLDetails && hasContainerDetails;
+        const isDocComplete = hasInvoiceDetails && hasBLDetails && hasContainerDetails;
 
         // Stage 2: Clearance (50%)
         // Rule: All BLs have Delivery Notes ISSUED
