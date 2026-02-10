@@ -131,7 +131,8 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
 
         // Update Job Progress if Confirmed
         if (status === 'Confirmed') {
-            await pool.query('UPDATE shipments SET progress = 75 WHERE id = $1', [updatedPayment.job_id]);
+            // Update Shipment Status to 'Payment' so it moves to Accountant's Inbox
+            await pool.query("UPDATE shipments SET status = 'Payment', progress = 75 WHERE id = $1", [updatedPayment.job_id]);
         }
 
         res.json(result.rows[0]);
@@ -295,17 +296,35 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
         }
 
         const result = await pool.query(
-            "UPDATE job_payments SET status = (CASE WHEN payment_type = 'No Payment' THEN 'Confirm with clearance' ELSE 'Pending' END) WHERE id = ANY($1) AND status = 'Draft' RETURNING *",
+            "UPDATE job_payments SET status = (CASE WHEN payment_type = 'No Payment' THEN 'Awaiting Clearance' ELSE 'Pending' END) WHERE id = ANY($1) AND status = 'Draft' RETURNING *",
             [paymentIds]
         );
 
-        // Update Job Status to 'Payment' for related jobs
-        const pendingJobs = [...new Set(valRes.rows.map(r => r.id))];
-        if (pendingJobs.length > 0) {
+        // Update Job Status based on Payment Types
+        // If ANY payment in the batch is 'No Payment' (now 'Awaiting Clearance'), set Job Status to 'Payment Confirmation'
+        // Else set to 'Payment'
+        const awaitingClearanceJobs = [...new Set(result.rows.filter(r => r.status === 'Awaiting Clearance').map(r => r.job_id))];
+        const normalPaymentJobs = [...new Set(result.rows.filter(r => r.status === 'Pending').map(r => r.job_id))];
+
+        if (awaitingClearanceJobs.length > 0) {
             await pool.query(
-                "UPDATE shipments SET status = 'Payment' WHERE id = ANY($1) AND status != 'Completed'",
-                [pendingJobs]
+                "UPDATE shipments SET status = 'Payment Confirmation' WHERE id = ANY($1) AND status != 'Completed'",
+                [awaitingClearanceJobs]
             );
+        }
+
+        if (normalPaymentJobs.length > 0) {
+            // Only update if not already set to Payment Confirmation (priority to confirmation)
+            // But wait, a job could have mixed? Assume separate batches.
+            // If mixed, 'Payment Confirmation' takes precedence if we want Clearance to see it.
+            // Exclude jobs that are in awaitingClearanceJobs
+            const jobsToSetPayment = normalPaymentJobs.filter(id => !awaitingClearanceJobs.includes(id));
+            if (jobsToSetPayment.length > 0) {
+                await pool.query(
+                    "UPDATE shipments SET status = 'Payment' WHERE id = ANY($1) AND status != 'Completed'",
+                    [jobsToSetPayment]
+                );
+            }
         }
 
         // Audit Logs per Job
