@@ -54,6 +54,7 @@ const ShipmentRegistry: React.FC = () => {
     // State
     const { user, hasRole } = useAuth();
     const canEdit = hasRole('Administrator') || hasRole('Documentation');
+    const canEditjobinvoice = hasRole('Administrator') || hasRole('Accountant') || hasRole('All');
     const location = useLocation();
     // const navigate = useNavigate(); // Unused for now
     const [jobs, setJobs] = useState<any[]>([]);
@@ -1678,7 +1679,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Registered Date</p>
                                             <p className="font-medium text-slate-200">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {user?.role !== 'Administrator' && user?.role !== 'Accountant' && user?.role !== 'All' && (
+                                        {canEditjobinvoice && (
                                             <div>
                                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Job Invoice</p>
                                                 <p className="font-medium text-slate-200">{selectedJob.job_invoice_no || selectedJob.invoice_id || selectedJob.invoice?.invoice_no || <span className="opacity-50 italic">Not Generated</span>}</p>
