@@ -1425,15 +1425,13 @@ const ShipmentRegistry: React.FC = () => {
                                         </button>
                                     </>
                                 )}
-                                {user?.role !== 'Accountant' && (
-                                    <button
-                                        onClick={() => handleOpenPopup('payment', selectedJob)}
-                                        className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
-                                        title="Add Payment"
-                                    >
-                                        <CreditCard className="w-5 h-5" />
-                                    </button>
-                                )}
+                                <button
+                                    onClick={() => handleOpenPopup('payment', selectedJob)}
+                                    className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
+                                    title="Add Payment"
+                                >
+                                    <CreditCard className="w-5 h-5" />
+                                </button>
                                 <button
                                     onClick={() => handleOpenPopup('upload', selectedJob)}
                                     className="p-2 bg-violet-50 text-violet-600 rounded-lg hover:bg-violet-100 transition-colors"
