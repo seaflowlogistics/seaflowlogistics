@@ -53,7 +53,7 @@ interface JobFormData {
 const ShipmentRegistry: React.FC = () => {
     // State
     const { user, hasRole } = useAuth();
-    const canEdit = hasRole('Administrator') || hasRole('Clearance') || hasRole('Documentation');
+    const canEdit = hasRole('Administrator') || hasRole('Documentation');
     const location = useLocation();
     // const navigate = useNavigate(); // Unused for now
     const [jobs, setJobs] = useState<any[]>([]);
@@ -1162,7 +1162,7 @@ const ShipmentRegistry: React.FC = () => {
                 </table>
             </div>
 
-            {canEdit && (
+            {(canEdit || hasRole('Clearance')) && (
                 <div className="border-t pt-6">
                     <h4 className="font-semibold text-sm text-gray-700 mb-4">Upload New Document</h4>
                     <div className="flex gap-4 items-end">
@@ -2441,7 +2441,7 @@ const ShipmentRegistry: React.FC = () => {
                                         }}
                                         placeholder="Select Payment Type"
                                         required
-                                        disabled={!canEdit}
+                                        disabled={!canEdit && !hasRole('Clearance')}
                                     />
                                 </div>
                                 <div>
@@ -2452,7 +2452,7 @@ const ShipmentRegistry: React.FC = () => {
                                         onChange={(val) => setEditFormData((prev: any) => ({ ...prev, vendor: val }))}
                                         placeholder="Select Vendor"
                                         required
-                                        disabled={!canEdit}
+                                        disabled={!canEdit && !hasRole('Clearance')}
                                     />
                                 </div>
                                 <div>
@@ -2476,7 +2476,7 @@ const ShipmentRegistry: React.FC = () => {
                                         name="bill_ref_no"
                                         value={editFormData.bill_ref_no || ''}
                                         onChange={handleEditChange}
-                                        disabled={!canEdit}
+                                        disabled={!canEdit && !hasRole('Clearance')}
                                         className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
                                         placeholder="Reference Number"
                                     />
@@ -2487,7 +2487,7 @@ const ShipmentRegistry: React.FC = () => {
                                         name="paid_by"
                                         value={editFormData.paid_by || ''}
                                         onChange={handleEditChange}
-                                        disabled={!canEdit}
+                                        disabled={!canEdit && !hasRole('Clearance')}
                                         className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
                                     >
                                         <option value="">Select Payer</option>
