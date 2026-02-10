@@ -1366,7 +1366,7 @@ const ShipmentRegistry: React.FC = () => {
                     <div className="flex justify-between items-start mb-6">
                         <div>
                             {/* Quick Actions Icons */}
-                            {user?.role !== 'Accountant' && (
+                            {canEdit && (
                                 <div className="flex items-center gap-2 mb-3">
                                     <button
                                         onClick={() => handleOpenPopup('invoice', selectedJob)}
