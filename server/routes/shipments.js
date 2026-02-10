@@ -495,9 +495,28 @@ router.get('/', authenticateToken, async (req, res) => {
         } else if (status === 'All') {
             // Fetch ALL jobs, do not exclude 'Completed'
         } else {
-            // Default: Hide 'Completed' jobs unless searching
+            // Default View ("Inbox"): Status depends on Role
             if (!search) {
-                conditions.push(`s.status != 'Completed'`);
+                // Role-based Inboxes
+                const role = req.user.role;
+
+                if (role === 'Documentation') {
+                    // Only see New jobs (not yet sent to clearance)
+                    conditions.push(`s.status = 'New'`);
+                }
+                else if (role === 'Clearance') {
+                    // See jobs pending clearance or currently clearing (Cleared = Delivery Note issued, but not sent to accounts)
+                    // 'Pending' comes from clearance.js (Schedule Clearance), 'Pending Clearance' comes from ShipmentRegistry.tsx (Send to Clearance)
+                    conditions.push(`s.status IN ('Pending', 'Pending Clearance', 'Cleared')`);
+                }
+                else if (role === 'Accountant') {
+                    // See jobs sent for payment
+                    conditions.push(`s.status = 'Payment'`);
+                }
+                else {
+                    // Admin / All / Others: See everything except Completed (Active)
+                    conditions.push(`s.status != 'Completed'`);
+                }
             }
         }
 
