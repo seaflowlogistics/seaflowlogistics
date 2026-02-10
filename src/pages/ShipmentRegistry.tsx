@@ -9,7 +9,7 @@ import {
     FileText,
     Check, Pencil,
     Anchor, Plane, Truck, Package, X, Download, Trash2,
-    CreditCard, UploadCloud, FileSpreadsheet, Calendar, MoreHorizontal, ChevronRight, Lock
+    CreditCard, UploadCloud, FileSpreadsheet, Calendar, MoreHorizontal, ChevronRight, Lock, Send
 
 
 } from 'lucide-react';
@@ -1257,6 +1257,24 @@ const ShipmentRegistry: React.FC = () => {
         if (isAccountsComplete) activeStage = 3;
         if (isJobCompleted) activeStage = 4;
 
+        const handleSendToClearance = async () => {
+            if (!window.confirm("Are you sure you want to send this job to Clearance?")) return;
+            try {
+                await shipmentsAPI.update(selectedJob.id, {
+                    status: 'Pending Clearance'
+                });
+
+                // Refresh local state
+                const res = await shipmentsAPI.getById(selectedJob.id);
+                setSelectedJob(res.data);
+                setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
+                alert("Job Sent to Clearance Successfully");
+            } catch (e) {
+                console.error(e);
+                alert('Failed to update status');
+            }
+        };
+
         const handleMarkCompleted = async () => {
             // Role Check
             if (!user || (!hasRole('Administrator') && !hasRole('Accountant') && !hasRole('All'))) {
@@ -1477,9 +1495,18 @@ const ShipmentRegistry: React.FC = () => {
                                         </button>
                                     )
                                 ) : isDocComplete ? (
-                                    // Schedule Clearance Button logic
-                                    // Restricted for Accountant and Documentation
-                                    (
+                                    selectedJob.status !== 'Pending Clearance' ? (
+                                        (hasRole('Documentation') || hasRole('Administrator') || hasRole('All')) && (
+                                            <button
+                                                onClick={handleSendToClearance}
+                                                className="px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                                            >
+                                                <Send className="w-4 h-4" /> Send to Clearance
+                                            </button>
+                                        )
+                                    ) : (
+                                        // Schedule Clearance Button logic
+                                        // Restricted for Accountant and Documentation
                                         <button
                                             onClick={() => handleOpenPopup('schedule', selectedJob)}
                                             className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
