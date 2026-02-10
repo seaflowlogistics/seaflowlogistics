@@ -1489,17 +1489,15 @@ const ShipmentRegistry: React.FC = () => {
                             {/* Action Button Logic */}
                             {!isJobCompleted ? (
                                 isDeliveryNoteIssued ? (
-                                    isAccountsComplete ? (
+                                    (isAccountsComplete && (hasRole('Administrator') || hasRole('All') || hasRole('Accountant'))) ? (
                                         // Mark Completed Button logic
                                         // Restricted for Clearance and Documentation
-                                        (hasRole('Administrator') || hasRole('All') || hasRole('Accountant')) && (
-                                            <button
-                                                onClick={handleMarkCompleted}
-                                                className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
-                                            >
-                                                <Check className="w-4 h-4" /> Mark Completed
-                                            </button>
-                                        )
+                                        <button
+                                            onClick={handleMarkCompleted}
+                                            className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
+                                        >
+                                            <Check className="w-4 h-4" /> Mark Completed
+                                        </button>
                                     ) : selectedJob.has_pending_payments ? (
                                         <span className="px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-lg flex items-center gap-2 cursor-default shadow-lg shadow-amber-200">
                                             <Lock className="w-4 h-4" /> Approval Pending
