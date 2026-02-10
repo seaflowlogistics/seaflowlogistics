@@ -35,8 +35,8 @@ router.post('/', async (req, res) => {
             schedule.id
         );
 
-        // Update Job Status to 'Clearance Scheduled'
-        await pool.query("UPDATE shipments SET status = 'Clearance Scheduled' WHERE id = $1 AND status NOT IN ('Cleared', 'Completed')", [job_id]);
+        // Update Job Status to 'Pending' if it's currently 'New'
+        await pool.query("UPDATE shipments SET status = 'Pending' WHERE id = $1 AND status = 'New'", [job_id]);
 
         res.status(201).json(schedule);
     } catch (error) {

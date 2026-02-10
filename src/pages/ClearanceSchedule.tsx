@@ -82,7 +82,15 @@ const ClearanceSchedule: React.FC = () => {
                     ...data
                 });
 
-
+                // Update Shipment Status to 'Clearance Scheduled'
+                try {
+                    await shipmentsAPI.update(creatingScheduleForJob.id, {
+                        status: 'Clearance Scheduled'
+                    });
+                } catch (statusErr) {
+                    console.error("Failed to update shipment status", statusErr);
+                    // Continue even if status update fails? Ideally yes, but logged.
+                }
 
                 alert('Clearance Scheduled Successfully!');
                 setCreatingScheduleForJob(null);
