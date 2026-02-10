@@ -1461,7 +1461,7 @@ const ShipmentRegistry: React.FC = () => {
                                     isAccountsComplete ? (
                                         // Mark Completed Button logic
                                         // Restricted for Clearance and Documentation
-                                        hasRole('Administrator') || hasRole('All') || hasRole('Accountant') && (
+                                        (hasRole('Administrator') || hasRole('All') || hasRole('Accountant')) && (
                                             <button
                                                 onClick={handleMarkCompleted}
                                                 className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
@@ -1476,7 +1476,7 @@ const ShipmentRegistry: React.FC = () => {
                                     ) : (
                                         // Go to Payments Button logic
                                         // Restricted for Accountant and Documentation
-                                        hasRole('Administrator') || hasRole('All') || hasRole('Clearance') && (
+                                        (hasRole('Administrator') || hasRole('All') || hasRole('Clearance')) && (
                                             <button
                                                 onClick={() => setActiveTab('Payments')}
                                                 className="px-5 py-2.5 bg-black text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-gray-200"
@@ -1488,7 +1488,7 @@ const ShipmentRegistry: React.FC = () => {
                                 ) : isAllScheduled ? (
                                     // Clearance Scheduled Button logic
                                     // Restricted for Accountant and Documentation
-                                    (
+                                    (hasRole('Clearance') || hasRole('Administrator') || hasRole('All')) && (
                                         <button
                                             onClick={() => handleOpenPopup('schedule', selectedJob, selectedJob.clearance_schedule)}
                                             className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
