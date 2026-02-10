@@ -79,14 +79,23 @@ const ShipmentRegistry: React.FC = () => {
         const stateJobId = location.state?.selectedJobId;
         const targetJobId = queryJobId || stateJobId;
 
-        if (targetJobId && jobs.length > 0) {
-            const jobToSelect = jobs.find(j => j.id === targetJobId);
-            if (jobToSelect) {
-                setSelectedJob(jobToSelect);
-                setViewMode('details');
+        if (targetJobId) {
+            // 1. Optimistic update from current list if possible
+            const existing = jobs.find(j => j.id === targetJobId);
+            if (existing) {
+                setSelectedJob(existing);
             }
+            setViewMode('details');
+
+            // 2. Fetch fresh details immediately to ensure latest status (e.g. Delivery Note issued)
+            shipmentsAPI.getById(targetJobId)
+                .then(res => {
+                    setSelectedJob((prev: any) => ({ ...prev, ...res.data }));
+                    // If Payments tab is active, refresh any specific data if needed (handled by separate effect)
+                })
+                .catch(err => console.error("Error fetching job details on navigation", err));
         }
-    }, [jobs, location.state, location.search]);
+    }, [location.state, location.search]); // Removed 'jobs' dependency to prevent loop and stale data reliance
 
     // Drawer State
     const [isBLDrawerOpen, setIsBLDrawerOpen] = useState(false);
@@ -1257,7 +1266,7 @@ const ShipmentRegistry: React.FC = () => {
             isAllScheduled = schedules.length > 0;
         }
 
-        const isDeliveryNoteIssued = deliveryNotes.length > 0;
+        const isDeliveryNoteIssued = deliveryNotes.length > 0 || (!!selectedJob.cleared_at);
 
         // Stage 1: Documentation (25%)
         // Rule: Details filled (Invoice, BL/AWB, Containers if Sea). Documents are optional.
