@@ -2475,7 +2475,7 @@ const ShipmentRegistry: React.FC = () => {
                                         }}
                                         placeholder="Select Payment Type"
                                         required
-                                        disabled={!canEdit && user?.role !== 'Clearance'}
+                                        disabled={!canEdit && user?.role === 'Clearance'}
                                     />
                                 </div>
                                 <div>
