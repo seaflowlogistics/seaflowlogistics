@@ -1163,6 +1163,35 @@ const ShipmentRegistry: React.FC = () => {
                 </table>
             </div>
 
+            {(!selectedJob.documents || selectedJob.documents.length === 0) && (
+                <div className="mb-8 flex items-center gap-3 p-4 bg-orange-50 border border-orange-100 rounded-lg animate-fade-in">
+                    <input
+                        type="checkbox"
+                        checked={selectedJob.no_documents || false}
+                        onChange={async (e) => {
+                            if (!canEdit) return;
+                            try {
+                                const newVal = e.target.checked;
+                                await shipmentsAPI.update(selectedJob.id, { no_documents: newVal });
+                                // Refresh
+                                const res = await shipmentsAPI.getById(selectedJob.id);
+                                setSelectedJob(res.data);
+                                setJobs(prev => prev.map(j => j.id === selectedJob.id ? res.data : j));
+                            } catch (err) {
+                                console.error(err);
+                                alert("Failed to update status");
+                            }
+                        }}
+                        id="noDocsCheck"
+                        className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500 border-gray-300 disabled:opacity-50"
+                        disabled={!canEdit}
+                    />
+                    <label htmlFor="noDocsCheck" className="font-medium text-gray-700 text-sm cursor-pointer select-none">
+                        No documents required for this job
+                    </label>
+                </div>
+            )}
+
             {canEdit && (
                 <div className="border-t pt-6">
                     <h4 className="font-semibold text-sm text-gray-700 mb-4">Upload New Document</h4>
@@ -1236,8 +1265,9 @@ const ShipmentRegistry: React.FC = () => {
         const hasInvoiceDetails = !!(selectedJob.invoice_no && selectedJob.invoice_items);
         const hasBLDetails = selectedJob.bls && selectedJob.bls.length > 0;
         const hasContainerDetails = !isSea || (selectedJob.containers && selectedJob.containers.length > 0);
+        const hasDocuments = (selectedJob.documents && selectedJob.documents.length > 0) || selectedJob.no_documents;
 
-        const isDocComplete = hasInvoiceDetails && hasBLDetails && hasContainerDetails;
+        const isDocComplete = hasInvoiceDetails && hasBLDetails && hasContainerDetails && hasDocuments;
 
         // Stage 2: Clearance (50%)
         // Rule: All BLs have Delivery Notes ISSUED
