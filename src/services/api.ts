@@ -239,6 +239,7 @@ export const paymentsAPI = {
     sendBatch: (paymentIds: string[]) => api.post('/payments/send-batch', { paymentIds }),
     processBatch: (data: any) => api.post('/payments/process-batch', data),
     noPayment: (job_id: string | number) => api.post('/payments/no-payment', { job_id }),
+    requestConfirmation: (paymentIds: string[]) => api.post('/payments/request-confirmation', { paymentIds }),
 };
 
 // Payment Items Settings API

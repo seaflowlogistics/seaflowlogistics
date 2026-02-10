@@ -95,6 +95,62 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
+// Request Payment Confirmation (Accountant -> Clearance)
+router.post('/request-confirmation', authenticateToken, async (req, res) => {
+    try {
+        const { paymentIds } = req.body;
+
+        if (!paymentIds || !Array.isArray(paymentIds) || paymentIds.length === 0) {
+            return res.status(400).json({ error: 'No items selected' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // 1. Update Payment Statuses
+            const result = await client.query(
+                "UPDATE job_payments SET status = 'Confirmation Requested' WHERE id = ANY($1) RETURNING *",
+                [paymentIds]
+            );
+
+            // 2. Update Shipment Status to 'Payment Confirmation' so Clearance can see it
+            const jobIds = [...new Set(result.rows.map(r => r.job_id))];
+            if (jobIds.length > 0) {
+                await client.query(
+                    "UPDATE shipments SET status = 'Payment Confirmation' WHERE id = ANY($1)",
+                    [jobIds]
+                );
+            }
+
+            // 3. Audit Logs
+            for (const jId of jobIds) {
+                await client.query(
+                    'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
+                    [req.user.id, 'REQUEST_CONFIRMATION', `Accountant requested confirmation for payments`, 'SHIPMENT', jId]
+                );
+
+                // Notify Clearance
+                // Assuming Clearance users have role 'Clearance' or are the 'requested_by' user
+                // Let's notify 'Clearance' role generally or specific user if we tracked who created the job
+                // For simplicity, notify all Clearance users
+                await broadcastNotification('Clearance', 'Payment Confirmation Requested', `Please confirm payment details for Job ${jId}`, 'action', `/registry?selectedJobId=${jId}`);
+            }
+
+            await client.query('COMMIT');
+            res.json({ message: 'Confirmation requested', count: result.rowCount });
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Request confirmation error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Update payment status
 router.put('/:id/status', authenticateToken, async (req, res) => {
     try {
@@ -129,9 +185,14 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
             [req.user.id, 'UPDATE_PAYMENT_STATUS', `Updated payment status to ${status}`, 'PAYMENT', id]
         );
 
-        // Update Job Progress if Confirmed
+        // Update Job Status/Progress based on Confirmation
         if (status === 'Confirmed') {
-            await pool.query('UPDATE shipments SET progress = 75 WHERE id = $1', [updatedPayment.job_id]);
+            // If Confirmed (by Clearance), send back to Accounts (Shipment Status: 'Payment')
+            // And update progress 75%
+            await pool.query("UPDATE shipments SET status = 'Payment', progress = 75 WHERE id = $1", [updatedPayment.job_id]);
+
+            // Notify Accountants
+            await broadcastNotification('Accountant', 'Payment Confirmed', `Payment for Job ${updatedPayment.job_id} confirmed by Clearance.`, 'action', `/registry?selectedJobId=${updatedPayment.job_id}`);
         }
 
         res.json(result.rows[0]);
@@ -299,7 +360,7 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
             [paymentIds]
         );
 
-        // Update Job Status
+        // Update Job Status to 'Payment' for related jobs
         const pendingJobs = [...new Set(valRes.rows.map(r => r.id))];
         if (pendingJobs.length > 0) {
             await pool.query(

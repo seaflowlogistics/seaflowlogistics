@@ -507,7 +507,7 @@ router.get('/', authenticateToken, async (req, res) => {
                 else if (role === 'Clearance') {
                     // See jobs pending clearance or currently clearing (Cleared = Delivery Note issued, but not sent to accounts)
                     // 'Pending' comes from clearance.js (Schedule Clearance), 'Pending Clearance' comes from ShipmentRegistry.tsx (Send to Clearance)
-                    conditions.push(`s.status IN ('Pending', 'Pending Clearance', 'Cleared', 'Payment Pending Confirmation')`);
+                    conditions.push(`s.status IN ('Pending', 'Pending Clearance', 'Cleared', 'Payment Confirmation')`);
                 }
                 else if (role === 'Accountant') {
                     // See jobs sent for payment
