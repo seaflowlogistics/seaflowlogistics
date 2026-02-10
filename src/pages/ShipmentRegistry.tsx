@@ -1601,7 +1601,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Registered Date</label>
                                             <p className="font-medium text-slate-200 py-2">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {user?.role !== 'Administrator' && user?.role !== 'Accountant' && user?.role !== 'All' && (
+                                        {user?.role !== 'Administrator' && user?.role !== 'Accountant' && user?.role !== 'All' && user?.role !== 'Clearance' && user?.role !== 'Documentation' && (
                                             <div>
                                                 <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Job Invoice No.</label>
                                                 <input
@@ -1678,7 +1678,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Registered Date</p>
                                             <p className="font-medium text-slate-200">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {user?.role !== 'Administrator' && user?.role !== 'Accountant' && (
+                                        {user?.role !== 'Administrator' && user?.role !== 'Accountant' && user?.role !== 'All' && user?.role !== 'Clearance' && user?.role !== 'Documentation' && (
                                             <div>
                                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Job Invoice</p>
                                                 <p className="font-medium text-slate-200">{selectedJob.job_invoice_no || selectedJob.invoice_id || selectedJob.invoice?.invoice_no || <span className="opacity-50 italic">Not Generated</span>}</p>
