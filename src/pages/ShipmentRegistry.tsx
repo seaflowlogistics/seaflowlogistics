@@ -2454,83 +2454,84 @@ const ShipmentRegistry: React.FC = () => {
                     <div className="p-6 overflow-y-auto custom-scrollbar">
 
                         {popupType === 'payment' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Payment Type *</label>
-                                    <SearchableSelect
-                                        options={paymentTypesList.map((p: any) => ({ id: p.id, label: p.name, value: p.name }))}
-                                        value={editFormData.payment_type || ''}
-                                        onChange={(val) => {
-                                            setEditFormData((prev: any) => {
-                                                const updates: any = { payment_type: val };
-                                                const selectedItem = paymentTypesList.find((p: any) => p.name === val);
-                                                if (selectedItem?.vendor_id) {
-                                                    const assignedVendor = vendorsList.find((v: any) => v.id === selectedItem.vendor_id);
-                                                    if (assignedVendor) {
-                                                        updates.vendor = assignedVendor.name;
+                            (hasRole('Administrator') || hasRole('All') || hasRole('Clearance')) && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Payment Type *</label>
+                                        <SearchableSelect
+                                            options={paymentTypesList.map((p: any) => ({ id: p.id, label: p.name, value: p.name }))}
+                                            value={editFormData.payment_type || ''}
+                                            onChange={(val) => {
+                                                setEditFormData((prev: any) => {
+                                                    const updates: any = { payment_type: val };
+                                                    const selectedItem = paymentTypesList.find((p: any) => p.name === val);
+                                                    if (selectedItem?.vendor_id) {
+                                                        const assignedVendor = vendorsList.find((v: any) => v.id === selectedItem.vendor_id);
+                                                        if (assignedVendor) {
+                                                            updates.vendor = assignedVendor.name;
+                                                        }
                                                     }
-                                                }
-                                                return { ...prev, ...updates };
-                                            });
-                                        }}
-                                        placeholder="Select Payment Type"
-                                        required
+                                                    return { ...prev, ...updates };
+                                                });
+                                            }}
+                                            placeholder="Select Payment Type"
+                                            required
 
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Vendor *</label>
-                                    <SearchableSelect
-                                        options={vendorsList.map((v: any) => ({ id: v.id, label: v.name, value: v.name }))}
-                                        value={editFormData.vendor || ''}
-                                        onChange={(val) => setEditFormData((prev: any) => ({ ...prev, vendor: val }))}
-                                        placeholder="Select Vendor"
-                                        required
-
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Amount *</label>
-                                    <div className="relative">
-                                        <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-medium ${user?.role === 'Accountant' ? 'text-gray-400' : 'text-gray-500'}`}>MVR</span>
-                                        <input
-                                            type="number"
-                                            name="amount"
-                                            value={editFormData.amount || ''}
-                                            onChange={handleEditChange}
-                                            className="w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            placeholder="0.00"
                                         />
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Bill Ref. No.</label>
-                                    <input
-                                        type="text"
-                                        name="bill_ref_no"
-                                        value={editFormData.bill_ref_no || ''}
-                                        onChange={handleEditChange}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Vendor *</label>
+                                        <SearchableSelect
+                                            options={vendorsList.map((v: any) => ({ id: v.id, label: v.name, value: v.name }))}
+                                            value={editFormData.vendor || ''}
+                                            onChange={(val) => setEditFormData((prev: any) => ({ ...prev, vendor: val }))}
+                                            placeholder="Select Vendor"
+                                            required
 
-                                        className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
-                                        placeholder="Reference Number"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Paid By *</label>
-                                    <select
-                                        name="paid_by"
-                                        value={editFormData.paid_by || ''}
-                                        onChange={handleEditChange}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Amount *</label>
+                                        <div className="relative">
+                                            <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-medium ${user?.role === 'Accountant' ? 'text-gray-400' : 'text-gray-500'}`}>MVR</span>
+                                            <input
+                                                type="number"
+                                                name="amount"
+                                                value={editFormData.amount || ''}
+                                                onChange={handleEditChange}
+                                                className="w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Bill Ref. No.</label>
+                                        <input
+                                            type="text"
+                                            name="bill_ref_no"
+                                            value={editFormData.bill_ref_no || ''}
+                                            onChange={handleEditChange}
 
-                                        className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
-                                    >
-                                        <option value="">Select Payer</option>
-                                        <option value="Company">Company</option>
-                                        <option value="Customer">Customer</option>
-                                    </select>
+                                            className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
+                                            placeholder="Reference Number"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Paid By *</label>
+                                        <select
+                                            name="paid_by"
+                                            value={editFormData.paid_by || ''}
+                                            onChange={handleEditChange}
+
+                                            className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
+                                        >
+                                            <option value="">Select Payer</option>
+                                            <option value="Company">Company</option>
+                                            <option value="Customer">Customer</option>
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            ))}
 
                         {popupType === 'upload' && (
                             <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
