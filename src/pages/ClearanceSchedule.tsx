@@ -57,9 +57,16 @@ const ClearanceSchedule: React.FC = () => {
         return () => clearTimeout(timeoutId);
     }, [searchTerm, clearanceType, transportMode, date]);
 
-    const handleScheduleJob = (job: any) => {
-        setCreatingScheduleForJob(job);
-        setIsDrawerOpen(true);
+    const handleScheduleJob = async (job: any) => {
+        try {
+            // Fetch full job details including BLs and Containers
+            const res = await shipmentsAPI.getById(job.id);
+            setCreatingScheduleForJob(res.data);
+            setIsDrawerOpen(true);
+        } catch (error) {
+            console.error("Failed to fetch job details", error);
+            alert("Failed to load job details. Please try again.");
+        }
     };
 
     const handleEditClick = (schedule: any) => {
