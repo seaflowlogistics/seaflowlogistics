@@ -465,6 +465,12 @@ router.get('/', authenticateToken, async (req, res) => {
             i.status as payment_status,
             i.created_at as invoice_date,
             (
+                SELECT json_agg(sb) FROM shipment_bls sb WHERE sb.shipment_id = s.id
+            ) as bls,
+            (
+                SELECT json_agg(sc) FROM shipment_containers sc WHERE sc.shipment_id = s.id
+            ) as containers,
+            (
                 SELECT dn.created_at 
                 FROM delivery_notes dn 
                 JOIN delivery_note_items dni ON dn.id = dni.delivery_note_id 
@@ -514,6 +520,11 @@ router.get('/', authenticateToken, async (req, res) => {
             } else if (!row.packages) {
                 row.packages = [];
             }
+
+            // Ensure bls and containers are arrays
+            if (!row.bls) row.bls = [];
+            if (!row.containers) row.containers = [];
+
             return row;
         });
 
