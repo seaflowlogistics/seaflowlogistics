@@ -410,7 +410,7 @@ const ShipmentRegistry: React.FC = () => {
             if (selectedJob.status === 'Payment Pending Confirmation') {
                 await shipmentsAPI.update(selectedJob.id, { status: 'Payment' });
                 // Update local state
-                setSelectedJob(prev => ({ ...prev, status: 'Payment' }));
+                setSelectedJob((prev: any) => ({ ...prev, status: 'Payment' }));
             }
 
             loadPayments(selectedJob.id);
