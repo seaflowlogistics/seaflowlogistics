@@ -63,6 +63,23 @@ const ShipmentRegistry: React.FC = () => {
     const [viewMode, setViewMode] = useState<'empty' | 'details' | 'create'>('empty');
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isJobListLoaded, setIsJobListLoaded] = useState(false);
+
+    // Sync Selected Job with List - Close details if job vanishes from list
+    useEffect(() => {
+        if (!isJobListLoaded) return;
+
+        if (selectedJob && jobs.length > 0) {
+            const exists = jobs.find(j => j.id === selectedJob.id);
+            if (!exists) {
+                setSelectedJob(null);
+                setViewMode('empty');
+            }
+        } else if (jobs.length === 0 && selectedJob && !loading) {
+            setSelectedJob(null);
+            setViewMode('empty');
+        }
+    }, [jobs, selectedJob, loading, isJobListLoaded]);
 
     const [activeTab, setActiveTab] = useState('Details');
     const [editFormData, setEditFormData] = useState<any>({});
@@ -363,6 +380,7 @@ const ShipmentRegistry: React.FC = () => {
             await paymentsAPI.noPayment(selectedJob.id);
             alert("No Payment Draft Created. Please click 'Send to Accounts' to submit.");
             loadPayments(selectedJob.id);
+            loadJobs(true);
         } catch (e) {
             console.error(e);
             alert("Failed to send request");
@@ -380,6 +398,7 @@ const ShipmentRegistry: React.FC = () => {
             await paymentsAPI.sendBatch(draftIds);
             alert('Payments sent to accounts successfully!');
             loadPayments(selectedJob.id);
+            loadJobs(true);
         } catch (e) {
             console.error(e);
             alert('Failed to send payments to accounts');
@@ -414,6 +433,7 @@ const ShipmentRegistry: React.FC = () => {
             }
 
             loadPayments(selectedJob.id);
+            loadJobs(true);
         } catch (e) {
             console.error(e);
             alert("Failed to confirm");
@@ -458,6 +478,7 @@ const ShipmentRegistry: React.FC = () => {
                 exporter: j.sender_name || 'Unknown Exporter',
                 customer: j.customer || j.sender_name || 'Unknown Customer'
             })));
+            setIsJobListLoaded(true);
         } catch (error) {
             console.error("Failed to load jobs", error);
         } finally {
