@@ -22,6 +22,8 @@ import containerRoutes from './routes/containers.js';
 import notificationRoutes from './routes/notifications.js';
 import filesRoutes from './routes/files.js';
 
+import { runMigrations } from './migrations/startup_migration.js';
+
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -149,6 +151,9 @@ app.use((err, req, res, next) => {
     console.error('Error:', err);
     res.status(500).json({ error: 'Internal server error' });
 });
+
+// Run database migrations on startup
+runMigrations().catch(console.error);
 
 // Start server
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
