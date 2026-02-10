@@ -2446,7 +2446,7 @@ const ShipmentRegistry: React.FC = () => {
                                         }}
                                         placeholder="Select Payment Type"
                                         required
-                                        disabled={!canEdit}
+                                        disabled={!canEdit && user?.role !== 'Clearance'}
                                     />
                                 </div>
                                 <div>
@@ -2457,7 +2457,7 @@ const ShipmentRegistry: React.FC = () => {
                                         onChange={(val) => setEditFormData((prev: any) => ({ ...prev, vendor: val }))}
                                         placeholder="Select Vendor"
                                         required
-                                        disabled={!canEdit}
+                                        disabled={!canEdit && user?.role !== 'Clearance'}
                                     />
                                 </div>
                                 <div>
@@ -2481,7 +2481,7 @@ const ShipmentRegistry: React.FC = () => {
                                         name="bill_ref_no"
                                         value={editFormData.bill_ref_no || ''}
                                         onChange={handleEditChange}
-                                        disabled={!canEdit}
+                                        disabled={!canEdit && user?.role !== 'Clearance'}
                                         className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
                                         placeholder="Reference Number"
                                     />
@@ -2492,7 +2492,7 @@ const ShipmentRegistry: React.FC = () => {
                                         name="paid_by"
                                         value={editFormData.paid_by || ''}
                                         onChange={handleEditChange}
-                                        disabled={!canEdit}
+                                        disabled={!canEdit && user?.role !== 'Clearance'}
                                         className={`w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white ${user?.role === 'Accountant' ? 'bg-gray-100 text-gray-500' : ''}`}
                                     >
                                         <option value="">Select Payer</option>
