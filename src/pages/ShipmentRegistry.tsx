@@ -68,6 +68,7 @@ const ShipmentRegistry: React.FC = () => {
     const [editFormData, setEditFormData] = useState<any>({});
     const [previewDoc, setPreviewDoc] = useState<any | null>(null);
     const [openMenu, setOpenMenu] = useState<string | null>(null);
+    const [initialLoaded, setInitialLoaded] = useState(false);
     const [historyLogs, setHistoryLogs] = useState<any[]>([]);
     const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
     const [jobDetailsForm, setJobDetailsForm] = useState<any>({});
@@ -99,7 +100,7 @@ const ShipmentRegistry: React.FC = () => {
 
     // Auto-close details if job vanishes from list (e.g. status change moves it out of inbox)
     useEffect(() => {
-        if (selectedJob && jobs.length > 0 && !searchTerm) {
+        if (selectedJob && initialLoaded && !searchTerm) {
             const exists = jobs.find(j => j.id === selectedJob.id);
             if (!exists) {
                 setSelectedJob(null);
@@ -110,7 +111,7 @@ const ShipmentRegistry: React.FC = () => {
                 window.history.replaceState({}, '', url.toString());
             }
         }
-    }, [jobs, searchTerm]);
+    }, [jobs, searchTerm, initialLoaded]);
 
     // Drawer State
     const [isBLDrawerOpen, setIsBLDrawerOpen] = useState(false);
@@ -487,6 +488,7 @@ const ShipmentRegistry: React.FC = () => {
                 exporter: j.sender_name || 'Unknown Exporter',
                 customer: j.customer || j.sender_name || 'Unknown Customer'
             })));
+            setInitialLoaded(true);
         } catch (error) {
             console.error("Failed to load jobs", error);
         } finally {
