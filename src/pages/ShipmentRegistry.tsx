@@ -73,6 +73,9 @@ const ShipmentRegistry: React.FC = () => {
     const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
     const [jobDetailsForm, setJobDetailsForm] = useState<any>({});
 
+    const selectedJobRef = React.useRef<any>(null);
+    useEffect(() => { selectedJobRef.current = selectedJob; }, [selectedJob]);
+
     // Handle incoming navigation from Dashboard and Notifications
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
@@ -91,8 +94,23 @@ const ShipmentRegistry: React.FC = () => {
             // 2. Fetch fresh details immediately to ensure latest status (e.g. Delivery Note issued)
             shipmentsAPI.getById(targetJobId)
                 .then(res => {
-                    setSelectedJob((prev: any) => ({ ...prev, ...res.data }));
-                    // If Payments tab is active, refresh any specific data if needed (handled by separate effect)
+                    const fetchedJob = res.data;
+                    setSelectedJob((prev: any) => ({ ...prev, ...fetchedJob }));
+
+                    // Force inject into list so it appears in inbox
+                    setJobs(prevJobs => {
+                        if (!prevJobs.find(j => j.id === fetchedJob.id)) {
+                            // Format it similar to list items if needed, but basic props matching is fine
+                            const listJob = {
+                                ...fetchedJob,
+                                payment_status: fetchedJob.payment_status || 'Pending',
+                                exporter: fetchedJob.sender_name || 'Unknown',
+                                customer: fetchedJob.customer || fetchedJob.sender_name || 'Unknown'
+                            };
+                            return [listJob, ...prevJobs];
+                        }
+                        return prevJobs;
+                    });
                 })
                 .catch(err => console.error("Error fetching job details on navigation", err));
         }
@@ -487,13 +505,27 @@ const ShipmentRegistry: React.FC = () => {
             const response = await shipmentsAPI.getAll({ search: searchTerm });
             const fetchedJobs = response.data || [];
             // Map backend fields to UI expected fields if necessary, though backend should return standard set.
-            setJobs(fetchedJobs.map((j: any) => ({
+            let formattedJobs = fetchedJobs.map((j: any) => ({
                 ...j,
                 payment_status: j.payment_status || 'Pending',
                 // Fallbacks if data is missing
                 exporter: j.sender_name || 'Unknown Exporter',
                 customer: j.customer || j.sender_name || 'Unknown Customer'
-            })));
+            }));
+
+            // If we have a selected job that is NOT in the new list, keep it in the list
+            // This happens if we are viewing a job triggering a notification that is meant for "Clearance" but we are "Admin" filtered out?
+            // Or usually if status changed and it moved out of inbox.
+            if (selectedJobRef.current && !searchTerm) {
+                const currentId = selectedJobRef.current.id;
+                const inList = formattedJobs.find((j: any) => j.id === currentId);
+                if (!inList) {
+                    // Inject it at top
+                    formattedJobs = [selectedJobRef.current, ...formattedJobs];
+                }
+            }
+
+            setJobs(formattedJobs);
             setInitialLoaded(true);
         } catch (error) {
             console.error("Failed to load jobs", error);
