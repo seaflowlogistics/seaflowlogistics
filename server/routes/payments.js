@@ -134,7 +134,7 @@ router.post('/request-confirmation', authenticateToken, async (req, res) => {
                 // Assuming Clearance users have role 'Clearance' or are the 'requested_by' user
                 // Let's notify 'Clearance' role generally or specific user if we tracked who created the job
                 // For simplicity, notify all Clearance users
-                await broadcastNotification('Clearance', 'Payment Confirmation Requested', `Please confirm payment details for Job ${jId}`, 'action', `/registry?selectedJobId=${jId}`);
+                await broadcastNotification('Clearance', 'Payment Confirmation Requested', `Please confirm payment details for Job ${jId}`, 'action', `/registry?selectedJobId=${jId}`, 'SHIPMENT', jId);
             }
 
             await client.query('COMMIT');
@@ -175,7 +175,7 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
         // Notify Requester (e.g., Clearance) if status changed by someone else (e.g., Accountant)
         if (updatedPayment.requested_by && updatedPayment.requested_by !== req.user.id) {
             try {
-                await createNotification(updatedPayment.requested_by, 'Payment Status Updated', `Payment for Job ${updatedPayment.job_id} status updated to ${status}.`, 'info', `/registry?selectedJobId=${updatedPayment.job_id}`);
+                await createNotification(updatedPayment.requested_by, 'Payment Status Updated', `Payment for Job ${updatedPayment.job_id} status updated to ${status}.`, 'info', `/registry?selectedJobId=${updatedPayment.job_id}`, 'SHIPMENT', updatedPayment.job_id);
             } catch (e) { console.error(e); }
         }
 
@@ -192,7 +192,7 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
             await pool.query("UPDATE shipments SET status = 'Payment', progress = 75 WHERE id = $1", [updatedPayment.job_id]);
 
             // Notify Accountants
-            await broadcastNotification('Accountant', 'Payment Confirmed', `Payment for Job ${updatedPayment.job_id} confirmed by Clearance.`, 'action', `/registry?selectedJobId=${updatedPayment.job_id}`);
+            await broadcastNotification('Accountant', 'Payment Confirmed', `Payment for Job ${updatedPayment.job_id} confirmed by Clearance.`, 'action', `/registry?selectedJobId=${updatedPayment.job_id}`, 'SHIPMENT', updatedPayment.job_id);
         }
 
         res.json(result.rows[0]);
@@ -384,6 +384,7 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
         let notifTitle = isNoPayment ? 'No Payment Request' : 'Payment Approval Request';
         let notifLink = '/payments';
         let notifMsg = `New payments have been sent for approval by ${req.user.username}.`;
+        let notifEntityId = null;
 
         if (jobsInBatch.length === 1) {
             const jobId = jobsInBatch[0];
@@ -391,11 +392,12 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
             notifMsg = isNoPayment
                 ? `No payment requested for Job ${jobId} by ${req.user.username}.`
                 : `New payments for Job ${jobId} sent for approval by ${req.user.username}.`;
+            notifEntityId = jobId;
         }
 
         try {
-            await broadcastNotification('Accountant', notifTitle, notifMsg, 'action', notifLink);
-            await broadcastNotification('Administrator', notifTitle, notifMsg, 'action', notifLink);
+            await broadcastNotification('Accountant', notifTitle, notifMsg, 'action', notifLink, 'SHIPMENT', notifEntityId);
+            await broadcastNotification('Administrator', notifTitle, notifMsg, 'action', notifLink, 'SHIPMENT', notifEntityId);
 
         } catch (noteError) {
             console.error('Notification error:', noteError);
@@ -516,7 +518,7 @@ router.post('/process-batch', authenticateToken, async (req, res) => {
         // Notify Completed
         for (const job of completedJobs) {
             try {
-                await broadcastToAll('Job Completed', `Job ${job.id} (${job.customer}) is now Completed.`, 'success', `/registry?selectedJobId=${job.id}`);
+                await broadcastToAll('Job Completed', `Job ${job.id} (${job.customer}) is now Completed.`, 'success', `/registry?selectedJobId=${job.id}`, 'SHIPMENT', job.id);
                 await pool.query(
                     'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
                     [req.user.id, 'JOB_COMPLETED', `Job marked as Completed`, 'SHIPMENT', job.id]

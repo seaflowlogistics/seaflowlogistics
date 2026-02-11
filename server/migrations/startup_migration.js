@@ -59,6 +59,24 @@ export const runMigrations = async () => {
             console.log('Migration skipped: vessel_name column already exists');
         }
 
+        // Migration: Add notifications columns (entity_type, entity_id)
+        const checkNotificationCols = await client.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='notifications' AND column_name='entity_type'
+        `);
+
+        if (checkNotificationCols.rows.length === 0) {
+            console.log('Applying migration: Add entity_type/id columns to notifications table');
+            await client.query(`
+                ALTER TABLE notifications 
+                ADD COLUMN IF NOT EXISTS entity_type VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS entity_id VARCHAR(255)
+            `);
+        } else {
+            console.log('Migration skipped: notifications entity columns already exist');
+        }
+
         await client.query('COMMIT');
         console.log('Migration check completed.');
     } catch (err) {

@@ -77,7 +77,11 @@ const Notifications: React.FC = () => {
         if (!notification.is_read) {
             await handleMarkAsRead(notification.id);
         }
-        if (notification.link) {
+
+        // Navigate based on entity type if available
+        if (notification.entity_type === 'SHIPMENT' && notification.entity_id) {
+            navigate(`/registry?selectedJobId=${notification.entity_id}`);
+        } else if (notification.link) {
             if (notification.link.startsWith('/')) {
                 navigate(notification.link);
             } else {
