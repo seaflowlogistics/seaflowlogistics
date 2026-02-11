@@ -101,6 +101,12 @@ const ShipmentRegistry: React.FC = () => {
     // Auto-close details if job vanishes from list (e.g. status change moves it out of inbox)
     useEffect(() => {
         if (selectedJob && initialLoaded && !searchTerm) {
+            // If URL has selectedJobId, implies explicit navigation/intent, so don't auto-close
+            const searchParams = new URLSearchParams(location.search);
+            if (searchParams.get('selectedJobId') === selectedJob.id) {
+                return;
+            }
+
             const exists = jobs.find(j => j.id === selectedJob.id);
             if (!exists) {
                 setSelectedJob(null);
@@ -111,7 +117,7 @@ const ShipmentRegistry: React.FC = () => {
                 window.history.replaceState({}, '', url.toString());
             }
         }
-    }, [jobs, searchTerm, initialLoaded]);
+    }, [jobs, searchTerm, initialLoaded, location.search, selectedJob]);
 
     // Drawer State
     const [isBLDrawerOpen, setIsBLDrawerOpen] = useState(false);
