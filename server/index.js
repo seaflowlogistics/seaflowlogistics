@@ -21,6 +21,7 @@ import paymentItemsRoutes from './routes/payment_items.js';
 import containerRoutes from './routes/containers.js';
 import notificationRoutes from './routes/notifications.js';
 import filesRoutes from './routes/files.js';
+import reportRoutes from './routes/reports.js';
 
 import { runMigrations } from './migrations/startup_migration.js';
 
@@ -87,6 +88,7 @@ app.use('/api/payment-items', paymentItemsRoutes);
 app.use('/api/containers', containerRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/files', filesRoutes);
+app.use('/api/reports', reportRoutes);
 
 
 // Health check

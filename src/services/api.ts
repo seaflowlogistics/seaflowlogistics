@@ -266,4 +266,10 @@ export const notificationsAPI = {
     deleteAll: () => api.delete('/notifications/delete-all'),
 };
 
+// Reports API
+export const reportsAPI = {
+    getSummary: (params: { year?: number; type: 'Monthly' | 'Yearly' }) => api.get('/reports/summary', { params }),
+    download: (params: { year?: number; type: 'Monthly' | 'Yearly' }) => api.get('/reports/download', { params, responseType: 'blob' }),
+};
+
 export default api;
