@@ -9,9 +9,14 @@ import {
     CartesianGrid,
     Tooltip,
     Legend,
-    ResponsiveContainer
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell
 } from 'recharts';
-import { Loader2, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Download, PieChart as PieChartIcon } from 'lucide-react';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 const Reports: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -19,6 +24,10 @@ const Reports: React.FC = () => {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
     const [chartData, setChartData] = useState<any[]>([]);
+    const [expenseBreakdown, setExpenseBreakdown] = useState<{
+        company: { name: string; value: number }[];
+        customer: { name: string; value: number }[];
+    }>({ company: [], customer: [] });
 
     // Summary Stats (for the selected range)
     const [stats, setStats] = useState({
@@ -41,9 +50,10 @@ const Reports: React.FC = () => {
                 type: viewMode
             });
 
-            const { chartData, stats } = response.data;
+            const { chartData, stats, expenseBreakdown } = response.data;
             setChartData(chartData);
             setStats(stats);
+            setExpenseBreakdown(expenseBreakdown);
         } catch (error) {
             console.error("Failed to fetch report data", error);
         } finally {
@@ -244,30 +254,83 @@ const Reports: React.FC = () => {
                                             activeDot={{ r: 6 }}
                                             name="Invoiced"
                                         />
-
-                                        <Line
-                                            type="monotone"
-                                            dataKey="CompanyPaid"
-                                            stroke="#6366f1"
-                                            strokeWidth={2}
-                                            strokeDasharray="5 5"
-                                            dot={{ r: 3, strokeWidth: 2 }}
-                                            activeDot={{ r: 5 }}
-                                            name="Company Paid (Exp)"
-                                        />
-
-                                        <Line
-                                            type="monotone"
-                                            dataKey="CustomerPaid"
-                                            stroke="#8b5cf6"
-                                            strokeWidth={2}
-                                            strokeDasharray="5 5"
-                                            dot={{ r: 3, strokeWidth: 2 }}
-                                            activeDot={{ r: 5 }}
-                                            name="Customer Paid (Exp)"
-                                        />
                                     </LineChart>
                                 </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Expense Breakdown Pie Charts */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-7xl mx-auto">
+                            {/* Company Expenses */}
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                    <PieChartIcon className="w-5 h-5 text-indigo-600" />
+                                    Company Expenses ({selectedYear})
+                                </h3>
+                                <div className="h-[350px] w-full mt-4">
+                                    {expenseBreakdown.company.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={expenseBreakdown.company}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={100}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {expenseBreakdown.company.map((_entry: any, index: number) => (
+                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip formatter={(value: any) => `QAR ${(value || 0).toLocaleString()}`} />
+                                                <Legend />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-gray-400">No company expenses recorded</div>
+                                    )}
+                                </div>
+                                <div className="mt-4 text-center">
+                                    <p className="text-gray-500 text-sm">Total: <span className="font-bold text-gray-900">QAR {stats.companyPaid?.toLocaleString() || 0}</span></p>
+                                </div>
+                            </div>
+
+                            {/* Customer Expenses */}
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                    <PieChartIcon className="w-5 h-5 text-violet-600" />
+                                    Customer Expenses ({selectedYear})
+                                </h3>
+                                <div className="h-[350px] w-full mt-4">
+                                    {expenseBreakdown.customer.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={expenseBreakdown.customer}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={100}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {expenseBreakdown.customer.map((_entry: any, index: number) => (
+                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip formatter={(value: any) => `QAR ${(value || 0).toLocaleString()}`} />
+                                                <Legend />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-gray-400">No customer expenses recorded</div>
+                                    )}
+                                </div>
+                                <div className="mt-4 text-center">
+                                    <p className="text-gray-500 text-sm">Total: <span className="font-bold text-gray-900">QAR {stats.customerPaid?.toLocaleString() || 0}</span></p>
+                                </div>
                             </div>
                         </div>
                     </div>

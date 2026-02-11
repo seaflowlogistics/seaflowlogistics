@@ -61,17 +61,17 @@ router.get('/summary', authenticateToken, async (req, res) => {
                 WHERE i.status = 'Completed' AND (${type === 'Monthly' ? `EXTRACT(YEAR FROM i.created_at) = $1` : `i.created_at >= NOW() - INTERVAL '5 years'`})
                 GROUP BY time_unit
             `,
-            // Expenses (Job Payments)
-            Expenses: `
+            // Expenses (Job Payments) - Grouped by paid_by for counts, but we need vendor details for pie chart
+            ExpensesBreakdown: `
                 SELECT 
-                    ${type === 'Monthly' ? "EXTRACT(MONTH FROM paid_at)" : "EXTRACT(YEAR FROM paid_at)"} as time_unit,
                     paid_by,
+                    vendor,
                     COUNT(*) as count,
                     SUM(amount) as total_amount
                 FROM job_payments
                 WHERE status = 'Paid' 
                 AND (${type === 'Monthly' ? `EXTRACT(YEAR FROM paid_at) = $1` : `paid_at >= NOW() - INTERVAL '5 years'`})
-                GROUP BY time_unit, paid_by
+                GROUP BY paid_by, vendor
             `
         };
 
@@ -81,12 +81,10 @@ router.get('/summary', authenticateToken, async (req, res) => {
             pool.query(queries.Registered, params),
             pool.query(queries.Cleared, params),
             pool.query(queries.Invoiced, params),
-            pool.query(queries.Expenses, params)
+            pool.query(queries.ExpensesBreakdown, params)
         ]);
 
         // Process Logic
-        // Normalize time_unit keys (1-12 for months, YYYY for years)
-
         // Initialize Result Map
         const dataMap = new Map();
 
@@ -97,11 +95,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
                     name: m,
                     Registered: 0,
                     Cleared: 0,
-                    Invoiced: 0,
-                    CompanyPaid: 0,
-                    CustomerPaid: 0,
-                    CompanyPaidAmount: 0,
-                    CustomerPaidAmount: 0
+                    Invoiced: 0
                 });
             });
         } else {
@@ -111,11 +105,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
                     name: y.toString(),
                     Registered: 0,
                     Cleared: 0,
-                    Invoiced: 0,
-                    CompanyPaid: 0,
-                    CustomerPaid: 0,
-                    CompanyPaidAmount: 0,
-                    CustomerPaidAmount: 0
+                    Invoiced: 0
                 });
             }
         }
@@ -133,32 +123,41 @@ router.get('/summary', authenticateToken, async (req, res) => {
             const t = parseInt(r.time_unit);
             if (dataMap.has(t)) dataMap.get(t).Invoiced = parseInt(r.count);
         });
-        expensesRes.rows.forEach(r => {
-            const t = parseInt(r.time_unit);
-            if (dataMap.has(t)) {
-                const entry = dataMap.get(t);
-                if (r.paid_by === 'Company') {
-                    entry.CompanyPaid += parseInt(r.count);
-                    entry.CompanyPaidAmount += parseFloat(r.total_amount);
-                } else if (r.paid_by === 'Client' || r.paid_by === 'Customer') { // handle variations
-                    entry.CustomerPaid += parseInt(r.count);
-                    entry.CustomerPaidAmount += parseFloat(r.total_amount);
-                }
-            }
-        });
 
         const chartData = Array.from(dataMap.values());
+
+        // Process Expense Breakdown for Pie Charts
+        const expenseBreakdown = {
+            company: [],
+            customer: []
+        };
+
+        let totalCompanyPaid = 0;
+        let totalCustomerPaid = 0;
+
+        expensesRes.rows.forEach(r => {
+            const amount = parseFloat(r.total_amount);
+            const entry = { name: r.vendor || 'Unknown', value: amount };
+
+            if (r.paid_by === 'Company') {
+                totalCompanyPaid += amount;
+                expenseBreakdown.company.push(entry);
+            } else if (r.paid_by === 'Client' || r.paid_by === 'Customer') {
+                totalCustomerPaid += amount;
+                expenseBreakdown.customer.push(entry);
+            }
+        });
 
         // Summary Stats
         const stats = {
             registered: chartData.reduce((acc, curr) => acc + curr.Registered, 0),
             cleared: chartData.reduce((acc, curr) => acc + curr.Cleared, 0),
             invoiced: chartData.reduce((acc, curr) => acc + curr.Invoiced, 0),
-            companyPaid: chartData.reduce((acc, curr) => acc + curr.CompanyPaid, 0),
-            customerPaid: chartData.reduce((acc, curr) => acc + curr.CustomerPaid, 0),
+            companyPaid: totalCompanyPaid,
+            customerPaid: totalCustomerPaid,
         };
 
-        res.json({ chartData, stats });
+        res.json({ chartData, stats, expenseBreakdown });
 
     } catch (error) {
         console.error('Reports Summary Error:', error);
@@ -216,8 +215,40 @@ router.get('/download', authenticateToken, async (req, res) => {
 
         // Create Excel
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(result.rows);
-        XLSX.utils.book_append_sheet(wb, ws, "Report");
+
+        // Sheet 1: Jobs
+        const wsJobs = XLSX.utils.json_to_sheet(result.rows);
+        XLSX.utils.book_append_sheet(wb, wsJobs, "Shipment Details");
+
+        // Sheet 2: Expense Summary (Company Paid)
+        const companyExpQuery = `
+             SELECT 
+                vendor as "Vendor",
+                COUNT(*) as "Count",
+                SUM(amount) as "Total Amount"
+            FROM job_payments
+            WHERE status = 'Paid' AND paid_by = 'Company'
+            ${type === 'Monthly' ? `AND EXTRACT(YEAR FROM paid_at) = $1` : `AND paid_at >= NOW() - INTERVAL '5 years'`}
+            GROUP BY vendor
+        `;
+        const companyExp = await pool.query(companyExpQuery, params);
+        const wsCompany = XLSX.utils.json_to_sheet(companyExp.rows);
+        XLSX.utils.book_append_sheet(wb, wsCompany, "Company Expenses");
+
+        // Sheet 3: Expense Summary (Customer Paid)
+        const customerExpQuery = `
+             SELECT 
+                vendor as "Vendor",
+                COUNT(*) as "Count",
+                SUM(amount) as "Total Amount"
+            FROM job_payments
+            WHERE status = 'Paid' AND paid_by IN ('Client', 'Customer')
+            ${type === 'Monthly' ? `AND EXTRACT(YEAR FROM paid_at) = $1` : `AND paid_at >= NOW() - INTERVAL '5 years'`}
+            GROUP BY vendor
+        `;
+        const customerExp = await pool.query(customerExpQuery, params);
+        const wsCustomer = XLSX.utils.json_to_sheet(customerExp.rows);
+        XLSX.utils.book_append_sheet(wb, wsCustomer, "Customer Expenses");
 
         const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
