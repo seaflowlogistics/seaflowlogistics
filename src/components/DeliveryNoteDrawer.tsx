@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, ArrowLeft } from 'lucide-react';
+import { vesselsAPI } from '../services/api';
 
 interface DeliveryNoteDrawerProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ interface DeliveryNoteDrawerProps {
 
 
 const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose, selectedSchedules, onSave }) => {
+    const [vessels, setVessels] = useState<any[]>([]);
     const [step, setStep] = useState(1);
     const [itemDetails, setItemDetails] = useState<Record<string, { shortage: string; damaged: string; remarks: string }>>({});
 
@@ -33,6 +35,10 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
         if (isOpen) {
 
             setStep(1); // Reset step
+            // Load vessels
+            vesselsAPI.getAll()
+                .then(res => setVessels(res.data || []))
+                .catch(err => console.error("Failed to load vessels", err));
         }
     }, [isOpen, selectedSchedules]);
 
@@ -159,6 +165,35 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
                                     {/* Conditional Fields for DHONI */}
                                     {transportMode === 'DHONI' && (
                                         <div className="grid grid-cols-1 gap-4 animate-fade-in">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-500 mb-1">Dhoani Name (Vessel)</label>
+                                                <select
+                                                    className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-indigo-500"
+                                                    onChange={(e) => {
+                                                        const vesselId = e.target.value;
+                                                        const vessel = vessels.find(v => v.id.toString() === vesselId);
+                                                        if (vessel) {
+                                                            setTransportDetails(prev => ({
+                                                                ...prev,
+                                                                captainName: vessel.captain_name || vessel.name || '', // Fallback to vessel name if captain name missing? No, user said Fill Captain Name.
+                                                                captainContact: vessel.captain_number || prev.captainContact
+                                                            }));
+                                                            // If captain_name is empty in DB, prefer empty string or keep previous? 
+                                                            // User said "automatically filled from the same vessel". 
+                                                            // I'll assume vessel.captain_name is what we want.
+                                                            if (vessel.captain_name) {
+                                                                setTransportDetails(prev => ({ ...prev, captainName: vessel.captain_name }));
+                                                            }
+                                                        }
+                                                    }}
+                                                >
+                                                    <option value="">Select Vessel</option>
+                                                    {vessels.map((v: any) => (
+                                                        <option key={v.id} value={v.id}>{v.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="block text-xs font-semibold text-gray-500 mb-1">Captain Name</label>

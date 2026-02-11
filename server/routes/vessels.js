@@ -21,7 +21,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // Create vessel
 router.post('/', authenticateToken, async (req, res) => {
-    const { name, registry_number, type, owner_number, captain_number } = req.body;
+    const { name, registry_number, type, owner_number, captain_number, captain_name } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -29,8 +29,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'INSERT INTO vessels (name, registry_number, type, owner_number, captain_number) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [name, registry_number, type, owner_number, captain_number]
+            'INSERT INTO vessels (name, registry_number, type, owner_number, captain_number, captain_name) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [name, registry_number, type, owner_number, captain_number, captain_name]
         );
 
         await logActivity(req.user.id, 'CREATE_VESSEL', `Created vessel: ${name}`, 'VESSEL', result.rows[0].id);
@@ -45,7 +45,7 @@ router.post('/', authenticateToken, async (req, res) => {
 // Update vessel
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { name, registry_number, type, owner_number, captain_number } = req.body;
+    const { name, registry_number, type, owner_number, captain_number, captain_name } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -53,8 +53,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'UPDATE vessels SET name = $1, registry_number = $2, type = $3, owner_number = $4, captain_number = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
-            [name, registry_number, type, owner_number, captain_number, id]
+            'UPDATE vessels SET name = $1, registry_number = $2, type = $3, owner_number = $4, captain_number = $5, captain_name = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING *',
+            [name, registry_number, type, owner_number, captain_number, captain_name, id]
         );
 
         if (result.rows.length === 0) {
@@ -142,12 +142,16 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             // Captain No
             const captain_number = normalizedRow['captain no'] || normalizedRow['captain number'] || normalizedRow['captain contact'] || normalizedRow['captain phone'];
 
+            // Captain Name
+            const captain_name = normalizedRow['captain name'] || normalizedRow['captain'];
+
+
             if (!name) continue;
 
             try {
                 await pool.query(
-                    'INSERT INTO vessels (name, registry_number, type, owner_number, captain_number) VALUES ($1, $2, $3, $4, $5)',
-                    [name, registry_number || null, type, owner_number || null, captain_number || null]
+                    'INSERT INTO vessels (name, registry_number, type, owner_number, captain_number, captain_name) VALUES ($1, $2, $3, $4, $5, $6)',
+                    [name, registry_number || null, type, owner_number || null, captain_number || null, captain_name || null]
                 );
                 successCount++;
             } catch (err) {

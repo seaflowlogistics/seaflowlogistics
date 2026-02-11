@@ -9,7 +9,33 @@ const VesselsSettings: React.FC = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [importing, setImporting] = useState(false);
 
-    // ... (rest of state)
+    const [editingId, setEditingId] = useState<string | null>(null);
+
+    // Form State
+    const [formData, setFormData] = useState({
+        name: '',
+        registry_number: '',
+        type: 'Dhoni',
+        owner_number: '',
+        captain_name: '',
+        captain_number: ''
+    });
+
+    const fetchVessels = async () => {
+        try {
+            setLoading(true);
+            const response = await vesselsAPI.getAll();
+            setVessels(response.data);
+        } catch (error) {
+            console.error('Failed to fetch vessels', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchVessels();
+    }, []);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -39,32 +65,12 @@ const VesselsSettings: React.FC = () => {
 
 
 
-    const [editingId, setEditingId] = useState<string | null>(null);
 
-    // Form State
-    const [formData, setFormData] = useState({
-        name: '',
-        registry_number: '',
-        type: 'Dhoni',
-        owner_number: '',
-        captain_number: ''
-    });
 
-    const fetchVessels = async () => {
-        try {
-            setLoading(true);
-            const response = await vesselsAPI.getAll();
-            setVessels(response.data);
-        } catch (error) {
-            console.error('Failed to fetch vessels', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
-    useEffect(() => {
-        fetchVessels();
-    }, []);
+
+
+
 
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -76,7 +82,7 @@ const VesselsSettings: React.FC = () => {
             }
             setShowAddModal(false);
             setEditingId(null);
-            setFormData({ name: '', registry_number: '', type: 'Dhoni', owner_number: '', captain_number: '' });
+            setFormData({ name: '', registry_number: '', type: 'Dhoni', owner_number: '', captain_name: '', captain_number: '' });
             fetchVessels();
         } catch (error) {
             console.error('Failed to save vessel', error);
@@ -91,6 +97,7 @@ const VesselsSettings: React.FC = () => {
             registry_number: vessel.registry_number || '',
             type: vessel.type || 'Dhoni',
             owner_number: vessel.owner_number || '',
+            captain_name: vessel.captain_name || '',
             captain_number: vessel.captain_number || ''
         });
         setShowAddModal(true);
@@ -99,7 +106,7 @@ const VesselsSettings: React.FC = () => {
     const closeModal = () => {
         setShowAddModal(false);
         setEditingId(null);
-        setFormData({ name: '', registry_number: '', type: 'Dhoni', owner_number: '', captain_number: '' });
+        setFormData({ name: '', registry_number: '', type: 'Dhoni', owner_number: '', captain_name: '', captain_number: '' });
     };
 
     const handleDelete = async (id: string) => {
@@ -139,7 +146,7 @@ const VesselsSettings: React.FC = () => {
                 </div>
                 <div className="flex gap-3">
                     <label className={`px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm cursor-pointer ${importing ? 'opacity-50 cursor-wait' : ''}`}>
-                        {/* TODO: Add FileUp icon */}
+
                         <span className="w-4 h-4 font-bold flex items-center justify-center">↑</span>
                         {importing ? 'Importing...' : 'Import Excel'}
                         <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} disabled={importing} />
@@ -165,7 +172,7 @@ const VesselsSettings: React.FC = () => {
                     <button
                         onClick={() => {
                             setEditingId(null);
-                            setFormData({ name: '', registry_number: '', type: 'Dhoni', owner_number: '', captain_number: '' });
+                            setFormData({ name: '', registry_number: '', type: 'Dhoni', owner_number: '', captain_name: '', captain_number: '' });
                             setShowAddModal(true);
                         }}
                         className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
@@ -198,6 +205,7 @@ const VesselsSettings: React.FC = () => {
                                     <th className="py-3 px-4 font-semibold">Registry No.</th>
                                     <th className="py-3 px-4 font-semibold">Type</th>
                                     <th className="py-3 px-4 font-semibold">Owner No.</th>
+                                    <th className="py-3 px-4 font-semibold">Captain Name</th>
                                     <th className="py-3 px-4 font-semibold">Captain No.</th>
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
@@ -209,6 +217,7 @@ const VesselsSettings: React.FC = () => {
                                         <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.registry_number || '-'}</td>
                                         <td className="py-3 px-4 text-gray-600">{item.type || '-'}</td>
                                         <td className="py-3 px-4 text-gray-600 font-mono">{item.owner_number || '-'}</td>
+                                        <td className="py-3 px-4 text-gray-600">{item.captain_name || '-'}</td>
                                         <td className="py-3 px-4 text-gray-600 font-mono">{item.captain_number || '-'}</td>
                                         <td className="py-3 px-4 text-right flex justify-end gap-2">
                                             <button
@@ -288,6 +297,16 @@ const VesselsSettings: React.FC = () => {
                                     value={formData.owner_number}
                                     onChange={e => setFormData({ ...formData, owner_number: e.target.value })}
                                     placeholder="Contact Number"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Captain Name</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                                    value={formData.captain_name}
+                                    onChange={e => setFormData({ ...formData, captain_name: e.target.value })}
+                                    placeholder="Captain Name"
                                 />
                             </div>
                             <div>
