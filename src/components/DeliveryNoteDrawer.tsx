@@ -175,15 +175,9 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
                                                         if (vessel) {
                                                             setTransportDetails(prev => ({
                                                                 ...prev,
-                                                                captainName: vessel.captain_name || vessel.name || '', // Fallback to vessel name if captain name missing? No, user said Fill Captain Name.
-                                                                captainContact: vessel.captain_number || prev.captainContact
+                                                                captainName: vessel.captain_name || '',
+                                                                captainContact: vessel.captain_number || ''
                                                             }));
-                                                            // If captain_name is empty in DB, prefer empty string or keep previous? 
-                                                            // User said "automatically filled from the same vessel". 
-                                                            // I'll assume vessel.captain_name is what we want.
-                                                            if (vessel.captain_name) {
-                                                                setTransportDetails(prev => ({ ...prev, captainName: vessel.captain_name }));
-                                                            }
                                                         }
                                                     }}
                                                 >
