@@ -78,6 +78,7 @@ interface DeliveryNote {
     captain_name?: string;
     captain_contact?: string;
     discharge_location?: string;
+    vessel_name?: string;
 }
 
 const DeliveryNotes: React.FC = () => {
@@ -427,6 +428,7 @@ const DeliveryNotes: React.FC = () => {
                                                 {selectedNote?.transport_mode === 'DHONI' ? (
                                                     <span>
                                                         {[
+                                                            selectedNote.vessel_name,
                                                             selectedNote.captain_name,
                                                             selectedNote.captain_contact
                                                         ].filter(Boolean).join(' / ')}

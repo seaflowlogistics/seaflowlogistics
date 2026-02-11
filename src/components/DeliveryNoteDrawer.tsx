@@ -22,7 +22,8 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
     const [transportDetails, setTransportDetails] = useState({
         captainName: '',
         captainContact: '',
-        dischargeLocation: ''
+        dischargeLocation: '',
+        vesselName: ''
     });
 
     const [commonDetails, setCommonDetails] = useState({
@@ -39,6 +40,19 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
             vesselsAPI.getAll()
                 .then(res => setVessels(res.data || []))
                 .catch(err => console.error("Failed to load vessels", err));
+
+            // Reset form
+            setTransportDetails({
+                captainName: '',
+                captainContact: '',
+                dischargeLocation: '',
+                vesselName: ''
+            });
+            setCommonDetails({
+                unloadingDate: '',
+                comments: ''
+            });
+            setItemDetails({});
         }
     }, [isOpen, selectedSchedules]);
 
@@ -53,6 +67,8 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
             }
         }));
     };
+
+
 
 
 
@@ -176,7 +192,15 @@ const DeliveryNoteDrawer: React.FC<DeliveryNoteDrawerProps> = ({ isOpen, onClose
                                                             setTransportDetails(prev => ({
                                                                 ...prev,
                                                                 captainName: vessel.captain_name || '',
-                                                                captainContact: vessel.captain_number || ''
+                                                                captainContact: vessel.captain_number || '',
+                                                                vesselName: vessel.name || ''
+                                                            }));
+                                                        } else {
+                                                            setTransportDetails(prev => ({
+                                                                ...prev,
+                                                                captainName: '',
+                                                                captainContact: '',
+                                                                vesselName: ''
                                                             }));
                                                         }
                                                     }}

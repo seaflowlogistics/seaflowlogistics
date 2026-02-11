@@ -55,7 +55,7 @@ router.post('/', authenticateToken, async (req, res) => {
         await client.query('BEGIN');
 
         console.log('Creating Delivery Note:', req.body);
-        const { items, transportMode, captainName, captainContact, dischargeLocation, unloadingDate, comments } = req.body;
+        const { items, transportMode, captainName, captainContact, dischargeLocation, unloadingDate, comments, vesselName } = req.body;
 
         if (!items || items.length === 0) {
             throw new Error('No items provided for Delivery Note');
@@ -80,13 +80,13 @@ router.post('/', authenticateToken, async (req, res) => {
             `INSERT INTO delivery_notes (
                 id, consignee, exporter, issued_date, issued_by, status, 
                 unloading_date, comments,
-                transport_mode, captain_name, captain_contact, discharge_location
+                transport_mode, captain_name, captain_contact, discharge_location, vessel_name
             )
-             VALUES ($1, $2, $3, CURRENT_DATE, $4, 'Pending', $5, $6, $7, $8, $9, $10)`,
+             VALUES ($1, $2, $3, CURRENT_DATE, $4, 'Pending', $5, $6, $7, $8, $9, $10, $11)`,
             [
                 dnId, consignee, exporter, issuedBy,
                 unloadingDate || null, comments,
-                transportMode, captainName, captainContact, dischargeLocation
+                transportMode, captainName, captainContact, dischargeLocation, vesselName
             ]
         );
 
