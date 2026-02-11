@@ -181,7 +181,7 @@ router.get('/download', authenticateToken, async (req, res) => {
                 TO_CHAR(s.created_at, 'YYYY-MM-DD') as "Registered Date",
                 s.status as "Status",
                 (SELECT TO_CHAR(dn.created_at, 'YYYY-MM-DD') FROM delivery_notes dn JOIN delivery_note_items dni ON dn.id = dni.delivery_note_id WHERE dni.job_id = s.id LIMIT 1) as "Cleared Date",
-                (SELECT i.invoice_no FROM invoices i WHERE i.shipment_id = s.id LIMIT 1) as "Invoice No",
+                (SELECT i.id FROM invoices i WHERE i.shipment_id = s.id LIMIT 1) as "Invoice No",
                 
                 -- Expense Summaries
                 COALESCE((SELECT SUM(amount) FROM job_payments WHERE job_id = s.id AND status = 'Paid' AND paid_by = 'Company'), 0) as "Company Paid Exp",
