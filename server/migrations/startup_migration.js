@@ -42,6 +42,23 @@ export const runMigrations = async () => {
             console.log('Migration skipped: captain_name column already exists');
         }
 
+        // Migration: Add vessel_name column to delivery_notes table
+        const checkVesselNameColumn = await client.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='delivery_notes' AND column_name='vessel_name'
+        `);
+
+        if (checkVesselNameColumn.rows.length === 0) {
+            console.log('Applying migration: Add vessel_name column to delivery_notes table');
+            await client.query(`
+                ALTER TABLE delivery_notes 
+                ADD COLUMN IF NOT EXISTS vessel_name VARCHAR(255)
+            `);
+        } else {
+            console.log('Migration skipped: vessel_name column already exists');
+        }
+
         await client.query('COMMIT');
         console.log('Migration check completed.');
     } catch (err) {
