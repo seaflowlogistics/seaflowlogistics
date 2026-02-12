@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Anchor, Plus, Trash2, Search, X, Edit2 } from 'lucide-react';
+import { Anchor, Plus, Trash2, Search, X, Edit2, FileDown } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { vesselsAPI } from '../../services/api';
 
 const VesselsSettings: React.FC = () => {
@@ -124,6 +125,22 @@ const VesselsSettings: React.FC = () => {
         (v.registry_number && v.registry_number.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    const handleExport = () => {
+        const dataToExport = filteredVessels.map(item => ({
+            Name: item.name,
+            'Registry Number': item.registry_number || '-',
+            Type: item.type || '-',
+            'Owner Number': item.owner_number || '-',
+            'Captain Name': item.captain_name || '-',
+            'Captain Number': item.captain_number || '-'
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Vessels");
+        XLSX.writeFile(wb, `Vessels_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
     return (
         <div className="flex-1 flex flex-col h-full bg-white">
             <div className="px-8 py-8 flex items-center justify-between">
@@ -151,6 +168,13 @@ const VesselsSettings: React.FC = () => {
                         {importing ? 'Importing...' : 'Import Excel'}
                         <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} disabled={importing} />
                     </label>
+                    <button
+                        onClick={handleExport}
+                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
+                    >
+                        <FileDown className="w-4 h-4" />
+                        Export
+                    </button>
                     <button
                         onClick={async () => {
                             if (window.confirm('Are you sure you want to DELETE ALL vessels? This action cannot be undone.')) {

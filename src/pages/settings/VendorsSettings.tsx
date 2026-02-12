@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Briefcase, FileUp, Plus, Trash2, Search, X, Edit2 } from 'lucide-react';
+import { Briefcase, FileUp, Plus, Trash2, Search, X, Edit2, FileDown } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { vendorsAPI } from '../../services/api';
 
 const VendorsSettings: React.FC = () => {
@@ -139,6 +140,26 @@ const VendorsSettings: React.FC = () => {
         (v.email && v.email.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    const handleExport = () => {
+        const dataToExport = filteredVendors.map(item => ({
+            'Display Name': item.name,
+            'Company Name': item.company_name || '-',
+            Email: item.email || '-',
+            Phone: item.phone || '-',
+            Currency: item.currency || '-',
+            'Billing Address': item.billing_address || '-',
+            'Billing Street': item.billing_street || '-',
+            'Billing Country': item.billing_country || '-',
+            'Bank Name': item.bank_name || '-',
+            'Account Number': item.account_number || '-'
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Vendors");
+        XLSX.writeFile(wb, `Vendors_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
     return (
         <div className="flex-1 flex flex-col h-full bg-white">
             <div className="px-8 py-8 flex items-center justify-between">
@@ -165,6 +186,13 @@ const VendorsSettings: React.FC = () => {
                         {importing ? 'Importing...' : 'Import Excel'}
                         <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} disabled={importing} />
                     </label>
+                    <button
+                        onClick={handleExport}
+                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
+                    >
+                        <FileDown className="w-4 h-4" />
+                        Export
+                    </button>
                     <button
                         onClick={async () => {
                             if (window.confirm('Are you sure you want to DELETE ALL vendors? This action cannot be undone.')) {

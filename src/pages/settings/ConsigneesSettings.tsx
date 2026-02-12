@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileUp, Plus, Trash2, Search, X, Edit2 } from 'lucide-react';
+import { Users, FileUp, Plus, Trash2, Search, X, Edit2, FileDown } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { consigneesAPI } from '../../services/api';
 
 const ConsigneesSettings: React.FC = () => {
@@ -144,6 +145,25 @@ const ConsigneesSettings: React.FC = () => {
         return matchesSearch && type === viewType;
     });
 
+    const handleExport = () => {
+        const dataToExport = filteredConsignees.map(item => ({
+            Name: item.name,
+            Type: item.type || 'Individual',
+            'ID / Reg No': viewType === 'Individual' ? (item.passport_id || '-') : (item.company_reg_no || '-'),
+            ...(viewType === 'Company' ? { 'C Number': item.c_number || '-' } : {}),
+            ...(viewType === 'Company' ? { 'GST TIN': item.gst_tin || '-' } : {}),
+            Email: item.email || '-',
+            Phone: item.phone || '-',
+            Address: item.address || '',
+            Code: item.code || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Consignees");
+        XLSX.writeFile(wb, `Consignees_${viewType}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
     return (
         <div className="flex-1 flex flex-col h-full bg-white">
             {/* Header */}
@@ -172,6 +192,13 @@ const ConsigneesSettings: React.FC = () => {
                         {importing ? 'Importing...' : 'Import Excel'}
                         <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} disabled={importing} />
                     </label>
+                    <button
+                        onClick={handleExport}
+                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
+                    >
+                        <FileDown className="w-4 h-4" />
+                        Export
+                    </button>
                     <button
                         onClick={async () => {
                             if (window.confirm('Are you sure you want to DELETE ALL consignees? This action cannot be undone.')) {

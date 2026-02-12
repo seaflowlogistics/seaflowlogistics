@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
-import { Users, FileUp, Plus, Trash2, Search, X, Edit2 } from 'lucide-react';
+import { Users, FileUp, Plus, Trash2, Search, X, Edit2, FileDown } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { customersAPI } from '../../services/api';
 
 const CustomersSettings: React.FC = () => {
@@ -164,6 +164,23 @@ const CustomersSettings: React.FC = () => {
         return matchesSearch && cType === activeTab;
     });
 
+    const handleExport = () => {
+        const dataToExport = filteredCustomers.map(item => ({
+            Name: item.name,
+            Type: item.type || 'Individual',
+            'ID / Reg No': item.code || '-',
+            Email: item.email || '-',
+            Phone: item.phone || '-',
+            Address: item.address || '',
+            ...(activeTab === 'Company' ? { 'GST TIN': item.gst_tin || '-' } : {})
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Customers");
+        XLSX.writeFile(wb, `Customers_${activeTab}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
     return (
         <div className="flex-1 flex flex-col h-full bg-white">
             <div className="px-8 py-8 flex items-center justify-between">
@@ -214,6 +231,14 @@ const CustomersSettings: React.FC = () => {
                         {importing ? 'Importing...' : 'Import Excel'}
                         <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} disabled={importing} />
                     </label>
+
+                    <button
+                        onClick={handleExport}
+                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
+                    >
+                        <FileDown className="w-4 h-4" />
+                        Export
+                    </button>
 
                     <button
                         onClick={() => {
