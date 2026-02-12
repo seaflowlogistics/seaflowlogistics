@@ -9,6 +9,7 @@ import QRCode from 'qrcode';
 const router = express.Router();
 
 import crypto from 'crypto';
+import { sendPasswordResetEmail } from '../utils/email.js';
 
 // ... (imports)
 
@@ -268,42 +269,39 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     try {
-        const result = await pool.query('SELECT id, username FROM users WHERE email = $1', [email]);
+        const trimmedEmail = email.trim().toLowerCase();
+        console.log(`[Forgot Password] Processing request for: ${trimmedEmail}`);
+
+        const result = await pool.query('SELECT id, username FROM users WHERE LOWER(email) = $1', [trimmedEmail]);
 
         if (result.rows.length === 0) {
+            console.log(`[Forgot Password] No user found for email: ${trimmedEmail}`);
             // For security, do not reveal if the email exists
             return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
         }
 
         const user = result.rows[0];
+        console.log(`[Forgot Password] Found user: ${user.username} (ID: ${user.id})`);
 
-        // Generate Token (simple random string for now, could use crypto.randomBytes)
-        // Using crypto would require importing it, but let's stick to a simple secure enough random string for this context or use jwt
-        // Let's use jwt as we already have it imported, it's easy to verify and can contain expiration
+        // Generate Token
         const token = jwt.sign(
             { id: user.id, type: 'reset' },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
-        // Store token hash in DB (optional if using stateless JWT, but prompt implied storing random password/token flow. 
-        // Although JWT is self-contained. Let's strictly follow "add column reset_token" from migration)
-        // Actually, if we use JWT we don't strictly need to store it if we just verify signature, 
-        // BUT storing it allows us to invalidate it after use (single use).
-
-        // Let's store it to ensure single use and valid tracking
+        // Store token hash in DB
         await pool.query(
             'UPDATE users SET reset_password_token = $1, reset_password_expires = NOW() + INTERVAL \'1 hour\' WHERE id = $2',
             [token, user.id]
         );
 
-        // Send Email (Async)
-        import('../utils/email.js').then(({ sendPasswordResetEmail }) => {
-            sendPasswordResetEmail(email, token).catch(err => {
-                console.error('Failed to send password reset email (async):', err);
-            });
+        // Send Email
+        console.log(`[Forgot Password] Attempting to send reset email to: ${email}`);
+        sendPasswordResetEmail(email, token).then(() => {
+            console.log(`[Forgot Password] Reset email sent successfully to: ${email}`);
         }).catch(err => {
-            console.error('Failed to import email utils:', err);
+            console.error(`[Forgot Password] Failed to send reset email to ${email}:`, err);
         });
 
         res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
