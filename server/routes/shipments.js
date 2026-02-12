@@ -485,7 +485,15 @@ router.get('/', authenticateToken, async (req, res) => {
         const conditions = [];
 
         if (search) {
-            conditions.push(`(s.id ILIKE $${params.length + 1} OR s.customer ILIKE $${params.length + 1} OR s.sender_name ILIKE $${params.length + 1})`);
+            conditions.push(`(
+                s.id ILIKE $${params.length + 1} 
+                OR s.customer ILIKE $${params.length + 1} 
+                OR s.sender_name ILIKE $${params.length + 1}
+                OR s.invoice_no ILIKE $${params.length + 1}
+                OR s.customs_r_form ILIKE $${params.length + 1}
+                OR i.id ILIKE $${params.length + 1}
+                OR EXISTS (SELECT 1 FROM shipment_bls sb WHERE sb.shipment_id = s.id AND sb.master_bl ILIKE $${params.length + 1})
+            )`);
             params.push(`%${search}%`);
         }
 
@@ -708,6 +716,16 @@ router.post('/:id/bls', authenticateToken, async (req, res) => {
         const { id } = req.params;
         const { master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent, containers } = req.body;
 
+        if (master_bl) {
+            const check = await pool.query(
+                'SELECT shipment_id FROM shipment_bls WHERE master_bl = $1',
+                [master_bl]
+            );
+            if (check.rows.length > 0) {
+                return res.status(400).json({ error: `BL Number "${master_bl}" already exists in Job ${check.rows[0].shipment_id}` });
+            }
+        }
+
         // Schema update handled by migration 037_add_packages_to_shipment_containers.sql
 
         // Allow legacy packages input if containers is missing, but prefer containers
@@ -755,6 +773,16 @@ router.put('/:id/bls/:blId', authenticateToken, async (req, res) => {
     try {
         const { id, blId } = req.params;
         const { master_bl, house_bl, loading_port, vessel, etd, eta, delivery_agent, containers } = req.body;
+
+        if (master_bl) {
+            const check = await pool.query(
+                'SELECT shipment_id FROM shipment_bls WHERE master_bl = $1 AND id != $2',
+                [master_bl, blId]
+            );
+            if (check.rows.length > 0) {
+                return res.status(400).json({ error: `BL Number "${master_bl}" already exists in Job ${check.rows[0].shipment_id}` });
+            }
+        }
 
         // Schema update handled by migration 037_add_packages_to_shipment_containers.sql
 
@@ -945,8 +973,20 @@ router.put('/:id', authenticateToken, async (req, res) => {
             no_documents // ADDED
         } = req.body;
 
+        // Validations for Duplicates
+        if (invoice_no) {
+            const check = await pool.query('SELECT id FROM shipments WHERE invoice_no = $1 AND id != $2', [invoice_no, id]);
+            if (check.rows.length > 0) {
+                return res.status(400).json({ error: `Shipment Invoice No "${invoice_no}" already exists in Job ${check.rows[0].id}` });
+            }
+        }
 
-
+        if (customs_r_form) {
+            const check = await pool.query('SELECT id FROM shipments WHERE customs_r_form = $1 AND id != $2', [customs_r_form, id]);
+            if (check.rows.length > 0) {
+                return res.status(400).json({ error: `Customs R Form "${customs_r_form}" already exists in Job ${check.rows[0].id}` });
+            }
+        }
 
         await pool.query('BEGIN');
 
