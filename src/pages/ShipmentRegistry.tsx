@@ -139,7 +139,7 @@ const ShipmentRegistry: React.FC = () => {
 
     // Drawer State
     const [isBLDrawerOpen, setIsBLDrawerOpen] = useState(false);
-    const [isPopupOpen, setIsPopupOpen] = useState(false);
+
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [popupJob, setPopupJob] = useState<any | null>(null);
     const [popupData, setPopupData] = useState<any | null>(null);
