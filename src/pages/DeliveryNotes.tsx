@@ -30,6 +30,8 @@ interface DeliveryNoteItem {
     package_type?: string;
     container_no?: string;
     schedule_port?: string; // Fetched from backend join
+    transport_mode?: string;
+    shipment_type?: string;
 }
 
 interface DeliveryNoteVehicle {
@@ -336,12 +338,13 @@ const DeliveryNotes: React.FC = () => {
                                 <thead className="bg-gray-200 font-bold border-y border-gray-400">
                                     {(() => {
                                         // Helper to decide if we show container column
-                                        const isSea = selectedNote?.transport_mode === 'SEA';
-                                        // If any item is EXP, we hide container? Or if ALL are EXP? Usually a DN is for one mode/type.
-                                        // Let's assume if any item is EXP, we hide it as per request "export no need".
-                                        // Or better: Show if Sea and NOT Export.
-                                        // We check the first item's type as a proxy if we assume homogeneity, or check if any item is EXP.
-                                        const isExport = selectedNote?.items?.some((i: any) => i.shipment_type === 'EXP');
+                                        // Check main note transport mode OR check first item's transport mode as fallback
+                                        const noteMode = selectedNote?.transport_mode || selectedNote?.items?.[0]?.transport_mode || '';
+                                        const isSea = noteMode.toUpperCase() === 'SEA';
+
+                                        // Check if any item is EXPORT
+                                        const isExport = selectedNote?.items?.some((i: any) => (i.shipment_type || '').toUpperCase() === 'EXP');
+
                                         const showContainer = isSea && !isExport;
 
                                         return (
@@ -359,8 +362,9 @@ const DeliveryNotes: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {selectedNote?.items?.map((item, idx) => {
-                                        const isSea = selectedNote?.transport_mode === 'SEA';
-                                        const isExport = selectedNote?.items?.some((i: any) => i.shipment_type === 'EXP');
+                                        const noteMode = selectedNote?.transport_mode || selectedNote?.items?.[0]?.transport_mode || '';
+                                        const isSea = noteMode.toUpperCase() === 'SEA';
+                                        const isExport = selectedNote?.items?.some((i: any) => (i.shipment_type || '').toUpperCase() === 'EXP');
                                         const showContainer = isSea && !isExport;
 
                                         return (
