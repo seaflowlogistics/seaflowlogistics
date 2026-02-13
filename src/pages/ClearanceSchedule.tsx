@@ -7,6 +7,40 @@ import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 import ClearanceDetailsDrawer from '../components/ClearanceDetailsDrawer';
 import DeliveryNoteDrawer from '../components/DeliveryNoteDrawer';
 
+const formatWeight = (val: any): string => {
+    if (val === undefined || val === null || val === '') return '-';
+
+    let content = val;
+    // Attempt to parse JSON string
+    if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) {
+        try {
+            content = JSON.parse(val);
+        } catch (e) {
+            // Failed to parse, use valid string
+        }
+    }
+
+    // If it's an object (or array), extract values
+    if (typeof content === 'object' && content !== null) {
+        if (Array.isArray(content)) {
+            if (content.length > 0) content = content[0];
+        } else {
+            // If object, take first value. 
+            // Handles cases like {"": "0"} or {"weight": 500}
+            const values = Object.values(content);
+            if (values.length > 0) content = values[0];
+        }
+    }
+
+    // Try to parse as float
+    const floatVal = parseFloat(String(content));
+    if (!isNaN(floatVal)) {
+        return floatVal.toString();
+    }
+
+    return String(content);
+};
+
 const ClearanceSchedule: React.FC = () => {
     const { hasRole } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
@@ -359,7 +393,7 @@ const ClearanceSchedule: React.FC = () => {
                                                             <td className="py-4 px-6 text-sm text-gray-600">
                                                                 {(() => {
                                                                     const job = shipmentsList.find((s: any) => s.id === item.job_id);
-                                                                    return item.weight || item.gross_weight || job?.weight || item.job?.weight || '-';
+                                                                    return formatWeight(item.weight || item.gross_weight || job?.weight || item.job?.weight);
                                                                 })()}
                                                             </td>
                                                             {/* No. of Packages */}
@@ -527,7 +561,7 @@ const ClearanceSchedule: React.FC = () => {
                                                             <td className="py-4 px-6 text-sm text-gray-600">
                                                                 {(() => {
                                                                     const job = shipmentsList.find((s: any) => s.id === item.job_id);
-                                                                    return item.weight || item.gross_weight || job?.weight || item.job?.weight || '-';
+                                                                    return formatWeight(item.weight || item.gross_weight || job?.weight || item.job?.weight);
                                                                 })()}
                                                             </td>
                                                             {/* No. of Packages */}
