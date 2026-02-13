@@ -257,15 +257,18 @@ const ClearanceSchedule: React.FC = () => {
                                                         {isDeliveryNoteMode && (
                                                             <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[50px]">Select</th>
                                                         )}
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">Job</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[240px]">Consignee</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Container</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Packages</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Type</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Port</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Job</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[180px]">Consignee</th>
                                                         <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Method</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Transport</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Date</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">BL No.</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">Customs R</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">C Number</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Container</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[80px]">Size</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Weight</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Packages</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Delivery details</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Date</th>
                                                         <th className="py-4 px-6 text-center text-xs font-bold uppercase tracking-wider w-[80px]">Edit</th>
                                                     </tr>
                                                 </thead>
@@ -293,6 +296,7 @@ const ClearanceSchedule: React.FC = () => {
                                                                     />
                                                                 </td>
                                                             )}
+                                                            {/* Job */}
                                                             <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
                                                                 <div className="flex items-center gap-2">
                                                                     {item.job_id}
@@ -300,38 +304,67 @@ const ClearanceSchedule: React.FC = () => {
                                                                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
                                                                     )}
                                                                 </div>
-                                                                <div className="text-[10px] text-gray-400 font-normal">{new Date(item.created_at).toLocaleDateString()}</div>
+                                                                <div className="text-[10px] text-gray-400 font-normal">{new Date(item.job?.created_at || item.created_at).toLocaleDateString()}</div>
                                                             </td>
-                                                            <td className="py-4 px-6 text-sm text-gray-900">
-                                                                <div className="font-medium">{item.consignee || 'Unknown'}</div>
-                                                                <div className="text-xs text-gray-500">{item.exporter}</div>
-                                                                <div className="text-xs text-gray-500">{item.bl_awb}</div>
+                                                            {/* Consignee */}
+                                                            <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                                                                {item.consignee || 'Unknown'}
                                                             </td>
-                                                            <td className="py-4 px-6 text-sm text-gray-500 font-mono">
+                                                            {/* Method */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600 uppercase">
+                                                                {item.clearance_method || '-'}
+                                                            </td>
+                                                            {/* BL No. */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.bl_awb || '-'}
+                                                            </td>
+                                                            {/* Customs R Number */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.customs_r_form || item.job?.customs_r_form || '-'}
+                                                            </td>
+                                                            {/* C Number */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.c_number || item.job?.c_number || '-'}
+                                                            </td>
+                                                            {/* Container No. */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600 font-mono">
                                                                 {item.container_no ? (
-                                                                    <>
-                                                                        <div className="font-medium text-gray-900">{item.container_no}</div>
-                                                                        <div className="text-xs text-gray-500">{item.container_type}</div>
-                                                                    </>
+                                                                    item.container_no.split(',').map((no: string, idx: number) => (
+                                                                        <div key={idx}>{no.trim()}</div>
+                                                                    ))
                                                                 ) : '-'}
                                                             </td>
+                                                            {/* Size */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.container_type ? (
+                                                                    item.container_type.split(',').map((type: string, idx: number) => (
+                                                                        <div key={idx}>{type.trim()}</div>
+                                                                    ))
+                                                                ) : '-'}
+                                                            </td>
+                                                            {/* Gross Weight */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.weight || item.gross_weight || '-'}
+                                                            </td>
+                                                            {/* No. of Packages */}
                                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
                                                                 {item.packages || '-'}
                                                             </td>
-                                                            <td className="py-4 px-6">
-                                                                <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${item.clearance_type === 'Express' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                                    {item.clearance_type || 'NORMAL'}
-                                                                </span>
+                                                            {/* Delivery Details */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium text-gray-900">{item.delivery_contact_name || '-'}</span>
+                                                                    <span className="text-xs text-gray-500">{item.delivery_contact_phone || '-'}</span>
+                                                                </div>
                                                             </td>
-                                                            <td className="py-4 px-6 text-sm text-gray-600 uppercase">{item.port || '-'}</td>
-                                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.clearance_method || '-'}</td>
-                                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.transport_mode || '-'}</td>
+                                                            {/* Date */}
                                                             <td className="py-4 px-6 text-sm text-gray-500">
                                                                 <div className="flex items-center gap-2">
                                                                     <Calendar className="w-3 h-3" />
                                                                     {new Date(item.clearance_date).toLocaleDateString()}
                                                                 </div>
                                                             </td>
+
                                                             <td className="py-4 px-6 text-center">
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
@@ -378,15 +411,18 @@ const ClearanceSchedule: React.FC = () => {
                                                         {isDeliveryNoteMode && (
                                                             <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[50px]">Select</th>
                                                         )}
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">Job</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[240px]">Consignee</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Container</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Packages</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Type</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Port</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Job</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[180px]">Consignee</th>
                                                         <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Method</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Transport</th>
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Date</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">BL No.</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">Customs R</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">C Number</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Container</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[80px]">Size</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Weight</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Packages</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Delivery details</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Date</th>
                                                         <th className="py-4 px-6 text-center text-xs font-bold uppercase tracking-wider w-[80px]">Edit</th>
                                                     </tr>
                                                 </thead>
@@ -414,6 +450,7 @@ const ClearanceSchedule: React.FC = () => {
                                                                     />
                                                                 </td>
                                                             )}
+                                                            {/* Job */}
                                                             <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
                                                                 <div className="flex items-center gap-2">
                                                                     {item.job_id}
@@ -421,38 +458,67 @@ const ClearanceSchedule: React.FC = () => {
                                                                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
                                                                     )}
                                                                 </div>
-                                                                <div className="text-[10px] text-gray-400 font-normal">{new Date(item.created_at).toLocaleDateString()}</div>
+                                                                <div className="text-[10px] text-gray-400 font-normal">{new Date(item.job?.created_at || item.created_at).toLocaleDateString()}</div>
                                                             </td>
-                                                            <td className="py-4 px-6 text-sm text-gray-900">
-                                                                <div className="font-medium">{item.consignee || 'Unknown'}</div>
-                                                                <div className="text-xs text-gray-500">{item.exporter}</div>
-                                                                <div className="text-xs text-gray-500">{item.bl_awb}</div>
+                                                            {/* Consignee */}
+                                                            <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                                                                {item.consignee || 'Unknown'}
                                                             </td>
-                                                            <td className="py-4 px-6 text-sm text-gray-500 font-mono">
+                                                            {/* Method */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600 uppercase">
+                                                                {item.clearance_method || '-'}
+                                                            </td>
+                                                            {/* BL No. */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.bl_awb || '-'}
+                                                            </td>
+                                                            {/* Customs R Number */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.customs_r_form || item.job?.customs_r_form || '-'}
+                                                            </td>
+                                                            {/* C Number */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.c_number || item.job?.c_number || '-'}
+                                                            </td>
+                                                            {/* Container No. */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600 font-mono">
                                                                 {item.container_no ? (
-                                                                    <>
-                                                                        <div className="font-medium text-gray-900">{item.container_no}</div>
-                                                                        <div className="text-xs text-gray-500">{item.container_type}</div>
-                                                                    </>
+                                                                    item.container_no.split(',').map((no: string, idx: number) => (
+                                                                        <div key={idx}>{no.trim()}</div>
+                                                                    ))
                                                                 ) : '-'}
                                                             </td>
+                                                            {/* Size */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.container_type ? (
+                                                                    item.container_type.split(',').map((type: string, idx: number) => (
+                                                                        <div key={idx}>{type.trim()}</div>
+                                                                    ))
+                                                                ) : '-'}
+                                                            </td>
+                                                            {/* Gross Weight */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                {item.weight || item.gross_weight || '-'}
+                                                            </td>
+                                                            {/* No. of Packages */}
                                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
                                                                 {item.packages || '-'}
                                                             </td>
-                                                            <td className="py-4 px-6">
-                                                                <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${item.clearance_type === 'Express' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                                    {item.clearance_type || 'NORMAL'}
-                                                                </span>
+                                                            {/* Delivery Details */}
+                                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium text-gray-900">{item.delivery_contact_name || '-'}</span>
+                                                                    <span className="text-xs text-gray-500">{item.delivery_contact_phone || '-'}</span>
+                                                                </div>
                                                             </td>
-                                                            <td className="py-4 px-6 text-sm text-gray-600 uppercase">{item.port || '-'}</td>
-                                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.clearance_method || '-'}</td>
-                                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.transport_mode || '-'}</td>
+                                                            {/* Date */}
                                                             <td className="py-4 px-6 text-sm text-gray-500">
                                                                 <div className="flex items-center gap-2">
                                                                     <Calendar className="w-3 h-3" />
                                                                     {new Date(item.clearance_date).toLocaleDateString()}
                                                                 </div>
                                                             </td>
+
                                                             <td className="py-4 px-6 text-center">
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}

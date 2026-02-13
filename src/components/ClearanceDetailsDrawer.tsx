@@ -159,6 +159,21 @@ const ClearanceDetailsDrawer: React.FC<ClearanceDetailsDrawerProps> = ({
                             </div>
                         </div>
 
+                        {/* Delivery Information */}
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-900 mb-4">Delivery Details</h3>
+                            <div className="grid grid-cols-2 gap-y-4 gap-x-4">
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Name</p>
+                                    <p className="text-sm font-medium text-gray-900">{schedule.delivery_contact_name || '-'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Phone</p>
+                                    <p className="text-sm font-medium text-gray-900">{schedule.delivery_contact_phone || '-'}</p>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     {/* Footer */}
