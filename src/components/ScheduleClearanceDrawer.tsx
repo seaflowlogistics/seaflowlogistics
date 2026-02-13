@@ -316,43 +316,40 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                                                         checked={isSelected}
                                                         onChange={(e) => {
                                                             const checked = e.target.checked;
+                                                            // currentNos tracks *what* is selected
                                                             let currentNos = formData.container_no ? formData.container_no.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                                            let currentTypes = formData.container_type ? formData.container_type.split(',').map(s => s.trim()).filter(Boolean) : [];
 
                                                             if (checked) {
-                                                                currentNos.push(c.container_no);
-                                                                currentTypes.push(c.container_type);
-                                                            } else {
-                                                                const index = currentNos.indexOf(c.container_no);
-                                                                if (index > -1) {
-                                                                    currentNos.splice(index, 1);
-                                                                    currentTypes.splice(index, 1);
+                                                                if (!currentNos.includes(c.container_no)) {
+                                                                    currentNos.push(c.container_no);
                                                                 }
+                                                            } else {
+                                                                currentNos = currentNos.filter(n => n !== c.container_no);
                                                             }
 
-                                                            const newContainerNo = currentNos.join(', ');
+                                                            // Re-derive ORDERED lists based on the original job.containers source of truth
+                                                            // This ensures Container No, Type, and Packages always align by index
+                                                            const selectedContainers = (job?.containers || []).filter((cont: any) => currentNos.includes(cont.container_no));
+
+                                                            const newContainerNo = selectedContainers.map((cont: any) => cont.container_no).join(', ');
+                                                            const newContainerType = selectedContainers.map((cont: any) => cont.container_type).join(', ');
 
                                                             // Calculate accumulated packages for selected containers
-                                                            let newPackagesStr = formData.packages;
-                                                            if (currentNos.length > 0 && job.containers) {
-                                                                const selectedContainers = job.containers.filter((cont: any) => currentNos.includes(cont.container_no));
-                                                                const allPkgs: string[] = [];
+                                                            const allPkgs: string[] = [];
+                                                            if (selectedContainers.length > 0) {
                                                                 selectedContainers.forEach((cont: any) => {
                                                                     const pList = typeof cont.packages === 'string' ? JSON.parse(cont.packages) : (cont.packages || []);
                                                                     if (Array.isArray(pList)) {
                                                                         pList.forEach((p: any) => allPkgs.push(`${p.pkg_count} ${p.pkg_type}`));
                                                                     }
                                                                 });
-                                                                newPackagesStr = allPkgs.join(', ');
-                                                            } else if (currentNos.length === 0) {
-                                                                // Reset to empty or allow manual selection if no containers
-                                                                newPackagesStr = '';
                                                             }
+                                                            const newPackagesStr = allPkgs.join(', ');
 
                                                             setFormData(prev => ({
                                                                 ...prev,
                                                                 container_no: newContainerNo,
-                                                                container_type: currentTypes.join(', '),
+                                                                container_type: newContainerType,
                                                                 packages: newPackagesStr
                                                             }));
                                                         }}

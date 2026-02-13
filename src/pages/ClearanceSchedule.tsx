@@ -364,7 +364,11 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
                                                             {/* No. of Packages */}
                                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                                                                {item.packages || '-'}
+                                                                {item.packages ? (
+                                                                    item.packages.split(',').map((pkg: string, idx: number) => (
+                                                                        <div key={idx}>{pkg.trim()}</div>
+                                                                    ))
+                                                                ) : '-'}
                                                             </td>
                                                             {/* Delivery Details */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
@@ -528,7 +532,11 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
                                                             {/* No. of Packages */}
                                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                                                                {item.packages || '-'}
+                                                                {item.packages ? (
+                                                                    item.packages.split(',').map((pkg: string, idx: number) => (
+                                                                        <div key={idx}>{pkg.trim()}</div>
+                                                                    ))
+                                                                ) : '-'}
                                                             </td>
                                                             {/* Delivery Details */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
