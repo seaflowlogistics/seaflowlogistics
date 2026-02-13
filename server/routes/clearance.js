@@ -1,14 +1,16 @@
 import express from 'express';
 import pool from '../config/database.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 import { logActivity } from '../utils/logger.js';
 
 const router = express.Router();
 
 router.use(authenticateToken);
 
+const writeAccessRoles = ['Administrator', 'Clearance', 'Clearance - Office', 'All'];
+
 // Create a new clearance schedule
-router.post('/', async (req, res) => {
+router.post('/', authorizeRole(writeAccessRoles), async (req, res) => {
     try {
         console.log('Creating clearance schedule:', req.body);
         const { job_id, date, type, port, bl_awb, transport_mode, remarks, packages, clearance_method, container_no, container_type, delivery_contact_name, delivery_contact_phone } = req.body;
@@ -46,7 +48,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update a clearance schedule
-router.put('/:id', async (req, res) => {
+router.put('/:id', authorizeRole(writeAccessRoles), async (req, res) => {
     try {
         const { id } = req.params;
         const { date, type, port, bl_awb, transport_mode, remarks, packages, clearance_method, reschedule_reason, container_no, container_type, delivery_contact_name, delivery_contact_phone } = req.body;
@@ -159,7 +161,7 @@ router.get('/', async (req, res) => {
 });
 
 // Delete a clearance schedule
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authorizeRole(writeAccessRoles), async (req, res) => {
     try {
         const { id } = req.params;
         const result = await pool.query('DELETE FROM clearance_schedules WHERE id = $1 RETURNING *', [id]);

@@ -5,7 +5,7 @@ interface ClearanceDetailsDrawerProps {
     isOpen: boolean;
     onClose: () => void;
     schedule: any;
-    onReschedule: (schedule: any) => void;
+    onReschedule?: (schedule: any) => void;
 }
 
 const ClearanceDetailsDrawer: React.FC<ClearanceDetailsDrawerProps> = ({
@@ -177,14 +177,16 @@ const ClearanceDetailsDrawer: React.FC<ClearanceDetailsDrawerProps> = ({
                     </div>
 
                     {/* Footer */}
-                    <div className="p-6 border-t border-gray-100 flex gap-3 bg-gray-50">
-                        <button
-                            onClick={() => onReschedule(schedule)}
-                            className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm"
-                        >
-                            Reschedule
-                        </button>
-                    </div>
+                    {onReschedule && (
+                        <div className="p-6 border-t border-gray-100 flex gap-3 bg-gray-50">
+                            <button
+                                onClick={() => onReschedule(schedule)}
+                                className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm"
+                            >
+                                Reschedule
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -138,6 +138,8 @@ const ClearanceSchedule: React.FC = () => {
 
 
 
+    const canEdit = hasRole('Administrator') || hasRole('Clearance') || hasRole('Clearance - Office') || hasRole('All');
+
     const handleEditClick = (schedule: any) => {
         setEditingSchedule(schedule);
         setIsDrawerOpen(true);
@@ -216,20 +218,22 @@ const ClearanceSchedule: React.FC = () => {
                     <div className="flex gap-2">
 
 
-                        {isDeliveryNoteMode && selectedIds.length > 0 ? (
-                            <button
-                                onClick={() => setIsDeliveryDrawerOpen(true)}
-                                className="px-4 py-2 bg-indigo-600 border border-transparent text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2"
-                            >
-                                <span>Create Note ({selectedIds.length})</span>
-                            </button>
-                        ) : (
-                            <button
-                                onClick={toggleDeliveryNoteMode}
-                                className={`px-4 py-2 border font-medium rounded-lg transition-colors shadow-sm ${isDeliveryNoteMode ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                            >
-                                {isDeliveryNoteMode ? 'Hide Delivery Note Picker' : 'Delivery Note Mode'}
-                            </button>
+                        {canEdit && (
+                            isDeliveryNoteMode && selectedIds.length > 0 ? (
+                                <button
+                                    onClick={() => setIsDeliveryDrawerOpen(true)}
+                                    className="px-4 py-2 bg-indigo-600 border border-transparent text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2"
+                                >
+                                    <span>Create Note ({selectedIds.length})</span>
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={toggleDeliveryNoteMode}
+                                    className={`px-4 py-2 border font-medium rounded-lg transition-colors shadow-sm ${isDeliveryNoteMode ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                    {isDeliveryNoteMode ? 'Hide Delivery Note Picker' : 'Delivery Note Mode'}
+                                </button>
+                            )
                         )}
                     </div>
                 </div>
@@ -465,13 +469,15 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
 
                                                             <td className="py-4 px-6 text-center">
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
-                                                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
-                                                                    title="Edit"
-                                                                >
-                                                                    <Pencil className="w-4 h-4" />
-                                                                </button>
+                                                                {canEdit && (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
+                                                                        className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
+                                                                        title="Edit"
+                                                                    >
+                                                                        <Pencil className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
 
                                                                 {hasRole('Administrator') && (
                                                                     <button
@@ -635,13 +641,15 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
 
                                                             <td className="py-4 px-6 text-center">
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
-                                                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
-                                                                    title="Edit"
-                                                                >
-                                                                    <Pencil className="w-4 h-4" />
-                                                                </button>
+                                                                {canEdit && (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
+                                                                        className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
+                                                                        title="Edit"
+                                                                    >
+                                                                        <Pencil className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
 
                                                                 {hasRole('Administrator') && (
                                                                     <button
@@ -690,10 +698,10 @@ const ClearanceSchedule: React.FC = () => {
                         isOpen={!!selectedSchedule}
                         onClose={() => setSelectedSchedule(null)}
                         schedule={selectedSchedule}
-                        onReschedule={(schedule) => {
+                        onReschedule={canEdit ? (schedule) => {
                             setSelectedSchedule(null);
                             handleEditClick(schedule);
-                        }}
+                        } : undefined}
                     />
                 )}
 
