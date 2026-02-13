@@ -981,17 +981,17 @@ const ShipmentRegistry: React.FC = () => {
                             <div className="flex bg-gray-100 rounded-lg p-0.5">
                                 <button
                                     type="button"
-                                    onClick={() => { setConsigneeType('Individual'); setFormData(prev => ({ ...prev, consignee: '' })); }}
-                                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${consigneeType === 'Individual' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-gray-700'}`}
-                                >
-                                    Individual
-                                </button>
-                                <button
-                                    type="button"
                                     onClick={() => { setConsigneeType('Company'); setFormData(prev => ({ ...prev, consignee: '' })); }}
                                     className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${consigneeType === 'Company' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-gray-700'}`}
                                 >
                                     Company
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setConsigneeType('Individual'); setFormData(prev => ({ ...prev, consignee: '' })); }}
+                                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${consigneeType === 'Individual' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Individual
                                 </button>
                             </div>
                         </div>
