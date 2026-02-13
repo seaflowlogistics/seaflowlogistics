@@ -14,11 +14,11 @@ const ClearanceSchedule: React.FC = () => {
     const [transportMode, setTransportMode] = useState('All modes');
     const [date, setDate] = useState('');
     const [schedules, setSchedules] = useState<any[]>([]);
-    const [consignees, setConsignees] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingSchedule, setEditingSchedule] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
+    const [consigneesList, setConsigneesList] = useState<any[]>([]);
 
     // Delivery Note Mode State
     const [isDeliveryNoteMode, setIsDeliveryNoteMode] = useState(false);
@@ -39,7 +39,8 @@ const ClearanceSchedule: React.FC = () => {
                 });
                 setSchedules(response.data);
 
-
+                const consigneesRes = await consigneesAPI.getAll();
+                setConsigneesList(consigneesRes.data || []);
             } catch (error) {
                 console.error("Failed to fetch clearance schedules", error);
             } finally {
@@ -47,20 +48,9 @@ const ClearanceSchedule: React.FC = () => {
             }
         };
 
-        const fetchConsignees = async () => {
-            try {
-                const response = await consigneesAPI.getAll();
-                setConsignees(response.data);
-            } catch (error) {
-                console.error("Failed to fetch consignees", error);
-            }
-        };
-
         const timeoutId = setTimeout(() => {
             fetchSchedules();
         }, 500);
-
-        fetchConsignees();
 
         return () => clearTimeout(timeoutId);
     }, [searchTerm, clearanceType, transportMode, date]);
@@ -331,15 +321,14 @@ const ClearanceSchedule: React.FC = () => {
                                                                 {item.bl_awb || '-'}
                                                             </td>
                                                             {/* Customs R Number */}
-                                                            {/* Customs R Number */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
-                                                                {item.job?.customs_r_form || item.customs_r_form || '-'}
+                                                                {item.customs_r_form || item.job?.invoice?.customs_r_form || item.job?.customs_r_form || '-'}
                                                             </td>
                                                             {/* C Number */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
                                                                 {(() => {
-                                                                    const consigneeName = item.consignee || item.job?.consignee;
-                                                                    const matchedConsignee = consignees.find(c => c.name === consigneeName);
+                                                                    const consigneeName = item.consignee || '';
+                                                                    const matchedConsignee = consigneesList.find((c: any) => c.name?.toLowerCase() === consigneeName.toLowerCase());
                                                                     return matchedConsignee?.c_number || item.c_number || item.job?.c_number || '-';
                                                                 })()}
                                                             </td>
@@ -490,15 +479,14 @@ const ClearanceSchedule: React.FC = () => {
                                                                 {item.bl_awb || '-'}
                                                             </td>
                                                             {/* Customs R Number */}
-                                                            {/* Customs R Number */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
-                                                                {item.job?.customs_r_form || item.customs_r_form || '-'}
+                                                                {item.customs_r_form || item.job?.invoice?.customs_r_form || item.job?.customs_r_form || '-'}
                                                             </td>
                                                             {/* C Number */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
                                                                 {(() => {
-                                                                    const consigneeName = item.consignee || item.job?.consignee;
-                                                                    const matchedConsignee = consignees.find(c => c.name === consigneeName);
+                                                                    const consigneeName = item.consignee || '';
+                                                                    const matchedConsignee = consigneesList.find((c: any) => c.name?.toLowerCase() === consigneeName.toLowerCase());
                                                                     return matchedConsignee?.c_number || item.c_number || item.job?.c_number || '-';
                                                                 })()}
                                                             </td>
