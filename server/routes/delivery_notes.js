@@ -140,7 +140,7 @@ router.post('/', authenticateToken, async (req, res) => {
                 const totalPayments = parseInt(totalPayRes.rows[0].total);
 
                 if (totalPayments > 0 && pendingPayments === 0) {
-                    await logActivity(req.user.id, 'ALL_PAYMENTS_COMPLETED', `All payments completed`, 'SHIPMENT', jobId);
+                    await logActivity(req.user.id, 'ALL_PAYMENTS_COMPLETED', `All payments completed`, 'SHIPMENT', jobId, client);
                 }
 
                 // Set to 'Cleared' (Stage 2). Progress 50%.
@@ -155,7 +155,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
         // Log Activities
         for (const jId of jobIds) {
-            await logActivity(req.user.id, 'CLEARANCE', `Clearance (Delivery Note ${dnId} issued)`, 'SHIPMENT', jId);
+            await logActivity(req.user.id, 'CLEARANCE', `Clearance (Delivery Note ${dnId} issued)`, 'SHIPMENT', jId, client);
         }
 
         await client.query('COMMIT');
@@ -392,7 +392,7 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
                     // Status 'Completed' is reserved for when Payments are also done.
                     await client.query("UPDATE shipments SET status = 'Cleared', progress = 100 WHERE id = $1", [jobId]);
 
-                    await logActivity(req.user.id, 'JOB_CLEARED', `Job marked as Cleared (Delivery Confirmed)`, 'SHIPMENT', jobId);
+                    await logActivity(req.user.id, 'JOB_CLEARED', `Job marked as Cleared (Delivery Confirmed)`, 'SHIPMENT', jobId, client);
                 }
             }
         }

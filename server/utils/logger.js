@@ -1,9 +1,10 @@
 
 import pool from '../config/database.js';
 
-export const logActivity = async (userId, action, details, entityType, entityId) => {
+export const logActivity = async (userId, action, details, entityType, entityId, client = null) => {
+    const db = client || pool;
     try {
-        await pool.query(
+        await db.query(
             'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
             [userId, action, details, entityType, entityId]
         );
