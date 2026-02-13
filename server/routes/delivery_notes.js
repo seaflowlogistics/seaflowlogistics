@@ -233,7 +233,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
             COALESCE(cs.packages, (SELECT string_agg(sc.packages::text, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id), s.invoice_items) as packages, 
             COALESCE(cs.container_type, (SELECT string_agg(sc.container_type, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id)) as package_type, 
             COALESCE(cs.container_no, (SELECT string_agg(sc.container_no, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id)) as container_no,
-            cs.port as schedule_port
+            cs.port as schedule_port,
+            s.shipment_type
             FROM delivery_note_items dni
             LEFT JOIN clearance_schedules cs ON dni.schedule_id = cs.id
             LEFT JOIN shipments s ON dni.job_id = s.id

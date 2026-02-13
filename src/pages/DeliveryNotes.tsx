@@ -334,28 +334,47 @@ const DeliveryNotes: React.FC = () => {
                         <div className="mb-6">
                             <table className="w-full border-collapse text-[10px]">
                                 <thead className="bg-gray-200 font-bold border-y border-gray-400">
-                                    <tr>
-                                        <th className={`py-1 px-2 text-left ${selectedNote?.transport_mode === 'SEA' ? 'w-[15%]' : 'w-1/5'}`}>Job No</th>
-                                        <th className={`py-1 px-2 text-left ${selectedNote?.transport_mode === 'SEA' ? 'w-[30%]' : 'w-2/5'}`}>Shipper</th>
-                                        <th className={`py-1 px-2 text-left ${selectedNote?.transport_mode === 'SEA' ? 'w-[20%]' : 'w-1/5'}`}>BL/AWB #</th>
-                                        <th className={`py-1 px-2 text-left ${selectedNote?.transport_mode === 'SEA' ? 'w-[10%]' : 'w-1/5'}`}>Qty</th>
-                                        {selectedNote?.transport_mode === 'SEA' && (
-                                            <th className="py-1 px-2 text-left w-[25%]">Container No</th>
-                                        )}
-                                    </tr>
+                                    {(() => {
+                                        // Helper to decide if we show container column
+                                        const isSea = selectedNote?.transport_mode === 'SEA';
+                                        // If any item is EXP, we hide container? Or if ALL are EXP? Usually a DN is for one mode/type.
+                                        // Let's assume if any item is EXP, we hide it as per request "export no need".
+                                        // Or better: Show if Sea and NOT Export.
+                                        // We check the first item's type as a proxy if we assume homogeneity, or check if any item is EXP.
+                                        const isExport = selectedNote?.items?.some((i: any) => i.shipment_type === 'EXP');
+                                        const showContainer = isSea && !isExport;
+
+                                        return (
+                                            <tr>
+                                                <th className={`py-1 px-2 text-left ${showContainer ? 'w-[15%]' : 'w-1/5'}`}>Job No</th>
+                                                <th className={`py-1 px-2 text-left ${showContainer ? 'w-[30%]' : 'w-2/5'}`}>Shipper</th>
+                                                <th className={`py-1 px-2 text-left ${showContainer ? 'w-[20%]' : 'w-1/5'}`}>BL/AWB #</th>
+                                                <th className={`py-1 px-2 text-left ${showContainer ? 'w-[10%]' : 'w-1/5'}`}>Qty</th>
+                                                {showContainer && (
+                                                    <th className="py-1 px-2 text-left w-[25%]">Container No</th>
+                                                )}
+                                            </tr>
+                                        );
+                                    })()}
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {selectedNote?.items?.map((item, idx) => (
-                                        <tr key={idx} className="border-b border-gray-200">
-                                            <td className="py-1 px-2 align-top">{item.job_id}</td>
-                                            <td className="py-1 px-2 align-top font-medium uppercase">{item.sender_name || selectedNote.exporter}</td>
-                                            <td className="py-1 px-2 align-top">{item.bl_awb_no || '-'}</td>
-                                            <td className="py-1 px-2 align-top font-bold">{item.packages} {item.package_type || ''}</td>
-                                            {selectedNote?.transport_mode === 'SEA' && (
-                                                <td className="py-1 px-2 align-top">{item.container_no || '-'}</td>
-                                            )}
-                                        </tr>
-                                    ))}
+                                    {selectedNote?.items?.map((item, idx) => {
+                                        const isSea = selectedNote?.transport_mode === 'SEA';
+                                        const isExport = selectedNote?.items?.some((i: any) => i.shipment_type === 'EXP');
+                                        const showContainer = isSea && !isExport;
+
+                                        return (
+                                            <tr key={idx} className="border-b border-gray-200">
+                                                <td className="py-1 px-2 align-top">{item.job_id}</td>
+                                                <td className="py-1 px-2 align-top font-medium uppercase">{item.sender_name || selectedNote.exporter}</td>
+                                                <td className="py-1 px-2 align-top">{item.bl_awb_no || '-'}</td>
+                                                <td className="py-1 px-2 align-top font-bold">{item.packages} {item.package_type || ''}</td>
+                                                {showContainer && (
+                                                    <td className="py-1 px-2 align-top">{item.container_no || '-'}</td>
+                                                )}
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
