@@ -24,9 +24,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
         container_type: '',
         clearance_method: '',
         remarks: '',
-        reschedule_reason: '',
-        delivery_contact_name: '',
-        delivery_contact_phone: ''
+        reschedule_reason: ''
     });
 
     useEffect(() => {
@@ -43,9 +41,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                 container_type: initialData.container_type || '',
                 clearance_method: initialData.clearance_method || '',
                 remarks: initialData.remarks || '',
-                reschedule_reason: initialData.reschedule_reason || '',
-                delivery_contact_name: initialData.delivery_contact_name || '',
-                delivery_contact_phone: initialData.delivery_contact_phone || ''
+                reschedule_reason: initialData.reschedule_reason || ''
             });
         } else {
             // New Schedule Defaults
@@ -64,9 +60,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                 container_type: '',
                 clearance_method: '',
                 remarks: '',
-                reschedule_reason: '',
-                delivery_contact_name: '',
-                delivery_contact_phone: ''
+                reschedule_reason: ''
             });
         }
     }, [initialData, isOpen, job, isReschedule]);
@@ -404,33 +398,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                             </div>
                         )}
 
-                        {/* Delivery Details */}
-                        {!isReschedule && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="form-group">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Delivery Contact Name</label>
-                                    <input
-                                        type="text"
-                                        name="delivery_contact_name"
-                                        value={(formData as any).delivery_contact_name}
-                                        onChange={handleInputChange}
-                                        className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-gray-700"
-                                        placeholder="Name"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Delivery Contact Phone</label>
-                                    <input
-                                        type="text"
-                                        name="delivery_contact_phone"
-                                        value={(formData as any).delivery_contact_phone}
-                                        onChange={handleInputChange}
-                                        className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-gray-700"
-                                        placeholder="Phone"
-                                    />
-                                </div>
-                            </div>
-                        )}
+
 
                         {/* Remarks */}
                         <div className="form-group">
