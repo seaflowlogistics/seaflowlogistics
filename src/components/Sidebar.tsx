@@ -53,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
     // Role definitions
     const hasFullAccess = hasRole('Administrator');
-    const isClearanceMember = hasRole('Clearance');
+    const isClearanceMember = hasRole('Clearance') || hasRole('Clearance - Labour') || hasRole('Clearance - Office');
     const isAccountantMember = hasRole('Accountant');
     const isDocumentationMember = hasRole('Documentation');
 
