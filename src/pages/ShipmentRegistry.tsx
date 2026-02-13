@@ -323,7 +323,7 @@ const ShipmentRegistry: React.FC = () => {
     // Form State (for Register New Job)
     const [isEditingJob, setIsEditingJob] = useState(false);
     const [billingType, setBillingType] = useState('Individual');
-    const [consigneeType, setConsigneeType] = useState<'Individual' | 'Company'>('Individual');
+    const [consigneeType, setConsigneeType] = useState<'Individual' | 'Company'>('Company');
     const [formData, setFormData] = useState<JobFormData>({
         service: 'Clearance',
         consignee: '',
@@ -559,6 +559,7 @@ const ShipmentRegistry: React.FC = () => {
         // Ensure dropdowns are fresh
         loadDropdownData();
         setBillingType('Individual');
+        setConsigneeType('Company');
     };
 
     const handleViewDoc = async (doc: any) => {
