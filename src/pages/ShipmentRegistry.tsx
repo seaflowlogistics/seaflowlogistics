@@ -997,7 +997,7 @@ const ShipmentRegistry: React.FC = () => {
                         </div>
                         <SearchableSelect
                             options={consigneesList
-                                .filter((c: any) => (c.type || 'Individual') === consigneeType)
+                                .filter((c: any) => (c.type || 'Company') === consigneeType)
                                 .map((c: any) => ({
                                     id: c.id,
                                     label: c.name,
