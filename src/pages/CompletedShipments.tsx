@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Package, Anchor, Plane, Truck, CheckCircle, FileText, Calendar, Filter } from 'lucide-react';
 import Layout from '../components/Layout';
 import { shipmentsAPI } from '../services/api';
@@ -7,7 +7,7 @@ const CompletedShipments = () => {
     const [jobs, setJobs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filteredJobs, setFilteredJobs] = useState<any[]>([]);
+
 
     useEffect(() => {
         fetchJobs();
@@ -134,7 +134,7 @@ const CompletedShipments = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    jobs.map((job) => (
+                                    jobs.map((job: any) => (
                                         <tr key={job.id} className="hover:bg-indigo-50/30 transition-all duration-150 group">
                                             <td className="py-5 px-6">
                                                 <div className="flex flex-col">
