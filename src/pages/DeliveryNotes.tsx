@@ -338,9 +338,9 @@ const DeliveryNotes: React.FC = () => {
                                 <thead className="bg-gray-200 font-bold border-y border-gray-400">
                                     {(() => {
                                         // Helper to decide if we show container column
-                                        // Check main note transport mode OR check first item's transport mode as fallback
-                                        const noteMode = selectedNote?.transport_mode || selectedNote?.items?.[0]?.transport_mode || '';
-                                        const isSea = noteMode.toUpperCase() === 'SEA';
+                                        // We must check if the JOB/SHIPMENT transport_mode is SEA.
+                                        // selectedNote.transport_mode refers to the local delivery mode (e.g. Truck, Dhoni), so we ignore it here.
+                                        const isSea = selectedNote?.items?.some((i: any) => (i.transport_mode || '').toUpperCase() === 'SEA');
 
                                         // Check if any item is EXPORT
                                         const isExport = selectedNote?.items?.some((i: any) => (i.shipment_type || '').toUpperCase() === 'EXP');
@@ -362,8 +362,9 @@ const DeliveryNotes: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {selectedNote?.items?.map((item, idx) => {
-                                        const noteMode = selectedNote?.transport_mode || selectedNote?.items?.[0]?.transport_mode || '';
-                                        const isSea = noteMode.toUpperCase() === 'SEA';
+                                        // Same logic for consistency (though computed once above would be cleaner, we do it inline for safety with map)
+                                        // Using the overall check ensures column alignment for all rows
+                                        const isSea = selectedNote?.items?.some((i: any) => (i.transport_mode || '').toUpperCase() === 'SEA');
                                         const isExport = selectedNote?.items?.some((i: any) => (i.shipment_type || '').toUpperCase() === 'EXP');
                                         const showContainer = isSea && !isExport;
 
