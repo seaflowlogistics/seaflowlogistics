@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { Search, Calendar, ChevronDown, Pencil, Trash2 } from 'lucide-react';
-import { clearanceAPI, deliveryNotesAPI, consigneesAPI } from '../services/api';
+import { clearanceAPI, deliveryNotesAPI, consigneesAPI, shipmentsAPI } from '../services/api';
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 import ClearanceDetailsDrawer from '../components/ClearanceDetailsDrawer';
 import DeliveryNoteDrawer from '../components/DeliveryNoteDrawer';
@@ -19,6 +19,7 @@ const ClearanceSchedule: React.FC = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
     const [consigneesList, setConsigneesList] = useState<any[]>([]);
+    const [shipmentsList, setShipmentsList] = useState<any[]>([]);
 
     // Delivery Note Mode State
     const [isDeliveryNoteMode, setIsDeliveryNoteMode] = useState(false);
@@ -41,6 +42,9 @@ const ClearanceSchedule: React.FC = () => {
 
                 const consigneesRes = await consigneesAPI.getAll();
                 setConsigneesList(consigneesRes.data || []);
+
+                const shipmentsRes = await shipmentsAPI.getAll();
+                setShipmentsList(shipmentsRes.data || []);
             } catch (error) {
                 console.error("Failed to fetch clearance schedules", error);
             } finally {
@@ -322,7 +326,10 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
                                                             {/* Customs R Number */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
-                                                                {item.customs_r_form || item.job?.invoice?.customs_r_form || item.job?.customs_r_form || '-'}
+                                                                {(() => {
+                                                                    const job = shipmentsList.find((s: any) => s.id === item.job_id);
+                                                                    return job?.customs_r_form || item.customs_r_form || item.job?.customs_r_form || '-';
+                                                                })()}
                                                             </td>
                                                             {/* C Number */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
@@ -480,7 +487,10 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
                                                             {/* Customs R Number */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
-                                                                {item.customs_r_form || item.job?.invoice?.customs_r_form || item.job?.customs_r_form || '-'}
+                                                                {(() => {
+                                                                    const job = shipmentsList.find((s: any) => s.id === item.job_id);
+                                                                    return job?.customs_r_form || item.customs_r_form || item.job?.customs_r_form || '-';
+                                                                })()}
                                                             </td>
                                                             {/* C Number */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
