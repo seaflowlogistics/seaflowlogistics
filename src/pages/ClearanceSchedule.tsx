@@ -357,7 +357,10 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
                                                             {/* Gross Weight */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
-                                                                {item.weight || item.gross_weight || '-'}
+                                                                {(() => {
+                                                                    const job = shipmentsList.find((s: any) => s.id === item.job_id);
+                                                                    return item.weight || item.gross_weight || job?.weight || '-';
+                                                                })()}
                                                             </td>
                                                             {/* No. of Packages */}
                                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
@@ -518,7 +521,10 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
                                                             {/* Gross Weight */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
-                                                                {item.weight || item.gross_weight || '-'}
+                                                                {(() => {
+                                                                    const job = shipmentsList.find((s: any) => s.id === item.job_id);
+                                                                    return item.weight || item.gross_weight || job?.weight || '-';
+                                                                })()}
                                                             </td>
                                                             {/* No. of Packages */}
                                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
