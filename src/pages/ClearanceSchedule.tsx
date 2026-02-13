@@ -231,126 +231,263 @@ const ClearanceSchedule: React.FC = () => {
 
 
 
-                {/* Table */}
-                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[1000px]">
-                            <thead>
-                                <tr className="bg-black text-white">
-                                    {isDeliveryNoteMode && (
-                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[50px]">Select</th>
-                                    )}
-                                    <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">Job</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[240px]">Consignee</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Container</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Packages</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Type</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Port</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Method</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Transport</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Date</th>
-                                    <th className="py-4 px-6 text-center text-xs font-bold uppercase tracking-wider w-[80px]">Edit</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={isDeliveryNoteMode ? 11 : 10} className="py-12 text-center text-gray-500">Loading...</td>
-                                    </tr>
-                                ) : schedules.length > 0 ? (
-                                    schedules.map((item) => (
-                                        <tr
-                                            key={item.id}
-                                            className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedIds.includes(item.id) ? 'bg-indigo-50/50' : ''}`}
-                                            onClick={() => {
-                                                if (isDeliveryNoteMode) {
-                                                    handleSelectSchedule(item.id);
-                                                } else {
-                                                    setSelectedSchedule(item);
-                                                }
-                                            }}
-                                        >
-                                            {isDeliveryNoteMode && (
-                                                <td className="py-4 px-6 text-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedIds.includes(item.id)}
-                                                        onChange={() => handleSelectSchedule(item.id)}
-                                                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    />
-                                                </td>
-                                            )}
-                                            <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
-                                                <div className="flex items-center gap-2">
-                                                    {item.job_id}
-                                                    {item.reschedule_reason && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
-                                                    )}
-                                                </div>
-                                                <div className="text-[10px] text-gray-400 font-normal">{new Date(item.created_at).toLocaleDateString()}</div>
-                                            </td>
-                                            <td className="py-4 px-6 text-sm text-gray-900">
-                                                <div className="font-medium">{item.consignee || 'Unknown'}</div>
-                                                <div className="text-xs text-gray-500">{item.exporter}</div>
-                                                <div className="text-xs text-gray-500">{item.bl_awb}</div>
-                                            </td>
-                                            <td className="py-4 px-6 text-sm text-gray-500 font-mono">
-                                                {item.container_no ? (
-                                                    <>
-                                                        <div className="font-medium text-gray-900">{item.container_no}</div>
-                                                        <div className="text-xs text-gray-500">{item.container_type}</div>
-                                                    </>
-                                                ) : '-'}
-                                            </td>
-                                            <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                                                {item.packages || '-'}
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${item.clearance_type === 'Express' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                    {item.clearance_type || 'NORMAL'}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6 text-sm text-gray-600 uppercase">{item.port || '-'}</td>
-                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.clearance_method || '-'}</td>
-                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.transport_mode || '-'}</td>
-                                            <td className="py-4 px-6 text-sm text-gray-500">
-                                                <div className="flex items-center gap-2">
-                                                    <Calendar className="w-3 h-3" />
-                                                    {new Date(item.clearance_date).toLocaleDateString()}
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
-                                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
-                                                    title="Edit"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
 
-                                                {hasRole('Administrator') && (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                                                        className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors ml-2"
-                                                        title="Delete"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={isDeliveryNoteMode ? 11 : 10} className="py-12 text-center text-gray-500 text-sm">
-                                            No scheduled clearances found.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                {/* Tables by Port */}
+                <div className="space-y-8">
+                    {loading ? (
+                        <div className="p-12 text-center text-gray-500 bg-white border border-gray-200 rounded-xl animate-pulse">
+                            Loading schedules...
+                        </div>
+                    ) : (
+                        <>
+                            {['MALE', 'HULHUMALE', 'MALE AIRPORT', 'ADDU'].map(portName => {
+                                const portSchedules = schedules.filter(s => (s.port || '').toUpperCase() === portName);
+                                if (portSchedules.length === 0) return null;
+
+                                return (
+                                    <div key={portName} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                                        <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                                            <h3 className="font-bold text-gray-800 uppercase tracking-wide">{portName} Port</h3>
+                                            <span className="text-xs font-semibold text-gray-500 bg-gray-200/50 px-2 py-1 rounded-full">{portSchedules.length} Clearances</span>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full min-w-[1000px]">
+                                                <thead>
+                                                    <tr className="bg-black text-white">
+                                                        {isDeliveryNoteMode && (
+                                                            <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[50px]">Select</th>
+                                                        )}
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">Job</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[240px]">Consignee</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Container</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Packages</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Type</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Port</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Method</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Transport</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Date</th>
+                                                        <th className="py-4 px-6 text-center text-xs font-bold uppercase tracking-wider w-[80px]">Edit</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {portSchedules.map((item) => (
+                                                        <tr
+                                                            key={item.id}
+                                                            className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedIds.includes(item.id) ? 'bg-indigo-50/50' : ''}`}
+                                                            onClick={() => {
+                                                                if (isDeliveryNoteMode) {
+                                                                    handleSelectSchedule(item.id);
+                                                                } else {
+                                                                    setSelectedSchedule(item);
+                                                                }
+                                                            }}
+                                                        >
+                                                            {isDeliveryNoteMode && (
+                                                                <td className="py-4 px-6 text-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={selectedIds.includes(item.id)}
+                                                                        onChange={() => handleSelectSchedule(item.id)}
+                                                                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    />
+                                                                </td>
+                                                            )}
+                                                            <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
+                                                                <div className="flex items-center gap-2">
+                                                                    {item.job_id}
+                                                                    {item.reschedule_reason && (
+                                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-[10px] text-gray-400 font-normal">{new Date(item.created_at).toLocaleDateString()}</div>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-sm text-gray-900">
+                                                                <div className="font-medium">{item.consignee || 'Unknown'}</div>
+                                                                <div className="text-xs text-gray-500">{item.exporter}</div>
+                                                                <div className="text-xs text-gray-500">{item.bl_awb}</div>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-sm text-gray-500 font-mono">
+                                                                {item.container_no ? (
+                                                                    <>
+                                                                        <div className="font-medium text-gray-900">{item.container_no}</div>
+                                                                        <div className="text-xs text-gray-500">{item.container_type}</div>
+                                                                    </>
+                                                                ) : '-'}
+                                                            </td>
+                                                            <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                                                                {item.packages || '-'}
+                                                            </td>
+                                                            <td className="py-4 px-6">
+                                                                <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${item.clearance_type === 'Express' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                                    {item.clearance_type || 'NORMAL'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-sm text-gray-600 uppercase">{item.port || '-'}</td>
+                                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.clearance_method || '-'}</td>
+                                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.transport_mode || '-'}</td>
+                                                            <td className="py-4 px-6 text-sm text-gray-500">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Calendar className="w-3 h-3" />
+                                                                    {new Date(item.clearance_date).toLocaleDateString()}
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-center">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
+                                                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
+                                                                    title="Edit"
+                                                                >
+                                                                    <Pencil className="w-4 h-4" />
+                                                                </button>
+
+                                                                {hasRole('Administrator') && (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                                                                        className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors ml-2"
+                                                                        title="Delete"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Other Ports / Unassigned */}
+                            {(() => {
+                                const otherSchedules = schedules.filter(s => !['MALE', 'HULHUMALE', 'MALE AIRPORT', 'ADDU'].includes((s.port || '').toUpperCase()));
+                                if (otherSchedules.length === 0) return null;
+
+                                return (
+                                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                                        <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                                            <h3 className="font-bold text-gray-800 uppercase tracking-wide">Other Ports</h3>
+                                            <span className="text-xs font-semibold text-gray-500 bg-gray-200/50 px-2 py-1 rounded-full">{otherSchedules.length} Clearances</span>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full min-w-[1000px]">
+                                                <thead>
+                                                    <tr className="bg-black text-white">
+                                                        {isDeliveryNoteMode && (
+                                                            <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[50px]">Select</th>
+                                                        )}
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[120px]">Job</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[240px]">Consignee</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Container</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Packages</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Type</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Port</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Method</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Transport</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[160px]">Date</th>
+                                                        <th className="py-4 px-6 text-center text-xs font-bold uppercase tracking-wider w-[80px]">Edit</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {otherSchedules.map((item) => (
+                                                        <tr
+                                                            key={item.id}
+                                                            className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedIds.includes(item.id) ? 'bg-indigo-50/50' : ''}`}
+                                                            onClick={() => {
+                                                                if (isDeliveryNoteMode) {
+                                                                    handleSelectSchedule(item.id);
+                                                                } else {
+                                                                    setSelectedSchedule(item);
+                                                                }
+                                                            }}
+                                                        >
+                                                            {isDeliveryNoteMode && (
+                                                                <td className="py-4 px-6 text-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={selectedIds.includes(item.id)}
+                                                                        onChange={() => handleSelectSchedule(item.id)}
+                                                                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    />
+                                                                </td>
+                                                            )}
+                                                            <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
+                                                                <div className="flex items-center gap-2">
+                                                                    {item.job_id}
+                                                                    {item.reschedule_reason && (
+                                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-[10px] text-gray-400 font-normal">{new Date(item.created_at).toLocaleDateString()}</div>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-sm text-gray-900">
+                                                                <div className="font-medium">{item.consignee || 'Unknown'}</div>
+                                                                <div className="text-xs text-gray-500">{item.exporter}</div>
+                                                                <div className="text-xs text-gray-500">{item.bl_awb}</div>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-sm text-gray-500 font-mono">
+                                                                {item.container_no ? (
+                                                                    <>
+                                                                        <div className="font-medium text-gray-900">{item.container_no}</div>
+                                                                        <div className="text-xs text-gray-500">{item.container_type}</div>
+                                                                    </>
+                                                                ) : '-'}
+                                                            </td>
+                                                            <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                                                                {item.packages || '-'}
+                                                            </td>
+                                                            <td className="py-4 px-6">
+                                                                <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${item.clearance_type === 'Express' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                                    {item.clearance_type || 'NORMAL'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-sm text-gray-600 uppercase">{item.port || '-'}</td>
+                                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.clearance_method || '-'}</td>
+                                                            <td className="py-4 px-6 text-sm text-gray-500 uppercase">{item.transport_mode || '-'}</td>
+                                                            <td className="py-4 px-6 text-sm text-gray-500">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Calendar className="w-3 h-3" />
+                                                                    {new Date(item.clearance_date).toLocaleDateString()}
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-center">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
+                                                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-indigo-600 transition-colors"
+                                                                    title="Edit"
+                                                                >
+                                                                    <Pencil className="w-4 h-4" />
+                                                                </button>
+
+                                                                {hasRole('Administrator') && (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                                                                        className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors ml-2"
+                                                                        title="Delete"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            {schedules.length === 0 && (
+                                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm p-12 text-center text-gray-500">
+                                    No scheduled clearances found.
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 {/* Drawer for Editing/Creating */}
