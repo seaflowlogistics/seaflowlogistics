@@ -54,18 +54,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     // Role definitions
     const hasFullAccess = hasRole('Administrator');
     const isClearanceMember = hasRole('Clearance') || hasRole('Clearance - Office') || hasRole('Clearance - Labour');
-    const canManageClearance = hasRole('Clearance') || hasRole('Clearance - Office');
+
     const isAccountantMember = hasRole('Accountant');
     const isDocumentationMember = hasRole('Documentation');
 
 
     // Computed Permissions
-    const showRegistry = hasFullAccess || canManageClearance || isAccountantMember || isDocumentationMember;
+    const showRegistry = hasFullAccess || isClearanceMember || isAccountantMember || isDocumentationMember;
     // Accountants need registry to click Payment icons usually.
 
     const showClearanceSchedule = hasFullAccess || isClearanceMember;
 
-    const showDeliveryNotes = hasFullAccess || canManageClearance || isAccountantMember;
+    const showDeliveryNotes = hasFullAccess || isClearanceMember || isAccountantMember;
 
     const showPayments = hasFullAccess || isAccountantMember;
 

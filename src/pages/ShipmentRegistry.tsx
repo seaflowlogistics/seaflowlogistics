@@ -139,6 +139,7 @@ const ShipmentRegistry: React.FC = () => {
 
     // Drawer State
     const [isBLDrawerOpen, setIsBLDrawerOpen] = useState(false);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [popupJob, setPopupJob] = useState<any | null>(null);
     const [popupData, setPopupData] = useState<any | null>(null);
@@ -1218,7 +1219,7 @@ const ShipmentRegistry: React.FC = () => {
                                             >
                                                 <Download className="w-4 h-4" />
                                             </button>
-                                            {hasRole('Administrator') && (
+                                            {canEdit && (
                                                 <button
                                                     onClick={async () => {
                                                         if (window.confirm('Delete document?')) {
@@ -1634,8 +1635,16 @@ const ShipmentRegistry: React.FC = () => {
                                             </button>
                                         )
                                     )
-                                ) : hasRole('Documentation') ? (
-                                    null
+                                ) : canEdit ? (
+                                    <button
+                                        onClick={() => {
+                                            setViewMode('create');
+                                        }}
+                                        className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-sm"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        <span>New</span>
+                                    </button>
                                 ) : (
                                     null
                                 )
@@ -1718,7 +1727,7 @@ const ShipmentRegistry: React.FC = () => {
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Registered Date</label>
                                             <p className="font-medium text-slate-200 py-2">{new Date(selectedJob.created_at || Date.now()).toLocaleString()}</p>
                                         </div>
-                                        {user?.role !== 'Administrator' && user?.role !== 'Accountant' && user?.role !== 'All' && user?.role !== 'Clearance' && user?.role !== 'Documentation' && (
+                                        {canEditjobinvoice && (
                                             <div>
                                                 <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Job Invoice No.</label>
                                                 <input

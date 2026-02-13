@@ -88,6 +88,9 @@ const DeliveryNotes: React.FC = () => {
     const [recordsPerPage, setRecordsPerPage] = useState('50 records');
     const [statusFilter, setStatusFilter] = useState('All statuses');
 
+    // Permissions
+    const canEdit = hasRole('Administrator') || hasRole('Clearance') || hasRole('Clearance - Office') || hasRole('All');
+
     const [deliveryNotes, setDeliveryNotes] = useState<DeliveryNote[]>([]);
     const [consignees, setConsignees] = useState<Consignee[]>([]);
     const [loading, setLoading] = useState(true);
@@ -581,8 +584,9 @@ const DeliveryNotes: React.FC = () => {
                             className="rounded text-blue-600 focus:ring-blue-500"
                             checked={detailsForm.mark_delivered}
                             onChange={(e) => setDetailsForm(prev => ({ ...prev, mark_delivered: e.target.checked }))}
+                            disabled={!canEdit}
                         />
-                        <span className="text-sm font-medium text-gray-700">Mark as delivered</span>
+                        <span className={`text-sm font-medium ${!canEdit ? 'text-gray-400' : 'text-gray-700'}`}>Mark as delivered</span>
                     </label>
                     <p className="text-xs text-gray-500 ml-6 mt-1">Pending delivery</p>
                 </div>
@@ -590,10 +594,11 @@ const DeliveryNotes: React.FC = () => {
                 <div className="mb-4">
                     <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Comments</label>
                     <textarea
-                        className="w-full text-sm border border-gray-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-gray-100"
+                        className="w-full text-sm border border-gray-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-gray-100 disabled:bg-gray-50 disabled:text-gray-400"
                         rows={3}
                         value={detailsForm.comments}
                         onChange={(e) => setDetailsForm(prev => ({ ...prev, comments: e.target.value }))}
+                        disabled={!canEdit}
                     ></textarea>
                 </div>
 
@@ -613,6 +618,7 @@ const DeliveryNotes: React.FC = () => {
                                         setFileToUpload(e.target.files[0]);
                                     }
                                 }}
+                                disabled={!canEdit}
                             />
                         </label>
                         <span className="text-sm text-gray-500 italic">
@@ -623,9 +629,11 @@ const DeliveryNotes: React.FC = () => {
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                     <button onClick={handleCloseDetails} className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
-                    <button onClick={handleSaveDetails} disabled={loading} className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-900 disabled:opacity-50">
-                        {loading ? 'Saving...' : 'Save changes'}
-                    </button>
+                    {canEdit && (
+                        <button onClick={handleSaveDetails} disabled={loading} className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-900 disabled:opacity-50">
+                            {loading ? 'Saving...' : 'Save changes'}
+                        </button>
+                    )}
                 </div>
             </div>
         </div >
