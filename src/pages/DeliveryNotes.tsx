@@ -335,10 +335,13 @@ const DeliveryNotes: React.FC = () => {
                             <table className="w-full border-collapse text-[10px]">
                                 <thead className="bg-gray-200 font-bold border-y border-gray-400">
                                     <tr>
-                                        <th className="py-1 px-2 text-left w-1/5">Job No</th>
-                                        <th className="py-1 px-2 text-left w-2/5">Shipper</th>
-                                        <th className="py-1 px-2 text-left w-1/5">BL/AWB #</th>
-                                        <th className="py-1 px-2 text-left w-1/5">Qty</th>
+                                        <th className={`py-1 px-2 text-left ${selectedNote?.transport_mode === 'SEA' ? 'w-[15%]' : 'w-1/5'}`}>Job No</th>
+                                        <th className={`py-1 px-2 text-left ${selectedNote?.transport_mode === 'SEA' ? 'w-[30%]' : 'w-2/5'}`}>Shipper</th>
+                                        <th className={`py-1 px-2 text-left ${selectedNote?.transport_mode === 'SEA' ? 'w-[20%]' : 'w-1/5'}`}>BL/AWB #</th>
+                                        <th className={`py-1 px-2 text-left ${selectedNote?.transport_mode === 'SEA' ? 'w-[10%]' : 'w-1/5'}`}>Qty</th>
+                                        {selectedNote?.transport_mode === 'SEA' && (
+                                            <th className="py-1 px-2 text-left w-[25%]">Container No</th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
@@ -348,6 +351,9 @@ const DeliveryNotes: React.FC = () => {
                                             <td className="py-1 px-2 align-top font-medium uppercase">{item.sender_name || selectedNote.exporter}</td>
                                             <td className="py-1 px-2 align-top">{item.bl_awb_no || '-'}</td>
                                             <td className="py-1 px-2 align-top font-bold">{item.packages} {item.package_type || ''}</td>
+                                            {selectedNote?.transport_mode === 'SEA' && (
+                                                <td className="py-1 px-2 align-top">{item.container_no || '-'}</td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
