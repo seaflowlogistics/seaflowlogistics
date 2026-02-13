@@ -31,13 +31,13 @@ const router = express.Router();
 // Table creation handled by migration 034_create_file_storage.sql
 
 // Helper to generate DN Number
-const generateDNId = async () => {
+const generateDNId = async (client) => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
 
     // Count DNs created in this month
-    const result = await pool.query(
+    const result = await client.query(
         "SELECT count(*) FROM delivery_notes WHERE to_char(created_at, 'YYYY-MM') = $1",
         [`${year}-${month}`]
     );
@@ -62,7 +62,7 @@ router.post('/', authenticateToken, async (req, res) => {
         }
 
         // Generate ID
-        const dnId = await generateDNId();
+        const dnId = await generateDNId(client);
 
         // Fetch Consignee/Exporter from the first job
         let consignee = '';
