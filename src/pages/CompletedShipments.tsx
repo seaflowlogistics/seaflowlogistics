@@ -107,9 +107,9 @@ const CompletedShipments = () => {
                                 <tr className="bg-gray-50/50 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100">
                                     <th className="py-4 px-6">Job Records</th>
                                     <th className="py-4 px-4">Completion Date</th>
-                                    <th className="py-4 px-4">Party Details</th>
-                                    <th className="py-4 px-4">Documentation</th>
-                                    <th className="py-4 px-4">Reference Nos</th>
+                                    <th className="py-4 px-4">Details</th>
+                                    <th className="py-4 px-4">BL No.</th>
+                                    <th className="py-4 px-4">Invoice No. & Cumtoms R No</th>
                                     <th className="py-4 px-6 text-right">Transport Mode</th>
                                 </tr>
                             </thead>
@@ -153,7 +153,7 @@ const CompletedShipments = () => {
                                             <td className="py-5 px-4">
                                                 <div className="flex flex-col max-w-[200px]">
                                                     <span className="text-sm font-extrabold text-gray-900 truncate" title={job.customer}>{job.customer}</span>
-                                                    <span className="text-xs text-gray-500 font-medium truncate mt-0.5" title={job.exporter}>Exp: {job.exporter}</span>
+                                                    <span className="text-xs text-gray-500 font-medium truncate mt-0.5" title={job.exporter}>{job.exporter}</span>
                                                 </div>
                                             </td>
                                             <td className="py-5 px-4">
