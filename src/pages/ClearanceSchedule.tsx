@@ -41,6 +41,49 @@ const formatWeight = (val: any): string => {
     return String(content);
 };
 
+const getWeightFromJobBL = (job: any, blNo: string): string | null => {
+    if (!job || !job.bls || !Array.isArray(job.bls) || !blNo) return null;
+
+    // Find BL
+    const bl = job.bls.find((b: any) => b.master_bl === blNo);
+    if (!bl || !bl.packages) return null;
+
+    let totalPoints = 0;
+    let foundAny = false;
+
+    try {
+        const parsed = typeof bl.packages === 'string' ? JSON.parse(bl.packages) : bl.packages;
+
+        const processPkg = (p: any) => {
+            if (p.weight) {
+                // Handle comma decimals if present (e.g. "1,000.50" or "10,5")
+                // Usually standard is "1000.50". If clean float string, parseFloat works.
+                const valStr = String(p.weight).replace(/,/g, '');
+                const w = parseFloat(valStr);
+                if (!isNaN(w)) {
+                    totalPoints += w;
+                    foundAny = true;
+                }
+            }
+        };
+
+        if (Array.isArray(parsed)) {
+            parsed.forEach((entry: any) => {
+                // Check if entry is a container (has packages array) or a package
+                if (entry.packages && Array.isArray(entry.packages)) {
+                    entry.packages.forEach(processPkg);
+                } else {
+                    processPkg(entry);
+                }
+            });
+        }
+    } catch (e) {
+        // Silent error
+    }
+
+    return foundAny ? totalPoints.toFixed(2) : null;
+};
+
 const ClearanceSchedule: React.FC = () => {
     const { hasRole } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
@@ -393,6 +436,8 @@ const ClearanceSchedule: React.FC = () => {
                                                             <td className="py-4 px-6 text-sm text-gray-600">
                                                                 {(() => {
                                                                     const job = shipmentsList.find((s: any) => s.id === item.job_id);
+                                                                    const blWeight = getWeightFromJobBL(job, item.bl_awb);
+                                                                    if (blWeight !== null) return blWeight;
                                                                     return formatWeight(item.weight || item.gross_weight || job?.weight || item.job?.weight);
                                                                 })()}
                                                             </td>
@@ -561,6 +606,8 @@ const ClearanceSchedule: React.FC = () => {
                                                             <td className="py-4 px-6 text-sm text-gray-600">
                                                                 {(() => {
                                                                     const job = shipmentsList.find((s: any) => s.id === item.job_id);
+                                                                    const blWeight = getWeightFromJobBL(job, item.bl_awb);
+                                                                    if (blWeight !== null) return blWeight;
                                                                     return formatWeight(item.weight || item.gross_weight || job?.weight || item.job?.weight);
                                                                 })()}
                                                             </td>
