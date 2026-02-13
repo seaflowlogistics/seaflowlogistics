@@ -13,7 +13,8 @@ import {
     ClipboardList,
     CreditCard,
     LogOut,
-    Bell
+    Bell,
+    CheckCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { notificationsAPI } from '../services/api';
@@ -69,8 +70,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
     const showPayments = hasFullAccess || isAccountantMember;
 
-    // Admin Only
     const showAdminToolsExpanded = hasFullAccess;
+    const showCompletedShipments = hasFullAccess || isAccountantMember || hasRole('All');
 
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -98,6 +99,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     if (showPayments) {
         menuItems.push(
             { icon: CreditCard, label: 'Payments', path: '/payments' }
+        );
+    }
+
+    if (showCompletedShipments) {
+        menuItems.push(
+            { icon: CheckCircle, label: 'Completed Shipment', path: '/completed' }
         );
     }
 
