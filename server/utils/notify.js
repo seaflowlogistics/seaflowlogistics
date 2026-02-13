@@ -20,8 +20,7 @@ export const broadcastNotification = async (role, title, message, type = 'info',
                 await createNotification(user.id, title, message, type, link, entityType, entityId);
             }
         } else {
-            // Use ILIKE to match role substring (handles "Clearance - Office" when targeting "Clearance", and multi-role strings)
-            const res = await pool.query('SELECT id FROM users WHERE role ILIKE $1', [`%${role}%`]);
+            const res = await pool.query('SELECT id FROM users WHERE role = $1', [role]);
             for (const user of res.rows) {
                 await createNotification(user.id, title, message, type, link, entityType, entityId);
             }
