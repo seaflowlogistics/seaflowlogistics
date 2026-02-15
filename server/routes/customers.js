@@ -88,23 +88,63 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 
         for (const row of data) {
             const normalizedRow = {};
+            const noSpaceRow = {};
+
             Object.keys(row).forEach(key => {
-                normalizedRow[key.toLowerCase()] = row[key];
+                // Robust cleaning:
+                // 1. Lowercase, trim
+                // 2. Replace _ / with space
+                // 3. Remove non standard chars
+                // 4. Collapse spaces
+                const cleanKey = key.toLowerCase().trim()
+                    .replace(/[_\/]/g, ' ')
+                    .replace(/[^a-z0-9 ]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                normalizedRow[cleanKey] = row[key];
+                noSpaceRow[cleanKey.replace(/\s/g, '')] = row[key];
             });
 
-            const name = normalizedRow['name'] || normalizedRow['customer name'];
+            const name = normalizedRow['name'] || normalizedRow['customer name'] || normalizedRow['company name'] || noSpaceRow['name'] || noSpaceRow['customername'] || noSpaceRow['companyname'];
             if (!name) continue;
+
+            // ID / Reg No mapping
+            const code = normalizedRow['id reg no'] || normalizedRow['registration number'] || normalizedRow['reg no'] || normalizedRow['id passport number'] || normalizedRow['code'] || normalizedRow['id'] ||
+                noSpaceRow['idregno'] || noSpaceRow['registrationnumber'] || noSpaceRow['regno'] || noSpaceRow['idpassportnumber'] || noSpaceRow['code'] || noSpaceRow['id'] || null;
+
+            const gst_tin = normalizedRow['gst tin'] || normalizedRow['gstin'] || noSpaceRow['gsttin'] || noSpaceRow['gstin'] || null;
+
+            let typeInput = (normalizedRow['type'] || noSpaceRow['type'] || '').toString().toLowerCase();
+            let type = 'Individual';
+            if (typeInput.includes('company')) type = 'Company';
+            else if (typeInput.includes('individual')) type = 'Individual';
+            else if (gst_tin) type = 'Company';
+
+            let address = normalizedRow['address'] || noSpaceRow['address'] || '';
+
+            // Follow frontend pattern: append GSTIN to address for companies
+            if (type === 'Company' && gst_tin) {
+                const gstinStr = `GSTIN: ${gst_tin}`;
+                if (address) {
+                    if (!address.toString().includes('GSTIN:')) {
+                        address = `${address}\n\n${gstinStr}`;
+                    }
+                } else {
+                    address = gstinStr;
+                }
+            }
 
             try {
                 await pool.query(
                     'INSERT INTO customers (name, email, phone, address, code, type) VALUES ($1, $2, $3, $4, $5, $6)',
                     [
                         name,
-                        normalizedRow['email'] || null,
-                        normalizedRow['phone'] || null,
-                        normalizedRow['address'] || null,
-                        normalizedRow['code'] || normalizedRow['id'] || null,
-                        normalizedRow['type'] || 'Individual'
+                        normalizedRow['email'] || noSpaceRow['email'] || null,
+                        normalizedRow['phone'] || normalizedRow['contact number'] || normalizedRow['contact'] || noSpaceRow['phone'] || noSpaceRow['contactnumber'] || noSpaceRow['contact'] || null,
+                        address || null,
+                        code,
+                        type
                     ]
                 );
                 successCount++;
