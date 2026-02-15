@@ -30,8 +30,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'INSERT INTO customers (name, email, phone, address, code, type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [name, email, phone, address, code, type || 'Individual']
+            'INSERT INTO customers (name, email, phone, address, code, id_reg_no, gst_tin, type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+            [name, email, phone, address, code, req.body.id_reg_no || code, req.body.gst_tin, type || 'Individual']
         );
 
         await logActivity(req.user.id, 'CREATE_CUSTOMER', `Created customer: ${name}`, 'CUSTOMER', result.rows[0].id);
@@ -54,8 +54,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            'UPDATE customers SET name = $1, email = $2, phone = $3, address = $4, code = $5, type = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING *',
-            [name, email, phone, address, code, type, id]
+            'UPDATE customers SET name = $1, email = $2, phone = $3, address = $4, code = $5, id_reg_no = $6, gst_tin = $7, type = $8, updated_at = CURRENT_TIMESTAMP WHERE id = $9 RETURNING *',
+            [name, email, phone, address, code, req.body.id_reg_no || code, req.body.gst_tin, type, id]
         );
 
         if (result.rows.length === 0) {
@@ -137,13 +137,15 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 
             try {
                 await pool.query(
-                    'INSERT INTO customers (name, email, phone, address, code, type) VALUES ($1, $2, $3, $4, $5, $6)',
+                    'INSERT INTO customers (name, email, phone, address, code, id_reg_no, gst_tin, type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
                     [
                         name,
                         normalizedRow['email'] || noSpaceRow['email'] || null,
                         normalizedRow['phone'] || normalizedRow['contact number'] || normalizedRow['contact'] || noSpaceRow['phone'] || noSpaceRow['contactnumber'] || noSpaceRow['contact'] || null,
                         address || null,
                         code,
+                        code, // Use code as id_reg_no during import
+                        gst_tin,
                         type
                     ]
                 );

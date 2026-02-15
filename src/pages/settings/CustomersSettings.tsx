@@ -42,26 +42,10 @@ const CustomersSettings: React.FC = () => {
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // Prepare payload
-            // We still append GSTIN to address for storage since we only added 'type', not 'gst_tin' column
-            // But we natively send 'type' now.
             const payload = {
                 ...formData,
-                address: formData.type === 'Company' && formData.gst_tin
-                    ? (formData.address.includes('GSTIN:') ? formData.address : `${formData.address}\n\nGSTIN: ${formData.gst_tin}`)
-                    : formData.address
+                id_reg_no: formData.code // Ensure id_reg_no is sent
             };
-
-            // Ensure address doesn't get duplicate GSTIN appended if editing
-            if (formData.type === 'Company' && formData.gst_tin && formData.address.includes('GSTIN:')) {
-                // If address already has GSTIN, we might need to update it.
-                // Simple regex replace or split/join to update the GSTIN part?
-                // For now, let's just assume the user edited the address field directly if they wanted to change it, 
-                // or we strip it before re-appending.
-                // Safer approach: Extract raw address from current input, append new GSTIN.
-                const rawAddress = formData.address.split('GSTIN:')[0].trim();
-                payload.address = `${rawAddress}\n\nGSTIN: ${formData.gst_tin}`;
-            }
 
             if (editingId) {
                 await customersAPI.update(editingId, payload);
@@ -81,26 +65,18 @@ const CustomersSettings: React.FC = () => {
     const handleEdit = (customer: any) => {
         setEditingId(customer.id);
 
-        // Parse Address to extract GSTIN if present
-        let address = customer.address || '';
-        let gst_tin = '';
-        if (address.includes('GSTIN: ')) {
-            const parts = address.split('GSTIN: ');
-            address = parts[0].trim();
-            gst_tin = parts[1].trim();
-        }
 
-        // Use native type if available, else infer
-        const type = customer.type || (gst_tin ? 'Company' : 'Individual');
+
+
 
         setFormData({
-            type,
+            type: customer.type || 'Individual',
             name: customer.name || '',
             email: customer.email || '',
             phone: customer.phone || '',
-            address: address,
-            code: customer.code || '',
-            gst_tin
+            address: customer.address || '',
+            code: customer.id_reg_no || customer.code || '',
+            gst_tin: customer.gst_tin || ''
         });
         setShowAddModal(true);
     };
@@ -299,6 +275,7 @@ const CustomersSettings: React.FC = () => {
                                     </th>
                                     <th className="py-3 px-4 font-semibold">Email</th>
                                     <th className="py-3 px-4 font-semibold">Contact</th>
+                                    {activeTab === 'Company' && <th className="py-3 px-4 font-semibold">GST TIN</th>}
                                     <th className="py-3 px-4 font-semibold w-24 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -309,6 +286,7 @@ const CustomersSettings: React.FC = () => {
                                         <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.code || '-'}</td>
                                         <td className="py-3 px-4 text-gray-600">{item.email || '-'}</td>
                                         <td className="py-3 px-4 text-gray-600 font-mono">{item.phone || '-'}</td>
+                                        {activeTab === 'Company' && <td className="py-3 px-4 text-gray-600 font-mono text-xs">{item.gst_tin || '-'}</td>}
                                         <td className="py-3 px-4 text-right flex justify-end gap-2">
                                             <button
                                                 onClick={() => handleEdit(item)}
