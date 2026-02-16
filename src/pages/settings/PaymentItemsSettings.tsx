@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, Search, X, Edit2, FileUp, FileDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { paymentItemsAPI, vendorsAPI } from '../../services/api';
+import SearchableSelect from '../../components/SearchableSelect';
 
 const PaymentItemsSettings: React.FC = () => {
     const [items, setItems] = useState<any[]>([]);
@@ -291,21 +292,16 @@ const PaymentItemsSettings: React.FC = () => {
                             <div className="space-y-1.5">
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Vendor</label>
                                 <div className="relative">
-                                    <select
-                                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm text-gray-700 appearance-none cursor-pointer"
-                                        value={formData.vendor_id}
-                                        onChange={e => setFormData({ ...formData, vendor_id: e.target.value })}
-                                    >
-                                        <option value="">Select a vendor</option>
-                                        {vendors.map(vendor => (
-                                            <option key={vendor.id} value={vendor.id}>
-                                                {vendor.name} {vendor.company_name ? `(${vendor.company_name})` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute right-3 top-3 pointer-events-none">
-                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
+                                    <SearchableSelect
+                                        options={vendors.map(vendor => ({
+                                            id: vendor.id,
+                                            label: `${vendor.name} ${vendor.company_name ? `(${vendor.company_name})` : ''}`,
+                                            value: String(vendor.id)
+                                        }))}
+                                        value={String(formData.vendor_id || '')}
+                                        onChange={(val) => setFormData({ ...formData, vendor_id: val })}
+                                        placeholder="Select a vendor"
+                                    />
                                 </div>
                             </div>
 
