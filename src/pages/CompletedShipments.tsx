@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Search, Package, Anchor, Plane, Truck, CheckCircle, FileText, Calendar, Filter } from 'lucide-react';
+import { Search, Package, Anchor, Plane, Truck, CheckCircle, FileText, Calendar, Filter, RotateCcw } from 'lucide-react';
 import Layout from '../components/Layout';
 import { shipmentsAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const CompletedShipments = () => {
     const [jobs, setJobs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-
+    const { hasRole } = useAuth();
 
     useEffect(() => {
         fetchJobs();
@@ -37,6 +38,21 @@ const CompletedShipments = () => {
         }
     };
 
+    const handleUndo = async (job: any) => {
+        if (!confirm(`Are you sure you want to revert Job ${job.id} to Pending (Payment) stage?`)) return;
+
+        try {
+            setLoading(true);
+            await shipmentsAPI.update(job.id, { status: 'Payment', progress: 75 });
+            alert(`Job ${job.id} reverted to Pending stage.`);
+            fetchJobs();
+        } catch (error) {
+            console.error('Undo failed', error);
+            alert('Failed to revert job.');
+            setLoading(false);
+        }
+    };
+
     const getModeIcon = (mode: string) => {
         switch (mode?.toUpperCase()) {
             case 'SEA': return <Anchor className="w-3 h-3" />;
@@ -54,6 +70,8 @@ const CompletedShipments = () => {
             default: return 'bg-gray-50 text-gray-700 border-gray-200';
         }
     };
+
+    const canUndo = hasRole('Administrator') || hasRole('All');
 
     return (
         <Layout>
@@ -111,12 +129,13 @@ const CompletedShipments = () => {
                                     <th className="py-4 px-4">BL No.</th>
                                     <th className="py-4 px-4">Invoice No. & Cumtoms R No</th>
                                     <th className="py-4 px-6 text-right">Transport Mode</th>
+                                    {canUndo && <th className="py-4 px-4 text-center">Action</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {loading && jobs.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="py-32 text-center">
+                                        <td colSpan={canUndo ? 7 : 6} className="py-32 text-center">
                                             <div className="flex flex-col items-center gap-3">
                                                 <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
                                                 <p className="text-sm font-bold text-gray-400">Fetching records...</p>
@@ -125,7 +144,7 @@ const CompletedShipments = () => {
                                     </tr>
                                 ) : jobs.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="py-32 text-center">
+                                        <td colSpan={canUndo ? 7 : 6} className="py-32 text-center">
                                             <div className="flex flex-col items-center gap-4 text-gray-400">
                                                 <Package className="w-16 h-16 opacity-20" />
                                                 <p className="text-lg font-bold">No completed shipments matching your search.</p>
@@ -193,6 +212,17 @@ const CompletedShipments = () => {
                                                     </span>
                                                 </div>
                                             </td>
+                                            {canUndo && (
+                                                <td className="py-5 px-4 text-center">
+                                                    <button
+                                                        onClick={() => handleUndo(job)}
+                                                        className="p-2 bg-gray-100 text-gray-500 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition-colors shadow-sm"
+                                                        title="Undo / Revert to Pending"
+                                                    >
+                                                        <RotateCcw className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}

@@ -231,7 +231,7 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     nextIdNum++;
                 }
 
-                // --- 2. Map Basic Fields ---
+                // --- 2. Map Basic Fields & Calculate Status/Progress ---
                 const customer = normalizedRow['customer'] || normalizedRow['client'] || 'Unknown';
                 const consignee = normalizedRow['consignee'] || normalizedRow['receiver_name'] || normalizedRow['receiver'] || 'Unknown';
                 const billingContact = normalizedRow['billing contact'] || normalizedRow['billing_contact'] || consignee || 'Unknown';
@@ -241,7 +241,28 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                 const invoiceItems = normalizedRow['invoice items'] || normalizedRow['invoice_items'];
                 const customsRForm = normalizedRow['customs r form'] || normalizedRow['customs_r_form'];
                 const jobInvoiceNo = normalizedRow['job invoice no'] || normalizedRow['job_invoice_no'];
-                const status = normalizedRow['clearing status'] || normalizedRow['status'] || 'New';
+
+                let status = normalizedRow['clearing status'] || normalizedRow['status'] || 'New';
+                let progress = 0;
+
+                // Status & Progress Mapping Logic
+                if (status.toLowerCase() === 'completed') {
+                    status = 'Completed';
+                    progress = 100;
+                } else if (status.toLowerCase() === 'pending' || status.toLowerCase() === 'payment') {
+                    // User Request: "Pending" imports should be at 75% (Payment Phase)
+                    status = 'Payment';
+                    progress = 75;
+                } else if (status.toLowerCase() === 'cleared') {
+                    status = 'Cleared';
+                    progress = 50;
+                } else if (status.toLowerCase().includes('clearance')) {
+                    status = 'Pending Clearance';
+                    progress = 25;
+                } else {
+                    status = 'New';
+                    progress = 0;
+                }
 
                 // Date Parsing
                 let dateVal = new Date();
@@ -275,15 +296,15 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     await pool.query(
                         `UPDATE shipments SET 
                             customer = $1, receiver_name = $2, sender_name = $3, invoice_no = $4, invoice_items = $5, 
-                            customs_r_form = $6, status = $7,
-                            expense_macl = $8, expense_mpl = $9, expense_mcs = $10,
-                            expense_transportation = $11, expense_liner = $12,
-                            billing_contact = $13,
-                            service = $14,
-                            date = $15
-                         WHERE id = $16`,
+                            customs_r_form = $6, status = $7, progress = $8,
+                            expense_macl = $9, expense_mpl = $10, expense_mcs = $11,
+                            expense_transportation = $12, expense_liner = $13,
+                            billing_contact = $14,
+                            service = $15,
+                            date = $16
+                         WHERE id = $17`,
                         [customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
-                            customsRForm, status,
+                            customsRForm, status, progress,
                             macl, mpl, mcs, transport, liner,
                             billingContact,
                             service,
@@ -295,13 +316,13 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     await pool.query(
                         `INSERT INTO shipments (
                             id, customer, receiver_name, sender_name, invoice_no, invoice_items, 
-                            customs_r_form, status,
+                            customs_r_form, status, progress,
                             expense_macl, expense_mpl, expense_mcs, 
                             expense_transportation, expense_liner, 
                             billing_contact, service, transport_mode, date, created_at
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW())`,
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW())`,
                         [id, customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
-                            customsRForm, status,
+                            customsRForm, status, progress,
                             macl, mpl, mcs, transport, liner,
                             billingContact, service, transportMode, dateVal]
                     );
