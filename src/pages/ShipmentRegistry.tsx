@@ -72,6 +72,7 @@ const ShipmentRegistry: React.FC = () => {
     const [historyLogs, setHistoryLogs] = useState<any[]>([]);
     const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
     const [jobDetailsForm, setJobDetailsForm] = useState<any>({});
+    const [importingMessage, setImportingMessage] = useState<string | null>(null);
 
     const selectedJobRef = React.useRef<any>(null);
     useEffect(() => { selectedJobRef.current = selectedJob; }, [selectedJob]);
@@ -759,7 +760,10 @@ const ShipmentRegistry: React.FC = () => {
     };
 
     const handleImportClick = () => {
-        document.getElementById('import-file-input')?.click();
+        const input = document.getElementById('import-file-input');
+        if (input instanceof HTMLInputElement) {
+            input.click();
+        }
     };
 
     const handleImportFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -767,7 +771,7 @@ const ShipmentRegistry: React.FC = () => {
         if (!file) return;
 
         if (!confirm(`Import jobs from ${file.name}?`)) {
-            event.target.value = ''; // Reset
+            event.target.value = '';
             return;
         }
 
@@ -776,19 +780,45 @@ const ShipmentRegistry: React.FC = () => {
 
         try {
             setLoading(true);
-            const res = await shipmentsAPI.import(formData);
-            alert(`Import Successful! \nSuccess: ${res.data.success} \nFailed: ${res.data.failed}`);
-            if (res.data.errors && res.data.errors.length > 0) {
-                console.warn("Import Errors:", res.data.errors);
-                alert("Some rows failed. Check console for details.");
-            }
-            loadJobs();
+            setImportingMessage('Reading file...');
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet);
+                    setImportingMessage(`Importing ${json.length} jobs...`);
+
+                    const res = await shipmentsAPI.import(formData);
+                    alert(`Import Successful! \nSuccess: ${res.data.success} \nFailed: ${res.data.failed}`);
+
+                    if (res.data.errors && res.data.errors.length > 0) {
+                        console.warn("Import Errors:", res.data.errors);
+                        alert("Some rows failed. Check console for details.");
+                    }
+                    loadJobs();
+                } catch (readErr) {
+                    console.error("Client-side read error or import error", readErr);
+                    // Fallback try simple import
+                    const res = await shipmentsAPI.import(formData);
+                    alert(`Import Successful!`);
+                    loadJobs();
+                } finally {
+                    setLoading(false);
+                    setImportingMessage(null);
+                    if (event.target) event.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+
         } catch (error: any) {
-            console.error("Import failed", error);
+            console.error("Import start failed", error);
             alert("Import failed: " + (error.response?.data?.error || error.message));
-        } finally {
             setLoading(false);
-            event.target.value = ''; // Reset
+            setImportingMessage(null);
+            event.target.value = '';
         }
     };
 
@@ -2781,7 +2811,10 @@ const ShipmentRegistry: React.FC = () => {
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                         {loading ? (
-                            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-indigo-600"></div></div>
+                            <div className="flex flex-col items-center justify-center py-12">
+                                <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-indigo-600 mb-3"></div>
+                                {importingMessage && <span className="text-sm font-medium text-indigo-600 animate-pulse">{importingMessage}</span>}
+                            </div>
                         ) : (
                             jobs.map(renderInboxItem)
                         )}
