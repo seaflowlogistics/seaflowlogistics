@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { Search, Calendar, ChevronDown, Pencil, Trash2 } from 'lucide-react';
+import { Search, Calendar, ChevronDown, Pencil, Trash2, Eye, Download, FileText, X } from 'lucide-react';
 import { clearanceAPI, deliveryNotesAPI, consigneesAPI, shipmentsAPI } from '../services/api';
 import ScheduleClearanceDrawer from '../components/ScheduleClearanceDrawer';
 import ClearanceDetailsDrawer from '../components/ClearanceDetailsDrawer';
@@ -102,6 +102,12 @@ const ClearanceSchedule: React.FC = () => {
     const [isDeliveryNoteMode, setIsDeliveryNoteMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isDeliveryDrawerOpen, setIsDeliveryDrawerOpen] = useState(false);
+
+    // Document View Modal State
+    const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
+    const [viewingDocs, setViewingDocs] = useState<any[]>([]);
+    const [viewingJobId, setViewingJobId] = useState<string | null>(null);
+    const [docsLoading, setDocsLoading] = useState(false);
 
     // Pending Jobs State removed
 
@@ -204,6 +210,55 @@ const ClearanceSchedule: React.FC = () => {
 
     const getSelectedSchedules = () => {
         return schedules.filter(s => selectedIds.includes(s.id));
+    };
+
+    const handleDocsClick = async (jobId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setViewingJobId(jobId);
+        setIsDocsModalOpen(true);
+        setDocsLoading(true);
+        setViewingDocs([]);
+
+        try {
+            const res = await shipmentsAPI.getById(jobId);
+            setViewingDocs(res.data.documents || []);
+        } catch (err) {
+            console.error("Failed to load docs", err);
+            alert("Failed to load documents.");
+        } finally {
+            setDocsLoading(false);
+        }
+    };
+
+    const handleViewDocument = async (doc: any) => {
+        if (!viewingJobId) return;
+        try {
+            const response = await shipmentsAPI.viewDocument(viewingJobId, doc.id);
+            const blob = new Blob([response.data], { type: doc.file_type || 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (error: any) {
+            console.error(error);
+            alert("Unable to view document. It might be missing.");
+        }
+    };
+
+    const handleDownloadDocument = async (doc: any) => {
+        if (!viewingJobId) return;
+        try {
+            const response = await shipmentsAPI.downloadDocument(viewingJobId, doc.id);
+            const blob = new Blob([response.data], { type: doc.file_type || 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', doc.file_name);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+        } catch (error: any) {
+            console.error(error);
+            alert("Unable to download document.");
+        }
     };
 
     return (
@@ -386,7 +441,13 @@ const ClearanceSchedule: React.FC = () => {
                                                             {/* Job */}
                                                             <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
                                                                 <div className="flex items-center gap-2">
-                                                                    {item.job_id}
+                                                                    <button
+                                                                        onClick={(e) => handleDocsClick(item.job_id, e)}
+                                                                        className="hover:underline text-indigo-600 font-bold focus:outline-none"
+                                                                        title="View Documents"
+                                                                    >
+                                                                        {item.job_id}
+                                                                    </button>
                                                                     {item.reschedule_reason && (
                                                                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
                                                                     )}
@@ -558,7 +619,13 @@ const ClearanceSchedule: React.FC = () => {
                                                             {/* Job */}
                                                             <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
                                                                 <div className="flex items-center gap-2">
-                                                                    {item.job_id}
+                                                                    <button
+                                                                        onClick={(e) => handleDocsClick(item.job_id, e)}
+                                                                        className="hover:underline text-indigo-600 font-bold focus:outline-none"
+                                                                        title="View Documents"
+                                                                    >
+                                                                        {item.job_id}
+                                                                    </button>
                                                                     {item.reschedule_reason && (
                                                                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
                                                                     )}
@@ -712,6 +779,70 @@ const ClearanceSchedule: React.FC = () => {
                     selectedSchedules={getSelectedSchedules()}
                     onSave={handleDeliveryNoteSave}
                 />
+
+                {/* Docs Modal */}
+                {isDocsModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+                        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-scale-in">
+                            <div className="flex justify-between items-center p-4 border-b border-gray-100">
+                                <h3 className="font-bold text-lg text-gray-900">Documents for {viewingJobId}</h3>
+                                <button
+                                    onClick={() => setIsDocsModalOpen(false)}
+                                    className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="p-4 max-h-[60vh] overflow-y-auto">
+                                {docsLoading ? (
+                                    <div className="text-center py-8 text-gray-500">Loading documents...</div>
+                                ) : viewingDocs.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-400">No documents uploaded for this shipment.</div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {viewingDocs.map((doc: any) => (
+                                            <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-indigo-200 transition-colors group">
+                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                    <div className="p-2 bg-white rounded border border-gray-200 text-indigo-500">
+                                                        <FileText className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-gray-900 truncate">{doc.document_type || 'Document'}</p>
+                                                        <p className="text-xs text-gray-500 truncate">{doc.file_name}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleViewDocument(doc)}
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                                        title="View"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDownloadDocument(doc)}
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                                        title="Download"
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                                <button
+                                    onClick={() => setIsDocsModalOpen(false)}
+                                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </Layout >
     );
