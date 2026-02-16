@@ -1645,7 +1645,7 @@ const ShipmentRegistry: React.FC = () => {
                     <div className="flex justify-between items-end mb-8">
                         <div className="flex gap-12">
                             <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Job Number</p>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Shipment Number</p>
                                 <p className="font-bold text-xl text-gray-900">{selectedJob.id}</p>
                             </div>
                             <div>
@@ -1726,7 +1726,7 @@ const ShipmentRegistry: React.FC = () => {
                                 )
                             ) : (
                                 <span className="px-5 py-2.5 bg-gray-100 text-gray-400 text-sm font-bold rounded-lg flex items-center gap-2 cursor-default border border-gray-200">
-                                    <Lock className="w-4 h-4" /> Job Closed
+                                    <Lock className="w-4 h-4" /> Shipment Closed
                                 </span>
                             )}
                         </div>

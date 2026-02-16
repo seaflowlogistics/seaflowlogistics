@@ -344,7 +344,7 @@ const ClearanceSchedule: React.FC = () => {
                                                         {isDeliveryNoteMode && (
                                                             <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[50px]">Select</th>
                                                         )}
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Job</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Shipment</th>
                                                         <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[180px]">Consignee</th>
                                                         <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Method</th>
                                                         <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">BL No.</th>
@@ -516,7 +516,7 @@ const ClearanceSchedule: React.FC = () => {
                                                         {isDeliveryNoteMode && (
                                                             <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[50px]">Select</th>
                                                         )}
-                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Job</th>
+                                                        <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">Shipment</th>
                                                         <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[180px]">Consignee</th>
                                                         <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[100px]">Method</th>
                                                         <th className="py-4 px-6 text-left text-xs font-bold uppercase tracking-wider w-[140px]">BL No.</th>

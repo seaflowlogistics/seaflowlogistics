@@ -189,7 +189,7 @@ const Payments = () => {
                                 {activeTab === 'pending' ? (
                                     <>
                                         <th className="pb-3 px-2 w-[4%]"></th>
-                                        <th className="pb-3 px-2 w-[10%]">Job</th>
+                                        <th className="pb-3 px-2 w-[10%]">Shipment</th>
                                         <th className="pb-3 px-2 w-[30%]">Pay to</th>
                                         <th className="pb-3 px-2 w-[20%]">Requested By</th>
                                         <th className="pb-3 px-2 w-[15%] text-right">Amount (MVR)</th>

@@ -349,7 +349,7 @@ const DeliveryNotes: React.FC = () => {
 
                                         return (
                                             <tr>
-                                                <th className={`py-1 px-2 text-left ${showContainer ? 'w-[15%]' : 'w-1/5'}`}>Job No</th>
+                                                <th className={`py-1 px-2 text-left ${showContainer ? 'w-[15%]' : 'w-1/5'}`}>Shipment No</th>
                                                 <th className={`py-1 px-2 text-left ${showContainer ? 'w-[30%]' : 'w-2/5'}`}>Shipper</th>
                                                 <th className={`py-1 px-2 text-left ${showContainer ? 'w-[20%]' : 'w-1/5'}`}>BL/AWB #</th>
                                                 <th className={`py-1 px-2 text-left ${showContainer ? 'w-[10%]' : 'w-1/5'}`}>Qty</th>
@@ -936,7 +936,7 @@ const DeliveryNotes: React.FC = () => {
                                     <tr className="bg-black text-white text-xs uppercase tracking-wider">
                                         <th className="py-4 px-6 font-semibold">Delivery</th>
                                         <th className="py-4 px-6 font-semibold w-1/4">Consignee</th>
-                                        <th className="py-4 px-6 font-semibold">Jobs</th>
+                                        <th className="py-4 px-6 font-semibold">Shipments</th>
                                         <th className="py-4 px-6 font-semibold">Details</th>
                                         <th className="py-4 px-6 font-semibold">Issued</th>
                                         <th className="py-4 px-6 font-semibold">Status</th>

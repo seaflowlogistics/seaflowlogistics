@@ -168,7 +168,7 @@ const Reports: React.FC = () => {
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
                                 <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Registered</p>
                                 <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.registered}</h3>
-                                <p className="text-xs text-gray-400 mt-1">Jobs Created</p>
+                                <p className="text-xs text-gray-400 mt-1">Shipment Created</p>
                             </div>
 
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-orange-500">
@@ -180,7 +180,7 @@ const Reports: React.FC = () => {
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-green-500">
                                 <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Invoiced</p>
                                 <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.invoiced}</h3>
-                                <p className="text-xs text-gray-400 mt-1">Jobs Completed</p>
+                                <p className="text-xs text-gray-400 mt-1">Shipment Completed</p>
                             </div>
 
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-indigo-500">

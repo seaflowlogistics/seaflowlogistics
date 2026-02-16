@@ -123,7 +123,7 @@ const CompletedShipments = () => {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-gray-50/50 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100">
-                                    <th className="py-4 px-6">Job Records</th>
+                                    <th className="py-4 px-6">Shipment Records</th>
                                     <th className="py-4 px-4">Completion Date</th>
                                     <th className="py-4 px-4">Details</th>
                                     <th className="py-4 px-4">BL No.</th>
