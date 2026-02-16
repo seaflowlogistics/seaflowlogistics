@@ -932,29 +932,31 @@ const ShipmentRegistry: React.FC = () => {
                 }
             `}
         >
-            <div className="flex justify-between items-start mb-2">
-                <span className="font-mono text-xs font-bold text-gray-500 group-hover:text-indigo-600 transition-colors">
-                    {job.id}
-                </span>
-
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-400">
-                        {new Date(job.created_at || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                    </span>
-                    {hasRole('Administrator') && (
-                        <button
-                            onClick={(e) => handleDeleteJob(job.id, e)}
-                            className="p-1 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
-                            title="Delete Job"
-                        >
-                            <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                    )}
-                </div>
+            <div className="mb-2">
+                <h4 className="text-sm font-bold text-gray-900 leading-tight mb-1">{job.customer || 'Unknown Customer'}</h4>
+                <p className="text-[10px] text-gray-400 font-medium">
+                    Registered on {new Date(job.created_at || Date.now()).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                </p>
             </div>
 
-            <h4 className="text-sm font-bold text-gray-900 mb-1 leading-tight pr-6">{job.customer || 'Unknown Customer'}</h4>
-            <p className="text-xs text-gray-500 mb-3 truncate">{job.exporter}</p>
+            <div className="flex justify-between items-center mb-3">
+                <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                    {job.id}
+                </span>
+                {hasRole('Administrator') && (
+                    <button
+                        onClick={(e) => handleDeleteJob(job.id, e)}
+                        className="p-1 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                        title="Delete Job"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                )}
+            </div>
+
+            <p className="text-xs text-gray-500 mb-2 truncate" title={`Exporter: ${job.exporter}`}>
+                <span className="font-semibold text-gray-400">Exp:</span> {job.exporter || '-'}
+            </p>
 
             <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2">

@@ -64,7 +64,7 @@ const generateShipmentId = async (transportMode) => {
 
     const nextNum = maxNum + 1;
 
-    return `${prefixChar}${year}-${String(nextNum).padStart(3, '0')}`;
+    return `${prefixChar}${year}-${String(nextNum).padStart(4, '0')}`;
 };
 
 // Export Shipments (Full Details)
