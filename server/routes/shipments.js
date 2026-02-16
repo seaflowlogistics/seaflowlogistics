@@ -9,7 +9,11 @@ import { generateInvoicePDF } from '../utils/invoiceGenerator.js';
 import XLSX from 'xlsx';
 import { logActivity } from '../utils/logger.js';
 import { broadcastNotification, createNotification, broadcastToAll } from '../utils/notify.js';
+import { fileURLToPath } from 'url';
 import multer from 'multer';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 const router = express.Router();
