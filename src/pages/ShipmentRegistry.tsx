@@ -73,9 +73,14 @@ const ShipmentRegistry: React.FC = () => {
     const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
     const [jobDetailsForm, setJobDetailsForm] = useState<any>({});
     const [importingMessage, setImportingMessage] = useState<string | null>(null);
+    const [pendingUploads, setPendingUploads] = useState<Array<{ id: number, file: File | null, type: string }>>([{ id: Date.now(), file: null, type: 'Invoice' }]);
 
     const selectedJobRef = React.useRef<any>(null);
     useEffect(() => { selectedJobRef.current = selectedJob; }, [selectedJob]);
+
+    useEffect(() => {
+        setPendingUploads([{ id: Date.now(), file: null, type: 'Invoice' }]);
+    }, [selectedJob?.id]);
 
     // Handle incoming navigation from Dashboard and Notifications
     useEffect(() => {
@@ -1314,42 +1319,91 @@ const ShipmentRegistry: React.FC = () => {
             {canEdit && (
                 <div className="border-t pt-6">
                     <h4 className="font-semibold text-sm text-gray-700 mb-4">Upload New Document</h4>
-                    <div className="flex gap-4 items-end">
-                        <div className="flex-1">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Document Type</label>
-                            <select id="docTypeSelect" className="w-full p-2 border rounded text-sm bg-gray-50">
-                                <option value="Invoice">Invoice</option>
-                                <option value="Packing List">Packing List</option>
-                                <option value="BL/AWB">BL/AWB</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div className="flex-1">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">File</label>
-                            <input type="file" id="docFileInput" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                        </div>
-                        <button onClick={async () => {
-                            const fileInput = document.getElementById('docFileInput') as HTMLInputElement;
-                            const typeInput = document.getElementById('docTypeSelect') as HTMLSelectElement;
-                            if (fileInput?.files?.[0]) {
-                                const file = fileInput.files[0];
-                                const type = typeInput.value;
 
-                                const formData = new FormData();
-                                formData.append('file', file);
-                                formData.append('document_type', type);
-                                try {
-                                    await shipmentsAPI.uploadDocument(selectedJob.id, formData);
-                                    alert('Uploaded successfully');
-                                    const res = await shipmentsAPI.getById(selectedJob.id);
-                                    setSelectedJob(res.data);
-                                    fileInput.value = '';
-                                } catch (e) {
-                                    console.error(e);
-                                    alert('Upload failed');
-                                }
-                            }
-                        }} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium text-sm">Upload</button>
+                    <div className="space-y-4">
+                        {pendingUploads.map((pend) => (
+                            <div key={pend.id} className="flex gap-4 items-end animate-fade-in">
+                                <div className="flex-1">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Document Type</label>
+                                    <select
+                                        className="w-full p-2 border rounded text-sm bg-gray-50"
+                                        value={pend.type}
+                                        onChange={(e) => {
+                                            const newVal = e.target.value;
+                                            setPendingUploads(prev => prev.map(p => p.id === pend.id ? { ...p, type: newVal } : p));
+                                        }}
+                                    >
+                                        <option value="Invoice">Invoice</option>
+                                        <option value="Packing List">Packing List</option>
+                                        <option value="BL/AWB">BL/AWB</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">File</label>
+                                    <input
+                                        type="file"
+                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0] || null;
+                                            setPendingUploads(prev => prev.map(p => p.id === pend.id ? { ...p, file } : p));
+                                        }}
+                                    />
+                                </div>
+                                {pendingUploads.length > 1 && (
+                                    <button
+                                        onClick={() => setPendingUploads(prev => prev.filter(p => p.id !== pend.id))}
+                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                        title="Remove"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+
+                        <div className="flex justify-between items-center pt-2">
+                            <button
+                                onClick={() => setPendingUploads(prev => [...prev, { id: Date.now(), file: null, type: 'Invoice' }])}
+                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-medium text-sm flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4" /> Add Another Document
+                            </button>
+
+                            <button
+                                onClick={async () => {
+                                    const validFiles = pendingUploads.filter(p => p.file);
+                                    if (validFiles.length === 0) return alert("Please select at least one file.");
+
+                                    try {
+                                        setLoading(true);
+                                        await Promise.all(validFiles.map(async (p) => {
+                                            const formData = new FormData();
+                                            if (p.file) {
+                                                formData.append('file', p.file);
+                                                formData.append('document_type', p.type);
+                                                await shipmentsAPI.uploadDocument(selectedJob.id, formData);
+                                            }
+                                        }));
+
+                                        alert('All documents uploaded successfully');
+                                        const res = await shipmentsAPI.getById(selectedJob.id);
+                                        setSelectedJob(res.data);
+                                        // Reset list
+                                        setPendingUploads([{ id: Date.now(), file: null, type: 'Invoice' }]);
+                                    } catch (e) {
+                                        console.error(e);
+                                        alert('Some uploads failed. Check console.');
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                                className="px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-bold text-sm shadow-md disabled:opacity-50"
+                                disabled={loading}
+                            >
+                                {loading ? 'Uploading...' : 'Upload All'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
