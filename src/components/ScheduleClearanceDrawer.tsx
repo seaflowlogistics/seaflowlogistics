@@ -382,23 +382,45 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                                         {formData.packages || 'No packages found in selected containers'}
                                     </div>
                                 ) : (
-                                    <div className="relative">
-                                        <select
-                                            name="packages"
-                                            value={formData.packages}
-                                            onChange={handleInputChange}
-                                            className={`w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none ${!formData.packages ? 'text-gray-400' : 'text-gray-700'}`}
-                                        >
-                                            <option value="" disabled>Select packages</option>
-                                            {packageOptions.length > 0 ? (
-                                                packageOptions.map((opt: string, idx: number) => (
-                                                    <option key={idx} value={opt}>{opt}</option>
-                                                ))
-                                            ) : (
-                                                <option value="" disabled>No packages available for this BL</option>
-                                            )}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    <div className="border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto bg-white">
+                                        {packageOptions.length > 0 ? (
+                                            packageOptions.map((opt: string, idx: number) => {
+                                                const currentPkgs = formData.packages ? formData.packages.toString().split(',').map((s: string) => s.trim()) : [];
+                                                const isSelected = currentPkgs.includes(opt);
+                                                return (
+                                                    <div key={idx} className="flex items-center gap-2 py-1">
+                                                        <input
+                                                            type="checkbox"
+                                                            id={`pkg-${idx}`}
+                                                            checked={isSelected}
+                                                            onChange={(e) => {
+                                                                const checked = e.target.checked;
+                                                                let newPkgs = [...currentPkgs];
+
+                                                                if (checked) {
+                                                                    if (!newPkgs.includes(opt)) {
+                                                                        newPkgs.push(opt);
+                                                                    }
+                                                                } else {
+                                                                    newPkgs = newPkgs.filter(p => p !== opt);
+                                                                }
+
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    packages: newPkgs.join(', ')
+                                                                }));
+                                                            }}
+                                                            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                                        />
+                                                        <label htmlFor={`pkg-${idx}`} className="text-sm text-gray-700 cursor-pointer select-none">
+                                                            {opt}
+                                                        </label>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <p className="text-sm text-gray-400 italic">No packages available for this BL</p>
+                                        )}
                                     </div>
                                 )}
                             </div>
