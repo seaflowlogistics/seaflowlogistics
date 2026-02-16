@@ -1665,16 +1665,6 @@ const ShipmentRegistry: React.FC = () => {
                                             </button>
                                         )
                                     )
-                                ) : canEdit ? (
-                                    <button
-                                        onClick={() => {
-                                            setViewMode('create');
-                                        }}
-                                        className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-sm"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        <span>New</span>
-                                    </button>
                                 ) : (
                                     null
                                 )
