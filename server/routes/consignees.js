@@ -43,7 +43,95 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-// Import from Excel/CSV (Partial update shown for context, but focusing on create/update routes first as requested)
+// Import from Excel/CSV
+router.post('/import', authenticateToken, upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    try {
+        const workbook = XLSX.readFile(req.file.path);
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet);
+
+        let successCount = 0;
+        let errors = [];
+
+        for (const row of data) {
+            const normalizedRow = {};
+            const noSpaceRow = {};
+
+            Object.keys(row).forEach(key => {
+                const cleanKey = key.toLowerCase().trim()
+                    .replace(/[_\/]/g, ' ')
+                    .replace(/[^a-z0-9 ]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                normalizedRow[cleanKey] = row[key];
+                noSpaceRow[cleanKey.replace(/\s/g, '')] = row[key];
+            });
+
+            const name = normalizedRow['name'] || normalizedRow['consignee name'] || normalizedRow['company name'] || noSpaceRow['name'] || noSpaceRow['consigneename'] || noSpaceRow['companyname'];
+            if (!name) continue;
+
+            const email = normalizedRow['email'] || noSpaceRow['email'] || null;
+            const phone = normalizedRow['phone'] || normalizedRow['contact number'] || normalizedRow['contact'] || noSpaceRow['phone'] || noSpaceRow['contactnumber'] || noSpaceRow['contact'] || null;
+            const address = normalizedRow['address'] || noSpaceRow['address'] || null;
+            const code = normalizedRow['code'] || noSpaceRow['code'] || null;
+
+            // Company Fields
+            const company_reg_no = normalizedRow['company reg no'] || normalizedRow['registration number'] || normalizedRow['reg no'] || noSpaceRow['companyregno'] || noSpaceRow['registrationnumber'] || noSpaceRow['regno'] || null;
+            const gst_tin = normalizedRow['gst tin'] || normalizedRow['gstin'] || noSpaceRow['gsttin'] || noSpaceRow['gstin'] || null;
+            const c_number = normalizedRow['c number'] || normalizedRow['c no'] || noSpaceRow['cnumber'] || noSpaceRow['cno'] || null;
+
+            // Individual Fields
+            const passport_id = normalizedRow['passport id'] || normalizedRow['passport'] || normalizedRow['id number'] || noSpaceRow['passportid'] || noSpaceRow['passport'] || noSpaceRow['idnumber'] || null;
+
+            // Type Inference
+            let typeInput = (normalizedRow['type'] || noSpaceRow['type'] || '').toString().toLowerCase();
+            let type = 'Individual';
+            if (typeInput.includes('company')) type = 'Company';
+            else if (typeInput.includes('individual')) type = 'Individual';
+            else if (company_reg_no || gst_tin || c_number) type = 'Company';
+
+            try {
+                await pool.query(
+                    'INSERT INTO consignees (name, email, phone, address, code, type, passport_id, company_reg_no, gst_tin, c_number) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+                    [
+                        name,
+                        email,
+                        phone,
+                        address,
+                        code,
+                        type,
+                        passport_id,
+                        company_reg_no,
+                        gst_tin,
+                        c_number
+                    ]
+                );
+                successCount++;
+            } catch (err) {
+                errors.push(`Failed to import ${name}: ${err.message}`);
+            }
+        }
+
+        fs.unlinkSync(req.file.path);
+
+        await logActivity(req.user.id, 'IMPORT_CONSIGNEES', `Imported ${successCount} consignees`, 'CONSIGNEE', 'BATCH');
+
+        res.json({
+            message: `Imported ${successCount} consignees`,
+            errors: errors.length > 0 ? errors : undefined
+        });
+
+    } catch (error) {
+        console.error('Import error:', error);
+        res.status(500).json({ error: 'Failed to process file: ' + error.message });
+    }
+});
 
 // Update consignee
 router.put('/:id', authenticateToken, async (req, res) => {
