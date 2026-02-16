@@ -1231,45 +1231,8 @@ router.get('/:id/documents/:docId/view', authenticateToken, async (req, res) => 
 
         console.log(`[View] Serving file: ${absolutePath} (DB: ${doc.file_path})`);
 
-        // Helper to extract filename handling both Windows and Unix paths
-        // If path contains backslashes, path.basename on POSIX systems might return full path.
-        // So we manually split.
-        const extractFilename = (p) => {
-            if (!p) return null;
-            return p.split(/[/\\]/).pop();
-        };
-
         if (!fs.existsSync(absolutePath)) {
-            console.warn(`[View] File missing at ${absolutePath}, trying fallbacks...`);
-            const filename = extractFilename(doc.file_path);
-
-            if (filename) {
-                const fallback1 = path.join(process.cwd(), 'server', 'uploads', filename);
-                const fallback2 = path.join(process.cwd(), 'uploads', filename);
-                // Also check if process.cwd() is '/var/task' (Vercel) -> /tmp/uploads
-                const fallback3 = path.join('/tmp', 'uploads', filename);
-
-                if (fs.existsSync(fallback1)) {
-                    console.log(`[View] Found at fallback: ${fallback1}`);
-                    res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
-                    res.setHeader('Content-Disposition', `inline; filename="${doc.file_name}"`);
-                    return res.sendFile(fallback1);
-                }
-                if (fs.existsSync(fallback2)) {
-                    console.log(`[View] Found at fallback: ${fallback2}`);
-                    res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
-                    res.setHeader('Content-Disposition', `inline; filename="${doc.file_name}"`);
-                    return res.sendFile(fallback2);
-                }
-                if (fs.existsSync(fallback3)) {
-                    console.log(`[View] Found at fallback: ${fallback3}`);
-                    res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
-                    res.setHeader('Content-Disposition', `inline; filename="${doc.file_name}"`);
-                    return res.sendFile(fallback3);
-                }
-            }
-
-            console.error(`[View] File missing at all locations.`);
+            console.error(`[View] File missing at ${absolutePath}`);
             return res.status(404).send('File not found on server disk');
         }
 
@@ -1296,30 +1259,7 @@ router.get('/:id/documents/:docId/download', authenticateToken, async (req, res)
         console.log(`[Download] Serving file: ${absolutePath} (DB: ${doc.file_path})`);
 
         if (!fs.existsSync(absolutePath)) {
-            console.warn(`[Download] File missing at ${absolutePath}, trying fallbacks...`);
-            // Helper logic reused implicitly or duplicated
-            const filename = doc.file_path ? doc.file_path.split(/[/\\]/).pop() : null;
-
-            if (filename) {
-                const fallback1 = path.join(process.cwd(), 'server', 'uploads', filename);
-                const fallback2 = path.join(process.cwd(), 'uploads', filename);
-                const fallback3 = path.join('/tmp', 'uploads', filename);
-
-                if (fs.existsSync(fallback1)) {
-                    console.log(`[Download] Found at fallback: ${fallback1}`);
-                    return res.download(fallback1, doc.file_name);
-                }
-                if (fs.existsSync(fallback2)) {
-                    console.log(`[Download] Found at fallback: ${fallback2}`);
-                    return res.download(fallback2, doc.file_name);
-                }
-                if (fs.existsSync(fallback3)) {
-                    console.log(`[Download] Found at fallback: ${fallback3}`);
-                    return res.download(fallback3, doc.file_name);
-                }
-            }
-
-            console.error(`[Download] File missing at all locations.`);
+            console.error(`[Download] File missing at ${absolutePath}`);
             return res.status(404).send('File not found on server disk');
         }
 
