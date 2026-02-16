@@ -510,6 +510,7 @@ router.get('/', authenticateToken, async (req, res) => {
                 s.id ILIKE $${params.length + 1} 
                 OR s.customer ILIKE $${params.length + 1} 
                 OR s.sender_name ILIKE $${params.length + 1}
+                OR s.receiver_name ILIKE $${params.length + 1}
                 OR s.invoice_no ILIKE $${params.length + 1}
                 OR s.customs_r_form ILIKE $${params.length + 1}
                 OR i.id ILIKE $${params.length + 1}

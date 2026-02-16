@@ -329,7 +329,7 @@ const ShipmentRegistry: React.FC = () => {
 
     // Form State (for Register New Job)
     const [isEditingJob, setIsEditingJob] = useState(false);
-    const [billingType, setBillingType] = useState('Individual');
+    const [billingType, setBillingType] = useState('Company');
     const [consigneeType, setConsigneeType] = useState<'Individual' | 'Company'>('Company');
     const [formData, setFormData] = useState<JobFormData>({
         service: 'Clearance',
@@ -565,7 +565,7 @@ const ShipmentRegistry: React.FC = () => {
         setSelectedJob(null);
         // Ensure dropdowns are fresh
         loadDropdownData();
-        setBillingType('Individual');
+        setBillingType('Company');
         setConsigneeType('Company');
     };
 
@@ -1128,19 +1128,6 @@ const ShipmentRegistry: React.FC = () => {
                     {!formData.billing_contact_same && (
                         <div className="mt-4 animate-fade-in-down">
                             <div className="flex gap-4 mb-3 p-1 bg-white rounded-lg border border-gray-200 w-fit">
-                                <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors ${billingType === 'Individual' ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50'}`}>
-                                    <input
-                                        type="radio"
-                                        name="billingType"
-                                        className="hidden"
-                                        checked={billingType === 'Individual'}
-                                        onChange={() => {
-                                            setBillingType('Individual');
-                                            setFormData(prev => ({ ...prev, billing_contact: '' }));
-                                        }}
-                                    />
-                                    <span className="text-sm font-medium">Individual</span>
-                                </label>
                                 <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors ${billingType === 'Company' ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50'}`}>
                                     <input
                                         type="radio"
@@ -1153,6 +1140,19 @@ const ShipmentRegistry: React.FC = () => {
                                         }}
                                     />
                                     <span className="text-sm font-medium">Company</span>
+                                </label>
+                                <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors ${billingType === 'Individual' ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50'}`}>
+                                    <input
+                                        type="radio"
+                                        name="billingType"
+                                        className="hidden"
+                                        checked={billingType === 'Individual'}
+                                        onChange={() => {
+                                            setBillingType('Individual');
+                                            setFormData(prev => ({ ...prev, billing_contact: '' }));
+                                        }}
+                                    />
+                                    <span className="text-sm font-medium">Individual</span>
                                 </label>
                             </div>
 
