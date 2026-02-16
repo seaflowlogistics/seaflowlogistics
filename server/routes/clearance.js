@@ -107,9 +107,11 @@ router.get('/', async (req, res) => {
                    s.customer, 
                    s.sender_name as exporter, 
                    s.receiver_name as consignee,
-                   s.transport_mode as shipment_transport_mode
+                   s.transport_mode as shipment_transport_mode,
+                   c.c_number
             FROM clearance_schedules cs
-            LEFT JOIN shipments s ON cs.job_id = s.id
+            JOIN shipments s ON cs.job_id = s.id
+            LEFT JOIN consignees c ON LOWER(TRIM(c.name)) = LOWER(TRIM(s.receiver_name))
         `;
 
         const params = [];
