@@ -111,7 +111,7 @@ router.get('/', async (req, res) => {
                    c.c_number
             FROM clearance_schedules cs
             JOIN shipments s ON cs.job_id = s.id
-            LEFT JOIN consignees c ON LOWER(TRIM(c.name)) = LOWER(TRIM(s.receiver_name))
+            LEFT JOIN consignees c ON REGEXP_REPLACE(LOWER(c.name), '[^a-z0-9]', '', 'g') = REGEXP_REPLACE(LOWER(s.receiver_name), '[^a-z0-9]', '', 'g')
         `;
 
         const params = [];
