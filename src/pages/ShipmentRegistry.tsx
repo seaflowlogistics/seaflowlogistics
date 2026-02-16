@@ -1386,7 +1386,7 @@ const ShipmentRegistry: React.FC = () => {
         const hasContainerDetails = !isSea || (selectedJob.containers && selectedJob.containers.length > 0);
         const hasDocuments = (selectedJob.documents && selectedJob.documents.length > 0) || selectedJob.no_documents;
 
-        const isDocComplete = (selectedJob.service === 'Clearance' || !selectedJob.service)
+        const isDocComplete = ((selectedJob.service || 'Clearance').toLowerCase() === 'clearance')
             ? (hasBLDetails && hasContainerDetails)
             : (hasInvoiceDetails && hasBLDetails && hasContainerDetails && hasDocuments);
 
