@@ -802,7 +802,7 @@ const ShipmentRegistry: React.FC = () => {
                 } catch (readErr) {
                     console.error("Client-side read error or import error", readErr);
                     // Fallback try simple import
-                    const res = await shipmentsAPI.import(formData);
+                    await shipmentsAPI.import(formData);
                     alert(`Import Successful!`);
                     loadJobs();
                 } finally {
