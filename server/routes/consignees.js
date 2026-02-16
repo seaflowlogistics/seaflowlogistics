@@ -84,15 +84,20 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             // Company Fields
             const company_reg_no = normalizedRow['company reg no'] || normalizedRow['registration number'] || normalizedRow['reg no'] ||
                 normalizedRow['company register number'] || normalizedRow['company registration no'] || normalizedRow['register no'] ||
+                normalizedRow['id reg no'] || normalizedRow['id regno'] ||
                 noSpaceRow['companyregno'] || noSpaceRow['registrationnumber'] || noSpaceRow['regno'] ||
-                noSpaceRow['companyregisternumber'] || noSpaceRow['companyregistrationno'] || noSpaceRow['registerno'] || null;
+                noSpaceRow['companyregisternumber'] || noSpaceRow['companyregistrationno'] || noSpaceRow['registerno'] ||
+                noSpaceRow['idregno'] || null;
 
             const gst_tin = normalizedRow['gst tin'] || normalizedRow['gstin'] || normalizedRow['gst no'] || noSpaceRow['gsttin'] || noSpaceRow['gstin'] || noSpaceRow['gstno'] || null;
 
             const c_number = normalizedRow['c number'] || normalizedRow['c no'] || normalizedRow['c code'] || noSpaceRow['cnumber'] || noSpaceRow['cno'] || noSpaceRow['ccode'] || null;
 
             // Individual Fields
-            const passport_id = normalizedRow['passport id'] || normalizedRow['passport'] || normalizedRow['id number'] || noSpaceRow['passportid'] || noSpaceRow['passport'] || noSpaceRow['idnumber'] || null;
+            const passport_id = normalizedRow['passport id'] || normalizedRow['passport'] || normalizedRow['id number'] ||
+                normalizedRow['id reg no'] || normalizedRow['id regno'] ||
+                noSpaceRow['passportid'] || noSpaceRow['passport'] || noSpaceRow['idnumber'] ||
+                noSpaceRow['idregno'] || null;
 
             // Type Inference
             let typeInput = (normalizedRow['type'] || noSpaceRow['type'] || '').toString().toLowerCase();
