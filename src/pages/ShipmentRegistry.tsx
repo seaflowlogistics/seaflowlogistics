@@ -1386,7 +1386,9 @@ const ShipmentRegistry: React.FC = () => {
         const hasContainerDetails = !isSea || (selectedJob.containers && selectedJob.containers.length > 0);
         const hasDocuments = (selectedJob.documents && selectedJob.documents.length > 0) || selectedJob.no_documents;
 
-        const isDocComplete = hasInvoiceDetails && hasBLDetails && hasContainerDetails && hasDocuments;
+        const isDocComplete = (selectedJob.service === 'Clearance' || !selectedJob.service)
+            ? (hasBLDetails && hasContainerDetails)
+            : (hasInvoiceDetails && hasBLDetails && hasContainerDetails && hasDocuments);
 
         // Stage 2: Clearance (50%)
         // Rule: All BLs have Delivery Notes ISSUED
