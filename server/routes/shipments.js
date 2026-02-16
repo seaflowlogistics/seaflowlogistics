@@ -1225,20 +1225,33 @@ router.get('/:id/documents/:docId/view', authenticateToken, async (req, res) => 
         if (docResult.rows.length === 0) return res.status(404).send('Document not found');
         const doc = docResult.rows[0];
 
-        // Resolve absolute path safely
-        const normalizedPath = doc.file_path.replace(/\\/g, '/');
-        const absolutePath = path.resolve(process.cwd(), normalizedPath);
+        // 1. Try the stored path directly (normalized)
+        let filePath = path.resolve(doc.file_path);
 
-        console.log(`[View] Serving file: ${absolutePath} (DB: ${doc.file_path})`);
+        if (!fs.existsSync(filePath)) {
+            // 2. Fallback: Check in 'server/uploads' or 'uploads' relative to CWD using the basename
+            const filename = path.basename(doc.file_path);
+            const possiblePaths = [
+                path.join(process.cwd(), 'server', 'uploads', filename),
+                path.join(process.cwd(), 'uploads', filename),
+                path.join(__dirname, '..', 'uploads', filename)
+            ];
 
-        if (!fs.existsSync(absolutePath)) {
-            console.error(`[View] File missing at ${absolutePath}`);
-            return res.status(404).send('File not found on server disk');
+            const foundPath = possiblePaths.find(p => fs.existsSync(p));
+            if (foundPath) {
+                console.log(`[View] Recovered file at: ${foundPath} (Original: ${doc.file_path})`);
+                filePath = foundPath;
+            } else {
+                console.error(`[View] File missing at ${filePath} and fallbacks`);
+                return res.status(404).send('File not found on server disk');
+            }
+        } else {
+            console.log(`[View] Serving file: ${filePath}`);
         }
 
         res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
         res.setHeader('Content-Disposition', `inline; filename="${doc.file_name}"`);
-        res.sendFile(absolutePath);
+        res.sendFile(filePath);
     } catch (error) {
         console.error('View document error:', error);
         res.status(500).send('Internal Server Error');
@@ -1253,17 +1266,31 @@ router.get('/:id/documents/:docId/download', authenticateToken, async (req, res)
         if (docResult.rows.length === 0) return res.status(404).send('Document not found');
         const doc = docResult.rows[0];
 
-        const normalizedPath = doc.file_path.replace(/\\/g, '/');
-        const absolutePath = path.resolve(process.cwd(), normalizedPath);
+        // 1. Try the stored path directly (normalized)
+        let filePath = path.resolve(doc.file_path);
 
-        console.log(`[Download] Serving file: ${absolutePath} (DB: ${doc.file_path})`);
+        if (!fs.existsSync(filePath)) {
+            // 2. Fallback: Check in 'server/uploads' or 'uploads' relative to CWD using the basename
+            const filename = path.basename(doc.file_path);
+            const possiblePaths = [
+                path.join(process.cwd(), 'server', 'uploads', filename),
+                path.join(process.cwd(), 'uploads', filename),
+                path.join(__dirname, '..', 'uploads', filename)
+            ];
 
-        if (!fs.existsSync(absolutePath)) {
-            console.error(`[Download] File missing at ${absolutePath}`);
-            return res.status(404).send('File not found on server disk');
+            const foundPath = possiblePaths.find(p => fs.existsSync(p));
+            if (foundPath) {
+                console.log(`[Download] Recovered file at: ${foundPath} (Original: ${doc.file_path})`);
+                filePath = foundPath;
+            } else {
+                console.error(`[Download] File missing at ${filePath} and fallbacks`);
+                return res.status(404).send('File not found on server disk');
+            }
+        } else {
+            console.log(`[Download] Serving file: ${filePath}`);
         }
 
-        res.download(absolutePath, doc.file_name);
+        res.download(filePath, doc.file_name);
     } catch (error) {
         console.error('Download document error:', error);
         res.status(500).send('Internal Server Error');
