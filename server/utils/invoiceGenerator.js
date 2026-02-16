@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { uploadToSupabase } from './supabaseStorage.js';
 
 export const generateInvoicePDF = (shipment, invoiceId) => {
     return new Promise((resolve, reject) => {
@@ -37,7 +38,18 @@ export const generateInvoicePDF = (shipment, invoiceId) => {
 
             doc.end();
 
-            stream.on('finish', () => resolve(relativePath));
+            stream.on('finish', async () => {
+                try {
+                    const uploadResult = await uploadToSupabase(fullPath, 'uploads', 'invoices');
+                    // Clean up local file
+                    if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+                    resolve(uploadResult.publicUrl);
+                } catch (uploadError) {
+                    console.error('Invoice upload to Supabase failed:', uploadError.message);
+                    // Fallback to relative path if upload fails
+                    resolve(relativePath);
+                }
+            });
             stream.on('error', reject);
         } catch (error) {
             reject(error);

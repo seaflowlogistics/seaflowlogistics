@@ -11,6 +11,9 @@ import { logActivity } from '../utils/logger.js';
 import { broadcastNotification, createNotification, broadcastToAll } from '../utils/notify.js';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
+import { uploadToSupabase } from '../utils/supabaseStorage.js';
+import { supabase } from '../config/supabase.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -924,9 +927,21 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
             for (const type of fileTypes) {
                 if (req.files[type]) {
                     const file = req.files[type][0];
+                    let finalPath = file.path;
+
+                    try {
+                        const uploadResult = await uploadToSupabase(file.path, 'uploads', `shipments/${id}`);
+                        finalPath = uploadResult.publicUrl;
+                        // Clean up local file after successful upload
+                        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                    } catch (uploadError) {
+                        console.error(`Supabase upload failed for ${type}:`, uploadError.message);
+                        // Fallback: use local path (if not on Vercel)
+                    }
+
                     await pool.query(
                         'INSERT INTO shipment_documents (shipment_id, file_name, file_path, file_type, file_size, document_type) VALUES ($1, $2, $3, $4, $5, $6)',
-                        [id, file.originalname, file.path, file.mimetype, file.size, type]
+                        [id, file.originalname, finalPath, file.mimetype, file.size, type]
                     );
                 }
             }
@@ -1205,9 +1220,18 @@ router.post('/:id/documents', authenticateToken, upload.single('file'), async (r
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
+        let finalPath = file.path;
+        try {
+            const uploadResult = await uploadToSupabase(file.path, 'uploads', `shipments/${id}`);
+            finalPath = uploadResult.publicUrl;
+            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        } catch (uploadError) {
+            console.error('Supabase upload failed:', uploadError.message);
+        }
+
         await pool.query(
             'INSERT INTO shipment_documents (shipment_id, file_name, file_path, file_type, file_size, document_type, uploaded_at, uploaded_by, uploaded_by_name) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, $7, $8)',
-            [id, file.originalname, file.path, file.mimetype, file.size, document_type || 'Other', req.user.id, req.user.username]
+            [id, file.originalname, finalPath, file.mimetype, file.size, document_type || 'Other', req.user.id, req.user.username]
         );
 
         await logActivity(req.user.id, 'UPLOAD_DOCUMENT', `Uploaded ${file.originalname} to shipment ${id}`, 'SHIPMENT', id);
@@ -1228,6 +1252,11 @@ router.get('/:id/documents/:docId/view', authenticateToken, async (req, res) => 
         const docResult = await pool.query('SELECT * FROM shipment_documents WHERE id = $1 AND shipment_id = $2', [docId, id]);
         if (docResult.rows.length === 0) return res.status(404).send('Document not found');
         const doc = docResult.rows[0];
+
+        // If it's a cloud URL, redirect to it
+        if (doc.file_path && doc.file_path.startsWith('http')) {
+            return res.redirect(doc.file_path);
+        }
 
         // 1. Try the stored path directly (normalized)
         let filePath = path.resolve(doc.file_path);
@@ -1269,6 +1298,11 @@ router.get('/:id/documents/:docId/download', authenticateToken, async (req, res)
         const docResult = await pool.query('SELECT * FROM shipment_documents WHERE id = $1 AND shipment_id = $2', [docId, id]);
         if (docResult.rows.length === 0) return res.status(404).send('Document not found');
         const doc = docResult.rows[0];
+
+        // If it's a cloud URL, redirect to it
+        if (doc.file_path && doc.file_path.startsWith('http')) {
+            return res.redirect(doc.file_path);
+        }
 
         // 1. Try the stored path directly (normalized)
         let filePath = path.resolve(doc.file_path);

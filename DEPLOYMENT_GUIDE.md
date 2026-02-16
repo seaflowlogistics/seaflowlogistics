@@ -1,4 +1,4 @@
-# 🚀 Deployment & Custom Domain Guide for Seaflow Logistics
+# 🚀 Deployment & Custom Domain Guide for Seaflow Logistics ( Migrated to Vercel so double check)
 
 Since you are using **Railway** for hosting, here is the step-by-step guide to getting your application live with a custom link (e.g., `www.seaflow-logistics.com`).
 
