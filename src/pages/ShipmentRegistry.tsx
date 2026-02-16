@@ -2811,9 +2811,18 @@ const ShipmentRegistry: React.FC = () => {
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-2 border-dashed border-indigo-600 mb-3"></div>
-                                {importingMessage && <span className="text-sm font-medium text-indigo-600 animate-pulse">{importingMessage}</span>}
+                            <div className="flex flex-col items-center justify-center p-6 h-64">
+                                <div className="w-full bg-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-indigo-50 flex flex-col items-center text-center">
+                                    <div className="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin mb-4"></div>
+                                    <h3 className="text-gray-900 font-bold mb-2">Importing Shipments</h3>
+                                    {importingMessage ? (
+                                        <div className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                                            {importingMessage}
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-400 text-sm">Please wait...</span>
+                                    )}
+                                </div>
                             </div>
                         ) : (
                             jobs.map(renderInboxItem)
