@@ -97,6 +97,13 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         let successCount = 0;
         let errors = [];
 
+        // Fetch all vendors for lookup
+        const vendorsResult = await pool.query('SELECT id, name FROM vendors');
+        const vendorMap = new Map();
+        vendorsResult.rows.forEach(v => {
+            if (v.name) vendorMap.set(v.name.toLowerCase().trim(), v.id);
+        });
+
         for (const row of data) {
             const normalizedRow = {};
             Object.keys(row).forEach(key => {
@@ -106,13 +113,17 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             const name = normalizedRow['name'] || normalizedRow['payment item'] || normalizedRow['item'] || normalizedRow['payment_item'];
             if (!name) continue;
 
-            // Vendor logic removed as per requirement: Import file only contains payment item names.
-            // Vendors are assigned manually in the UI.
+            // Lookup vendor
+            const vendorName = normalizedRow['vendor'] || normalizedRow['vendor name'];
+            let vendorId = null;
+            if (vendorName) {
+                vendorId = vendorMap.get(vendorName.toString().toLowerCase().trim()) || null;
+            }
 
             try {
                 await pool.query(
-                    'INSERT INTO payment_items (name, vendor_id) VALUES ($1, NULL)',
-                    [name]
+                    'INSERT INTO payment_items (name, vendor_id) VALUES ($1, $2)',
+                    [name, vendorId]
                 );
                 successCount++;
             } catch (err) {
