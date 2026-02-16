@@ -102,8 +102,103 @@ const ClearanceSchedule: React.FC = () => {
     const [isDeliveryNoteMode, setIsDeliveryNoteMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isDeliveryDrawerOpen, setIsDeliveryDrawerOpen] = useState(false);
+    // Document handling state
+    const [selectedJobDocs, setSelectedJobDocs] = useState<{ jobId: string, docs: any[] } | null>(null);
+    const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
+    const [loadingJobId, setLoadingJobId] = useState<string | null>(null);
 
-    // Pending Jobs State removed
+    const viewDocument = async (jobId: string, doc: any) => {
+        try {
+            const response = await shipmentsAPI.viewDocument(jobId, doc.id);
+            const blob = new Blob([response.data], { type: doc.file_type || 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (error) {
+            console.error("Failed to view document", error);
+            alert("Failed to view document");
+        }
+    };
+
+    const handleShipmentClick = async (jobId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (loadingJobId) return;
+
+        setLoadingJobId(jobId);
+        try {
+            const res = await shipmentsAPI.getById(jobId);
+            const docs = res.data.documents || [];
+
+            if (docs.length === 0) {
+                alert(`No documents found for Shipment ${jobId}`);
+            } else if (docs.length === 1) {
+                // If only one document, view it directly
+                await viewDocument(jobId, docs[0]);
+            } else {
+                // If multiple, show the list modal
+                setSelectedJobDocs({ jobId, docs });
+                setIsDocsModalOpen(true);
+            }
+        } catch (error) {
+            console.error("Failed to load shipment documents", error);
+            alert("Failed to load documents");
+        } finally {
+            setLoadingJobId(null);
+        }
+    };
+
+    // Components
+    const DocumentsListModal = () => {
+        if (!isDocsModalOpen || !selectedJobDocs) return null;
+
+        return (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in">
+                    <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900">Shipment Documents</h3>
+                            <p className="text-sm text-gray-500">Job: <span className="font-mono font-medium text-indigo-600">{selectedJobDocs.jobId}</span></p>
+                        </div>
+                        <button
+                            onClick={() => setIsDocsModalOpen(false)}
+                            className="p-2 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div className="p-2 max-h-[60vh] overflow-y-auto">
+                        {selectedJobDocs.docs.map((doc, index) => (
+                            <div
+                                key={doc.id || index}
+                                onClick={() => viewDocument(selectedJobDocs.jobId, doc)}
+                                className="flex items-center gap-4 p-4 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors border-b last:border-0 border-gray-50 group"
+                            >
+                                <div className="p-3 bg-indigo-100/50 text-indigo-600 rounded-lg group-hover:bg-white group-hover:shadow-sm transition-all">
+                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold text-gray-900 truncate">{doc.document_type || 'Document'}</h4>
+                                    <p className="text-xs text-gray-500 truncate">{doc.file_name}</p>
+                                </div>
+                                <div className="text-xs text-gray-400 group-hover:text-indigo-600 font-medium">
+                                    View
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">
+                        <button
+                            onClick={() => setIsDocsModalOpen(false)}
+                            className="text-sm text-gray-500 hover:text-gray-700 font-medium px-4 py-2 hover:bg-gray-200 rounded-lg transition-colors"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     useEffect(() => {
         const fetchSchedules = async () => {
@@ -208,6 +303,7 @@ const ClearanceSchedule: React.FC = () => {
 
     return (
         <Layout>
+            <DocumentsListModal />
             <div className="space-y-6 animate-fade-in font-sans">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -384,8 +480,11 @@ const ClearanceSchedule: React.FC = () => {
                                                                 </td>
                                                             )}
                                                             {/* Job */}
-                                                            <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
-                                                                <div className="flex items-center gap-2">
+                                                            <td className="py-4 px-6 text-sm font-semibold text-indigo-600 group/job">
+                                                                <div
+                                                                    className="flex items-center gap-2 cursor-pointer hover:text-indigo-800 transition-colors"
+                                                                    onClick={(e) => handleShipmentClick(item.job_id, e)}
+                                                                >
                                                                     {item.job_id}
                                                                     {item.reschedule_reason && (
                                                                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
@@ -556,8 +655,11 @@ const ClearanceSchedule: React.FC = () => {
                                                                 </td>
                                                             )}
                                                             {/* Job */}
-                                                            <td className="py-4 px-6 text-sm font-semibold text-indigo-600">
-                                                                <div className="flex items-center gap-2">
+                                                            <td className="py-4 px-6 text-sm font-semibold text-indigo-600 group/job">
+                                                                <div
+                                                                    className="flex items-center gap-2 cursor-pointer hover:text-indigo-800 transition-colors"
+                                                                    onClick={(e) => handleShipmentClick(item.job_id, e)}
+                                                                >
                                                                     {item.job_id}
                                                                     {item.reschedule_reason && (
                                                                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-100 text-yellow-700" title={`Reason: ${item.reschedule_reason}`}>Rescheduled</span>
