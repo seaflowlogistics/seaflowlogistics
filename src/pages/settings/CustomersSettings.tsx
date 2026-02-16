@@ -8,7 +8,7 @@ const CustomersSettings: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
-    const [activeTab, setActiveTab] = useState<'Individual' | 'Company'>('Individual');
+    const [activeTab, setActiveTab] = useState<'Individual' | 'Company'>('Company');
     const [importing, setImporting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -169,16 +169,6 @@ const CustomersSettings: React.FC = () => {
             {/* Tabs */}
             <div className="px-8 mb-6 border-b border-gray-200 flex gap-6">
                 <button
-                    onClick={() => setActiveTab('Individual')}
-                    className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'Individual' ? 'text-black' : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                >
-                    Individual
-                    {activeTab === 'Individual' && (
-                        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black rounded-t-full" />
-                    )}
-                </button>
-                <button
                     onClick={() => setActiveTab('Company')}
                     className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'Company' ? 'text-black' : 'text-gray-500 hover:text-gray-700'
                         }`}
@@ -188,6 +178,17 @@ const CustomersSettings: React.FC = () => {
                         <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black rounded-t-full" />
                     )}
                 </button>
+                <button
+                    onClick={() => setActiveTab('Individual')}
+                    className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'Individual' ? 'text-black' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    Individual
+                    {activeTab === 'Individual' && (
+                        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black rounded-t-full" />
+                    )}
+                </button>
+
             </div>
 
             <div className="px-8 mb-6 flex justify-between items-center gap-4">

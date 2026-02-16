@@ -10,7 +10,7 @@ const ConsigneesSettings: React.FC = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [importing, setImporting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [viewType, setViewType] = useState<'Individual' | 'Company'>('Individual');
+    const [viewType, setViewType] = useState<'Individual' | 'Company'>('Company');
 
     // Form State
     const [formData, setFormData] = useState({
@@ -221,6 +221,7 @@ const ConsigneesSettings: React.FC = () => {
                         onClick={() => {
                             setEditingId(null);
                             resetForm();
+                            setFormData(prev => ({ ...prev, type: viewType }));
                             setShowAddModal(true);
                         }}
                         className="px-4 py-2 bg-[#FCD34D] text-black font-semibold rounded-lg shadow-sm hover:bg-[#FBBF24] transition-colors flex items-center gap-2 text-sm"
@@ -235,15 +236,6 @@ const ConsigneesSettings: React.FC = () => {
             <div className="px-8 mb-4 border-b border-gray-200">
                 <div className="flex gap-6">
                     <button
-                        onClick={() => setViewType('Individual')}
-                        className={`pb-3 text-sm font-medium transition-colors relative ${viewType === 'Individual'
-                            ? 'text-black border-b-2 border-black'
-                            : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        Individual
-                    </button>
-                    <button
                         onClick={() => setViewType('Company')}
                         className={`pb-3 text-sm font-medium transition-colors relative ${viewType === 'Company'
                             ? 'text-black border-b-2 border-black'
@@ -251,6 +243,15 @@ const ConsigneesSettings: React.FC = () => {
                             }`}
                     >
                         Company
+                    </button>
+                    <button
+                        onClick={() => setViewType('Individual')}
+                        className={`pb-3 text-sm font-medium transition-colors relative ${viewType === 'Individual'
+                            ? 'text-black border-b-2 border-black'
+                            : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        Individual
                     </button>
                 </div>
             </div>
