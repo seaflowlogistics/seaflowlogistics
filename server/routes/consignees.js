@@ -82,9 +82,14 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             const code = normalizedRow['code'] || noSpaceRow['code'] || null;
 
             // Company Fields
-            const company_reg_no = normalizedRow['company reg no'] || normalizedRow['registration number'] || normalizedRow['reg no'] || noSpaceRow['companyregno'] || noSpaceRow['registrationnumber'] || noSpaceRow['regno'] || null;
-            const gst_tin = normalizedRow['gst tin'] || normalizedRow['gstin'] || noSpaceRow['gsttin'] || noSpaceRow['gstin'] || null;
-            const c_number = normalizedRow['c number'] || normalizedRow['c no'] || noSpaceRow['cnumber'] || noSpaceRow['cno'] || null;
+            const company_reg_no = normalizedRow['company reg no'] || normalizedRow['registration number'] || normalizedRow['reg no'] ||
+                normalizedRow['company register number'] || normalizedRow['company registration no'] || normalizedRow['register no'] ||
+                noSpaceRow['companyregno'] || noSpaceRow['registrationnumber'] || noSpaceRow['regno'] ||
+                noSpaceRow['companyregisternumber'] || noSpaceRow['companyregistrationno'] || noSpaceRow['registerno'] || null;
+
+            const gst_tin = normalizedRow['gst tin'] || normalizedRow['gstin'] || normalizedRow['gst no'] || noSpaceRow['gsttin'] || noSpaceRow['gstin'] || noSpaceRow['gstno'] || null;
+
+            const c_number = normalizedRow['c number'] || normalizedRow['c no'] || normalizedRow['c code'] || noSpaceRow['cnumber'] || noSpaceRow['cno'] || noSpaceRow['ccode'] || null;
 
             // Individual Fields
             const passport_id = normalizedRow['passport id'] || normalizedRow['passport'] || normalizedRow['id number'] || noSpaceRow['passportid'] || noSpaceRow['passport'] || noSpaceRow['idnumber'] || null;
