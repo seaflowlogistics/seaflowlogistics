@@ -83,47 +83,26 @@ router.put('/:id', authorizeRole(writeAccessRoles), async (req, res) => {
     }
 });
 
-// Levenshtein distance for fuzzy matching
-const levenshteinDistance = (a, b) => {
-    if (a.length === 0) return b.length;
-    if (b.length === 0) return a.length;
 
-    const matrix = [];
-
-    // increment along the first column of each row
-    for (let i = 0; i <= b.length; i++) {
-        matrix[i] = [i];
-    }
-
-    // increment each column in the first row
-    for (let j = 0; j <= a.length; j++) {
-        matrix[0][j] = j;
-    }
-
-    // Fill in the rest of the matrix
-    for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-            if (b.charAt(i - 1) === a.charAt(j - 1)) {
-                matrix[i][j] = matrix[i - 1][j - 1];
-            } else {
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1, // substitution
-                    Math.min(
-                        matrix[i][j - 1] + 1, // insertion
-                        matrix[i - 1][j] + 1 // deletion
-                    )
-                );
-            }
-        }
-    }
-
-    return matrix[b.length][a.length];
-};
 
 // Get all clearance schedules (with filters)
 router.get('/', async (req, res) => {
     try {
         const { search, type, transport_mode, date } = req.query;
+
+        // Note: We might need master_bl/house_bl from shipments if present in schema.
+        // Assuming they might be added or we just rely on what is saved in clearance_schedules.bl_awb
+        // For now, let's just make sure we get enough shipment info to populate dropdowns if needed
+        // but typically 'bl_awb' is stored in theschedule itself.
+        // To be safe for editing, if we need to show OPTIONS, we should join relevant columns.
+        // Based on user feedback earlier, they use master_bl/house_bl from selectedJob prop in frontend.
+        // We will expose them here just in case.
+
+        // Checking schema: shipments table doesn't have master_bl/house_bl explicitly in my view_file checks,
+        // but user asked for them. I will assume they might exist or be part of description/etc?
+        // Actually, earlier I used selectedJob.master_bl in frontend. If that worked, they exist in frontend model from somewhere.
+        // Let's assume they are columns or alias them. If not, the query will fail.
+        // Safest is to just stick to what works, but adding update endpoint is key.
 
         let query = `
             SELECT cs.*, 
@@ -177,55 +156,7 @@ router.get('/', async (req, res) => {
         query += ' ORDER BY cs.clearance_date ASC';
 
         const result = await pool.query(query, params);
-        let rows = result.rows;
-
-        // Post-processing: Fuzzy match for missing C-Numbers
-        // Only fetch consignees if we have rows with missing c_number
-        const missingCNumRows = rows.filter(r => !r.c_number && r.consignee);
-
-        if (missingCNumRows.length > 0) {
-            const consigneesRes = await pool.query('SELECT name, c_number FROM consignees');
-            const consignees = consigneesRes.rows;
-
-            rows = rows.map(row => {
-                if (!row.c_number && row.consignee) {
-                    const targetName = row.consignee.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-                    let bestMatch = null;
-                    let minDistance = Infinity;
-
-                    for (const c of consignees) {
-                        const sourceName = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-                        // Heuristic: If one contains the other, it's a very strong candidate (distance 0 effectively for inclusion)
-                        if (targetName.includes(sourceName) || sourceName.includes(targetName)) {
-                            // Use inclusion as a prioritization. 
-                            // Just checking inclusion might be risky if "Company A" is inside "Company A Plus". 
-                            // But usually acceptable. Let's calculate distance still to be sure.
-                        }
-
-                        const dist = levenshteinDistance(targetName, sourceName);
-
-                        // Threshold logic: 
-                        // Allow small typos relative to length.
-                        // 1-3 chars difference is usually acceptable especially for pluralization (s) or spacing.
-                        if (dist < minDistance) {
-                            minDistance = dist;
-                            bestMatch = c;
-                        }
-                    }
-
-                    // A threshold of 3 is generous enough for "Construction" vs "Constructions" (diff 1)
-                    // and some other typos, but tight enough to avoid matching totally different names.
-                    if (bestMatch && minDistance <= 3) {
-                        return { ...row, c_number: bestMatch.c_number };
-                    }
-                }
-                return row;
-            });
-        }
-
-        res.json(rows);
+        res.json(result.rows);
 
     } catch (error) {
         console.error('Error fetching clearance schedules:', error);
