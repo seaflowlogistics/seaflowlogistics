@@ -35,7 +35,7 @@ export const authorizeRole = (allowedRoles) => {
         if (Array.isArray(req.user.role)) {
             userRoles = req.user.role;
         } else if (typeof req.user.role === 'string') {
-            userRoles = req.user.role.split(',');
+            userRoles = req.user.role.split(',').map(r => r.trim());
         }
 
         // Check if user has at least one of the allowed roles
