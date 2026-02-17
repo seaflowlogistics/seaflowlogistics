@@ -339,9 +339,9 @@ const ClearanceSchedule: React.FC = () => {
 
                 {/* Filters */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-12 gap-6">
                         {/* Search */}
-                        <div className="lg:col-span-5">
+                        <div className="col-span-2 lg:col-span-5">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Search Clearances</label>
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -356,7 +356,7 @@ const ClearanceSchedule: React.FC = () => {
                         </div>
 
                         {/* Clearance Type */}
-                        <div className="lg:col-span-3">
+                        <div className="col-span-1 lg:col-span-3">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Clearance Type</label>
                             <div className="relative">
                                 <select
@@ -373,7 +373,7 @@ const ClearanceSchedule: React.FC = () => {
                         </div>
 
                         {/* Transport Mode */}
-                        <div className="lg:col-span-4">
+                        <div className="col-span-1 lg:col-span-4">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Transport Mode</label>
                             <div className="relative">
                                 <select
@@ -389,11 +389,9 @@ const ClearanceSchedule: React.FC = () => {
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                             </div>
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                         {/* Date */}
-                        <div className="">
+                        <div className="col-span-2 lg:col-span-3">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Clearance Date</label>
                             <div className="relative">
                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
