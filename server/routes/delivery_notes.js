@@ -4,6 +4,8 @@ import { authenticateToken } from '../middleware/auth.js';
 import baseUpload from '../utils/upload.js';
 import { logActivity } from '../utils/logger.js';
 import multer from 'multer';
+import { uploadToSupabase } from '../utils/supabaseStorage.js';
+import supabase from '../config/supabase.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -316,29 +318,31 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
         let currentDocs = currentRes.rows[0].documents || [];
         if (!Array.isArray(currentDocs)) currentDocs = [];
 
-        // 2. Process Uploaded Files - SAVE TO DB
+        // 2. Process Uploaded Files - SAVE TO CLOUD
         const newDocs = [];
         if (req.files && req.files.length > 0) {
-
-
             for (const file of req.files) {
-                // Insert into file_storage
-                const fileRes = await client.query(
-                    `INSERT INTO file_storage(filename, mime_type, data, size)
-        VALUES($1, $2, $3, $4) 
-                     RETURNING id`,
-                    [file.originalname, file.mimetype, file.buffer, file.size]
-                );
-                const fileId = fileRes.rows[0].id;
+                let finalUrl = '';
+                try {
+                    // Upload to Supabase Bucket
+                    const result = await uploadToSupabase(file.path, 'uploads', `delivery_notes/${id}`);
+                    finalUrl = result.publicUrl;
+
+                    // Clean up local temp file
+                    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                } catch (uploadErr) {
+                    console.error('Delivery Note file upload failed:', uploadErr.message);
+                    // Fallback to local path if storage fails (not ideal for Vercel)
+                    finalUrl = file.path;
+                }
 
                 newDocs.push({
-                    fileId: fileId, // Important: Store the DB ID
                     name: file.originalname,
-                    // Legacy URL for fallbacks or UI display logic
-                    url: `/ api / delivery - notes / document / view ? fileId = ${fileId} `,
+                    url: finalUrl,
                     uploaded_at: new Date().toISOString(),
                     type: file.mimetype,
-                    size: file.size
+                    size: file.size,
+                    isCloud: true // Helper flag for UI
                 });
             }
         }
@@ -453,6 +457,11 @@ router.delete('/:id/documents', authenticateToken, async (req, res) => {
 router.get('/document/view', authenticateToken, async (req, res) => {
     try {
         const { path: filePath, fileId } = req.query;
+
+        // If 'path' is a cloud URL, redirect to it
+        if (filePath && filePath.startsWith('http')) {
+            return res.redirect(filePath);
+        }
 
         // 1. Try DB Storage
         if (fileId) {

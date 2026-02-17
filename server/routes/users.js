@@ -2,6 +2,9 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import pool from '../config/database.js';
 import { authenticateToken, authorizeRole } from '../middleware/auth.js';
+import { uploadToSupabase } from '../utils/supabaseStorage.js';
+import fs from 'fs';
+import path from 'path';
 
 const router = express.Router();
 
@@ -260,7 +263,7 @@ const upload = multer({
 router.post('/:id/photo', (req, res, next) => {
     console.log(`[DEBUG] Received photo upload request for user ${req.params.id}`);
     next();
-}, upload.single('photo'), async (req, res) => {
+}, baseUpload.single('photo'), async (req, res) => {
     const { id } = req.params;
 
     // Authorization Check: Admin or Self
@@ -274,20 +277,17 @@ router.post('/:id/photo', (req, res, next) => {
     }
 
     try {
-        // Insert into file_storage
-        const fileRes = await pool.query(
-            `INSERT INTO file_storage (filename, mime_type, data, size) 
-             VALUES ($1, $2, $3, $4) 
-             RETURNING id`,
-            [req.file.originalname, req.file.mimetype, req.file.buffer, req.file.size]
-        );
-        const fileId = fileRes.rows[0].id;
+        // Upload to Cloud Storage
+        const result = await uploadToSupabase(req.file.path, 'uploads', 'avatars');
+        const photoUrl = result.publicUrl;
 
-        // Use the generic file view endpoint
-        // NOTE: Frontend needs to handle this new URL format
-        const photoUrl = `/api/files/view/${fileId}`;
+        // Clean up local file
+        if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
 
-        const updateResult = await pool.query(
+        // Update User Record
+        await pool.query(
             'UPDATE users SET photo_url = $1 WHERE id = $2',
             [photoUrl, id]
         );
@@ -295,7 +295,6 @@ router.post('/:id/photo', (req, res, next) => {
         res.json({ photoUrl });
     } catch (error) {
         console.error('Error uploading photo:', error);
-        // Helper to get formatted error
         res.status(500).json({ error: 'Upload failed: ' + (error.message || 'Unknown error') });
     }
 });
