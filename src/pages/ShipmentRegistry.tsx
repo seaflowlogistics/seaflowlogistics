@@ -849,6 +849,9 @@ const ShipmentRegistry: React.FC = () => {
         setPopupJob(job);
         setPopupType(type);
         setPopupData(data);
+        if (type === 'upload') {
+            setPendingUploads([{ id: Date.now(), file: null, type: 'Invoice' }]);
+        }
         const initialData = { ...job };
 
         if (type === 'schedule') {
@@ -2737,22 +2740,56 @@ const ShipmentRegistry: React.FC = () => {
                         )}
 
                         {popupType === 'upload' && (
-                            <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Document Type</label>
-                                        <select id="docTypeSelectPopup" className="w-full p-3 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-                                            <option value="Invoice">Invoice</option>
-                                            <option value="Packing List">Packing List</option>
-                                            <option value="BL/AWB">BL/AWB</option>
-                                            <option value="Other">Other</option>
-                                        </select>
+                            <div className="space-y-4">
+                                {pendingUploads.map((item, index) => (
+                                    <div key={item.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 relative animate-fade-in-up">
+                                        {pendingUploads.length > 1 && (
+                                            <button
+                                                onClick={() => setPendingUploads(prev => prev.filter(p => p.id !== item.id))}
+                                                className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                                title="Remove"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Document Type {pendingUploads.length > 1 && `#${index + 1}`}</label>
+                                                <select
+                                                    value={item.type}
+                                                    onChange={e => {
+                                                        const newVal = e.target.value;
+                                                        setPendingUploads(prev => prev.map(p => p.id === item.id ? { ...p, type: newVal } : p));
+                                                    }}
+                                                    className="w-full p-3 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                >
+                                                    <option value="Invoice">Invoice</option>
+                                                    <option value="Packing List">Packing List</option>
+                                                    <option value="BL/AWB">BL/AWB</option>
+                                                    <option value="Delivery Order">Delivery Order</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">File</label>
+                                                <input
+                                                    type="file"
+                                                    onChange={e => {
+                                                        const file = e.target.files ? e.target.files[0] : null;
+                                                        setPendingUploads(prev => prev.map(p => p.id === item.id ? { ...p, file } : p));
+                                                    }}
+                                                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">File</label>
-                                        <input type="file" id="docFileInputPopup" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                                    </div>
-                                </div>
+                                ))}
+                                <button
+                                    onClick={() => setPendingUploads(prev => [...prev, { id: Date.now(), file: null, type: 'Invoice' }])}
+                                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-indigo-500 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Plus className="w-5 h-5" /> Add Another Document
+                                </button>
                             </div>
                         )}
 
@@ -2764,36 +2801,44 @@ const ShipmentRegistry: React.FC = () => {
 
                         {popupType === 'upload' ? (
                             <button onClick={async () => {
-                                const fileInput = document.getElementById('docFileInputPopup') as HTMLInputElement;
-                                const typeInput = document.getElementById('docTypeSelectPopup') as HTMLSelectElement;
-                                if (fileInput?.files?.[0]) {
-                                    const file = fileInput.files[0];
-                                    const type = typeInput.value;
-                                    const formData = new FormData();
-                                    formData.append('file', file);
-                                    formData.append('document_type', type);
-                                    try {
-                                        setLoading(true);
-                                        await shipmentsAPI.uploadDocument(popupJob.id, formData);
-                                        alert('Uploaded successfully');
-                                        // Refresh job if it's the selected one
-                                        if (selectedJob?.id === popupJob.id) {
-                                            const res = await shipmentsAPI.getById(popupJob.id);
-                                            setSelectedJob(res.data);
-                                        }
-                                        setPopupType(null);
-                                        setPopupJob(null);
-                                    } catch (e) {
-                                        console.error(e);
-                                        alert('Upload failed');
-                                    } finally {
-                                        setLoading(false);
-                                    }
-                                } else {
-                                    alert('Please select a file');
+                                const validUploads = pendingUploads.filter(u => u.file);
+                                if (validUploads.length === 0) {
+                                    alert('Please select at least one file to upload');
+                                    return;
                                 }
-                            }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm">
-                                Upload Document
+
+                                try {
+                                    setLoading(true);
+                                    let uploadedCount = 0;
+
+                                    // Process sequentially to avoid overwhelming server or race conditions
+                                    for (const uploadItem of validUploads) {
+                                        if (uploadItem.file) {
+                                            const formData = new FormData();
+                                            formData.append('file', uploadItem.file);
+                                            formData.append('document_type', uploadItem.type);
+                                            await shipmentsAPI.uploadDocument(popupJob.id, formData);
+                                            uploadedCount++;
+                                        }
+                                    }
+
+                                    alert(`Successfully uploaded ${uploadedCount} document(s)`);
+
+                                    // Refresh job if it's the selected one
+                                    if (selectedJob?.id === popupJob.id) {
+                                        const res = await shipmentsAPI.getById(popupJob.id);
+                                        setSelectedJob(res.data);
+                                    }
+                                    setPopupType(null);
+                                    setPopupJob(null);
+                                } catch (e) {
+                                    console.error(e);
+                                    alert('Upload failed. Please try again.');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm flex items-center gap-2">
+                                <UploadCloud className="w-4 h-4" /> Upload {pendingUploads.filter(u => u.file).length > 1 ? 'All Documents' : 'Document'}
                             </button>
                         ) : (
                             <button onClick={handlePopupSave} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm">
