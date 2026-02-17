@@ -938,7 +938,12 @@ const ShipmentRegistry: React.FC = () => {
             <div className="mb-2">
                 <h4 className="text-sm font-bold text-gray-900 leading-tight mb-1">{job.customer || 'Unknown Customer'}</h4>
                 <p className="text-[10px] text-gray-400 font-medium">
-                    Registered by <span className="text-gray-600 font-bold">{job.creator_name || ''}</span> on {new Date(job.created_at || Date.now()).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                    {job.creator_name ? (
+                        <>Registered by <span className="text-gray-600 font-bold">{job.creator_name}</span> on </>
+                    ) : (
+                        <>Registered on </>
+                    )}
+                    {new Date(job.created_at || Date.now()).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                 </p>
             </div>
 
