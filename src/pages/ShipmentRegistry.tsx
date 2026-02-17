@@ -2417,7 +2417,7 @@ const ShipmentRegistry: React.FC = () => {
                                         </td>
                                         <td className="py-4 px-6 text-center">
                                             <div className="flex items-center justify-center gap-2">
-                                                {((user?.role === 'Accountant' && ['Draft', 'Pending'].includes(payment.status)) || user?.role === 'Administrator' || user?.role === 'All' || (user?.role === 'Clearance' && ['Draft', 'Pending'].includes(payment.status))) && (
+                                                {((user?.role === 'Accountant' && ['Draft', 'Pending'].includes(payment.status)) || user?.role === 'Administrator' || user?.role === 'All' || ((user?.role === 'Clearance' || user?.role === 'Clearance - Office') && ['Draft', 'Pending'].includes(payment.status))) && (
                                                     <button
                                                         onClick={() => handleOpenPopup('payment', selectedJob, payment)}
                                                         className="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-colors flex items-center justify-center"
@@ -2428,7 +2428,7 @@ const ShipmentRegistry: React.FC = () => {
                                                 )}
 
                                                 {/* Clearance Confirmation Action (for Clearance user) */}
-                                                {(hasRole('Clearance') || hasRole('Administrator') || hasRole('All')) && payment.status === 'Confirmation Requested' && (
+                                                {(hasRole('Clearance') || hasRole('Clearance - Office') || hasRole('Administrator') || hasRole('All')) && payment.status === 'Confirmation Requested' && (
                                                     <div className="flex gap-1">
                                                         <button
                                                             onClick={() => handleClearanceConfirmation(payment.id, true)}

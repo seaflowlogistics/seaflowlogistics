@@ -119,8 +119,11 @@ const ClearanceSchedule: React.FC = () => {
         }
     };
 
+    const canViewDocs = hasRole('Administrator') || hasRole('Clearance') || hasRole('Clearance - Office') || hasRole('Clearance - Labour') || hasRole('All');
+
     const handleShipmentClick = async (jobId: string, e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!canViewDocs) return; // Guard against unauthorized clicks if any
         if (loadingJobId) return;
 
         setLoadingJobId(jobId);
