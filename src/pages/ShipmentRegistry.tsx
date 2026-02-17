@@ -946,25 +946,15 @@ const ShipmentRegistry: React.FC = () => {
                 <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
                     {job.id}
                 </span>
-                <div className="flex items-center gap-2">
-                    {job.created_by_avatar && (
-                        <img
-                            src={job.created_by_avatar}
-                            alt="Creator"
-                            className="w-6 h-6 rounded-full object-cover border border-gray-200 shadow-sm"
-                            title="Created by"
-                        />
-                    )}
-                    {hasRole('Administrator') && (
-                        <button
-                            onClick={(e) => handleDeleteJob(job.id, e)}
-                            className="p-1 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
-                            title="Delete Job"
-                        >
-                            <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                    )}
-                </div>
+                {hasRole('Administrator') && (
+                    <button
+                        onClick={(e) => handleDeleteJob(job.id, e)}
+                        className="p-1 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                        title="Delete Job"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                )}
             </div>
 
             <p className="text-xs text-gray-500 mb-2 truncate" title={`Exporter: ${job.exporter}`}>

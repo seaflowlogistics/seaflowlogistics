@@ -326,12 +326,12 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                             customs_r_form, status, progress,
                             expense_macl, expense_mpl, expense_mcs, 
                             expense_transportation, expense_liner, 
-                            billing_contact, service, transport_mode, date, created_at, created_by_avatar
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), $19)`,
+                            billing_contact, service, transport_mode, date, created_at
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW())`,
                         [id, customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status, progress,
                             macl, mpl, mcs, transport, liner,
-                            billingContact, service, transportMode, dateVal, req.user.avatar || null]
+                            billingContact, service, transportMode, dateVal]
                     );
                 }
 
@@ -488,8 +488,7 @@ router.get('/', authenticateToken, async (req, res) => {
     try {
         const { search, status } = req.query;
         let query = `
-            SELECT s.*, s.id, s.status, s.customer, s.transport_mode, s.created_at, s.progress, s.service, s.exporter, s.receiver_name, s.sender_name, s.sender_address, s.receiver_address, s.date, s.expected_delivery_date, s.driver, s.vehicle_id, s.billing_contact, s.shipment_type, s.origin,
-                s.created_by_avatar,
+            SELECT s.*, 
             i.id as invoice_id, 
             i.status as payment_status,
             i.created_at as invoice_date,
@@ -901,12 +900,13 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
         await pool.query('BEGIN');
 
         const shipmentQuery = `
+            INSERT INTO shipments (
                 id, customer, status, progress, 
                 sender_name, sender_address, receiver_name, receiver_address,
                 weight, dimensions, price,
                 date, expected_delivery_date, transport_mode,
-                driver, vehicle_id, service, billing_contact, shipment_type, origin, created_by_avatar
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                driver, vehicle_id, service, billing_contact, shipment_type, origin
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
             RETURNING *
         `;
 
@@ -915,7 +915,7 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
             sender_name, sender_address, receiver_name, receiver_address,
             safeWeight, dimensions, safePrice,
             date, expected_delivery_date, transport_mode,
-            driver || null, vehicle_id || null, service, billing_contact, shipment_type, origin, req.user.avatar || null
+            driver || null, vehicle_id || null, service, billing_contact, shipment_type, origin
         ];
 
         const shipmentResult = await pool.query(shipmentQuery, shipmentValues);
