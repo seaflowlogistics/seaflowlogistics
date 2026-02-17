@@ -327,7 +327,7 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                             expense_macl, expense_mpl, expense_mcs, 
                             expense_transportation, expense_liner, 
                             billing_contact, service, transport_mode, date, created_at, created_by
-                        ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), $19)`,
+                        ) VALUES ($1, $2, $3, $4, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), $19)`,
                         [id, customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status, progress,
                             macl, mpl, mcs, transport, liner,
@@ -507,7 +507,6 @@ router.get('/', authenticateToken, async (req, res) => {
                 LIMIT 1
                 
             ) as cleared_at,
-            u_creator.photo_url as creator_photo,
             u_creator.username as creator_name
             FROM shipments s
             LEFT JOIN invoices i ON s.id = i.shipment_id
