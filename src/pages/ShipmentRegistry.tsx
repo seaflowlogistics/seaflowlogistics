@@ -971,6 +971,20 @@ const ShipmentRegistry: React.FC = () => {
                         {job.status || 'New'}
                     </span>
                 </div>
+                {/* Creator Profile Picture */}
+                <div title={`Created by: ${job.creator_name || 'System'}`}>
+                    {job.creator_photo ? (
+                        <img
+                            src={job.creator_photo}
+                            alt={job.creator_name}
+                            className="w-6 h-6 rounded-full border border-gray-200 object-cover"
+                        />
+                    ) : (
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-bold border border-indigo-200">
+                            {(job.creator_name || 'SYS').substring(0, 2).toUpperCase()}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
