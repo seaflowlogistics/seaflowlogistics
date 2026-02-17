@@ -600,7 +600,14 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const shipmentResult = await pool.query('SELECT * FROM shipments WHERE id = $1', [id]);
+        const shipmentResult = await pool.query(`
+            SELECT s.*, 
+            u_creator.photo_url as creator_photo,
+            u_creator.username as creator_name
+            FROM shipments s
+            LEFT JOIN users u_creator ON s.created_by = u_creator.id
+            WHERE s.id = $1
+        `, [id]);
 
         if (shipmentResult.rows.length === 0) {
             return res.status(404).json({ error: 'Shipment not found' });
