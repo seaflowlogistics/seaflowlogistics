@@ -766,7 +766,11 @@ const DeliveryNotes: React.FC = () => {
                                 filteredDocs.map((row, idx) => (
                                     <tr
                                         key={idx}
-                                        className="hover:bg-gray-50 transition-colors"
+                                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                        onClick={() => {
+                                            const note = deliveryNotes.find(n => n.id === row.noteId);
+                                            if (note) handleViewDetails(note, 'document');
+                                        }}
                                     >
                                         <td className="py-4 px-6">
                                             <span className="font-bold text-gray-900 text-sm">{row.noteId}</span>
@@ -812,6 +816,7 @@ const DeliveryNotes: React.FC = () => {
                                                                     href={viewUrl}
                                                                     target="_blank"
                                                                     rel="noreferrer"
+                                                                    onClick={(e) => e.stopPropagation()}
                                                                     className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                                                     title="View"
                                                                 >
@@ -820,6 +825,7 @@ const DeliveryNotes: React.FC = () => {
                                                                 <a
                                                                     href={viewUrl}
                                                                     download={doc.name}
+                                                                    onClick={(e) => e.stopPropagation()}
                                                                     className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                                                                     title="Download"
                                                                 >
