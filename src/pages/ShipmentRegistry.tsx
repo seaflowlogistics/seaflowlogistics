@@ -938,7 +938,7 @@ const ShipmentRegistry: React.FC = () => {
             <div className="mb-2">
                 <h4 className="text-sm font-bold text-gray-900 leading-tight mb-1">{job.customer || 'Unknown Customer'}</h4>
                 <p className="text-[10px] text-gray-400 font-medium">
-                    Registered on {new Date(job.created_at || Date.now()).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                    Registered by <span className="text-gray-600 font-bold">{job.creator_name || ''}</span> on {new Date(job.created_at || Date.now()).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                 </p>
             </div>
 
@@ -970,20 +970,6 @@ const ShipmentRegistry: React.FC = () => {
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getStatusColor(job.status || 'New')}`}>
                         {job.status || 'New'}
                     </span>
-                </div>
-                {/* Creator Profile Picture */}
-                <div title={`Created by: ${job.creator_name || 'System'}`}>
-                    {job.creator_photo ? (
-                        <img
-                            src={job.creator_photo}
-                            alt={job.creator_name}
-                            className="w-6 h-6 rounded-full border border-gray-200 object-cover"
-                        />
-                    ) : (
-                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-bold border border-indigo-200">
-                            {(job.creator_name || 'SYS').substring(0, 2).toUpperCase()}
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
