@@ -505,7 +505,7 @@ router.get('/', authenticateToken, async (req, res) => {
                 WHERE dni.job_id = s.id 
                 ORDER BY dn.created_at ASC 
                 LIMIT 1
-            ) as cleared_at
+                
             ) as cleared_at,
             u_creator.photo_url as creator_photo,
             u_creator.username as creator_name
