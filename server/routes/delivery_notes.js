@@ -94,6 +94,10 @@ router.post('/', authenticateToken, async (req, res) => {
 
         // Insert Items
         for (const item of items) {
+            if (!item.job_id) {
+                console.error('Missing job_id for item:', item);
+                throw new Error('Job ID is required for all items');
+            }
             await client.query(
                 `INSERT INTO delivery_note_items (delivery_note_id, schedule_id, job_id, shortage, damaged, remarks)
                   VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -179,7 +183,7 @@ router.get('/', authenticateToken, async (req, res) => {
         let query = `
             SELECT dn.*,
                    (SELECT count(*) FROM delivery_note_items WHERE delivery_note_id = dn.id) as item_count,
-                   (SELECT json_agg(job_id) FROM delivery_note_items WHERE delivery_note_id = dn.id) as job_ids
+                   (SELECT json_agg(DISTINCT job_id) FROM delivery_note_items WHERE delivery_note_id = dn.id AND job_id IS NOT NULL) as job_ids
             FROM delivery_notes dn
         `;
 
