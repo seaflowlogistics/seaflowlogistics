@@ -671,7 +671,6 @@ const ShipmentRegistry: React.FC = () => {
 
             // Map UI 'Exporter' -> sender_name / customer
             apiData.append('sender_name', formData.exporter);
-            apiData.append('exporter', formData.exporter);
 
             // Map UI 'Consignee' -> receiver_name
             apiData.append('receiver_name', formData.consignee);
