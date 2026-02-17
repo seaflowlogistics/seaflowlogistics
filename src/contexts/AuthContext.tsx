@@ -102,10 +102,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const hasRole = (role: string) => {
         if (!user) return false;
+        const targetRole = role.trim();
+
+        // Handle array of roles
         if (Array.isArray(user.role)) {
-            return user.role.includes(role) || user.role.includes('All');
+            return user.role.some(r => r.trim() === targetRole) || user.role.some(r => r.trim() === 'All');
         }
-        return user.role === role || user.role === 'All';
+
+        // Handle comma-separated string roles (just in case)
+        if (typeof user.role === 'string' && user.role.includes(',')) {
+            const roles = user.role.split(',').map(r => r.trim());
+            return roles.includes(targetRole) || roles.includes('All');
+        }
+
+        // Handle single string role
+        const userRole = (user.role as string).trim();
+        return userRole === targetRole || userRole === 'All';
     };
 
     return (
