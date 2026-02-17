@@ -1059,26 +1059,28 @@ const DeliveryNotes: React.FC = () => {
 
                             {/* Tabs/Actions */}
                             <div className="border-b border-gray-200 px-6 py-2 bg-gray-50 flex items-center sticky top-0 z-10">
-                                <div className="flex p-1 bg-white border border-gray-200 rounded-lg">
-                                    <button
-                                        onClick={() => setActiveTab('manage')}
-                                        className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'manage'
-                                            ? 'bg-black text-white shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        Details
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('document')}
-                                        className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'document'
-                                            ? 'bg-black text-white shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        Document Preview
-                                    </button>
-                                </div>
+                                {viewMode === 'list' && (
+                                    <div className="flex p-1 bg-white border border-gray-200 rounded-lg">
+                                        <button
+                                            onClick={() => setActiveTab('manage')}
+                                            className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'manage'
+                                                ? 'bg-black text-white shadow-sm'
+                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            Details
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('document')}
+                                            className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'document'
+                                                ? 'bg-black text-white shadow-sm'
+                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            Document Preview
+                                        </button>
+                                    </div>
+                                )}
 
                                 {activeTab === 'document' && (
                                     <div className="ml-auto flex gap-2">
