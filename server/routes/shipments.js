@@ -917,12 +917,12 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
         `;
 
         const shipmentValues = [
-            id, customer, status, progress,
-            sender_name, sender_address, receiver_name, receiver_address,
-            safeWeight, dimensions, safePrice,
-            date, expected_delivery_date, transport_mode,
-            driver || null, vehicle_id || null, service, billing_contact, shipment_type, origin,
-            req.user.id, sender_name // Set exporter same as sender_name
+            id, customer || null, status, progress,
+            sender_name || null, sender_address || null, receiver_name || null, receiver_address || null,
+            safeWeight, dimensions || null, safePrice,
+            date || null, expected_delivery_date || null, transport_mode || 'SEA',
+            driver || null, vehicle_id || null, service || null, billing_contact || null, shipment_type || null, origin || null,
+            req.user?.id || null, sender_name || null // Set exporter same as sender_name
         ];
 
         const shipmentResult = await pool.query(shipmentQuery, shipmentValues);
