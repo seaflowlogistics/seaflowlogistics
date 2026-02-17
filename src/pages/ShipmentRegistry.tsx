@@ -1624,7 +1624,28 @@ const ShipmentRegistry: React.FC = () => {
                                 Registered on {new Date(selectedJob.created_at || Date.now()).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                             </p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
+                            {/* Creator Profile */}
+                            {(selectedJob.created_by_user || selectedJob.profiles) && (
+                                <div className="flex items-center gap-2 text-right group relative cursor-help">
+                                    <div className="hidden md:block">
+                                        <p className="text-xs font-bold text-gray-900 leading-none">{(selectedJob.created_by_user || selectedJob.profiles)?.full_name || 'System'}</p>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">Creator</p>
+                                    </div>
+                                    {(selectedJob.created_by_user || selectedJob.profiles)?.avatar_url ? (
+                                        <img
+                                            src={(selectedJob.created_by_user || selectedJob.profiles).avatar_url}
+                                            alt="Creator"
+                                            className="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm border-2 border-white shadow-sm">
+                                            {((selectedJob.created_by_user || selectedJob.profiles)?.full_name || 'S').charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(selectedJob.status || 'New')}`}>
                                 {selectedJob.status || 'New'}
                             </span>
