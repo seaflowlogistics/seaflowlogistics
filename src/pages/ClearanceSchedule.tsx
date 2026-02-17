@@ -396,13 +396,10 @@ const ClearanceSchedule: React.FC = () => {
                             <div className="relative">
                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input
-                                    type="text"
-                                    placeholder="Filter date"
-                                    onFocus={(e) => e.target.type = 'date'}
-                                    onBlur={(e) => e.target.type = 'text'}
+                                    type="date"
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-1.5 lg:py-2.5 bg-white border border-gray-200 rounded-lg text-xs lg:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400"
+                                    className="w-full pl-10 pr-4 py-1.5 lg:py-2.5 bg-white border border-gray-200 rounded-lg text-xs lg:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 text-gray-700"
                                 />
                             </div>
                         </div>
