@@ -1769,20 +1769,36 @@ const ShipmentRegistry: React.FC = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                                         <div>
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Exporter</label>
-                                            <input
-                                                type="text"
+                                            <SearchableSelect
+                                                options={(() => {
+                                                    const opts = exportersList.map((e: any) => ({ id: e.id, label: e.name, value: e.name }));
+                                                    if (jobDetailsForm.exporter && !opts.find((o: any) => o.value === jobDetailsForm.exporter)) {
+                                                        opts.unshift({ id: 'current-exp', label: jobDetailsForm.exporter, value: jobDetailsForm.exporter });
+                                                    }
+                                                    return opts;
+                                                })()}
                                                 value={jobDetailsForm.exporter}
-                                                onChange={e => setJobDetailsForm({ ...jobDetailsForm, exporter: e.target.value })}
-                                                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                                                onChange={(val) => setJobDetailsForm({ ...jobDetailsForm, exporter: val })}
+                                                inputClassName="bg-slate-800 border-slate-700 text-white"
+                                                dropdownClassName="bg-white border-gray-200 text-gray-900"
+                                                placeholder="Select Exporter"
                                             />
                                         </div>
                                         <div>
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Consignee</label>
-                                            <input
-                                                type="text"
+                                            <SearchableSelect
+                                                options={(() => {
+                                                    const opts = consigneesList.map((c: any) => ({ id: c.id, label: c.name, value: c.name }));
+                                                    if (jobDetailsForm.consignee && !opts.find((o: any) => o.value === jobDetailsForm.consignee)) {
+                                                        opts.unshift({ id: 'current-cons', label: jobDetailsForm.consignee, value: jobDetailsForm.consignee });
+                                                    }
+                                                    return opts;
+                                                })()}
                                                 value={jobDetailsForm.consignee}
-                                                onChange={e => setJobDetailsForm({ ...jobDetailsForm, consignee: e.target.value })}
-                                                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                                                onChange={(val) => setJobDetailsForm({ ...jobDetailsForm, consignee: val })}
+                                                inputClassName="bg-slate-800 border-slate-700 text-white"
+                                                dropdownClassName="bg-white border-gray-200 text-gray-900"
+                                                placeholder="Select Consignee"
                                             />
                                         </div>
                                         <div>
