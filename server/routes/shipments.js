@@ -910,8 +910,9 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
                 sender_name, sender_address, receiver_name, receiver_address,
                 weight, dimensions, price,
                 date, expected_delivery_date, transport_mode,
-                driver, vehicle_id, service, billing_contact, shipment_type, origin
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+                driver, vehicle_id, service, billing_contact, shipment_type, origin, 
+                created_by, exporter
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
             RETURNING *
         `;
 
@@ -920,7 +921,8 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
             sender_name, sender_address, receiver_name, receiver_address,
             safeWeight, dimensions, safePrice,
             date, expected_delivery_date, transport_mode,
-            driver || null, vehicle_id || null, service, billing_contact, shipment_type, origin
+            driver || null, vehicle_id || null, service, billing_contact, shipment_type, origin,
+            req.user.id, sender_name // Set exporter same as sender_name
         ];
 
         const shipmentResult = await pool.query(shipmentQuery, shipmentValues);
