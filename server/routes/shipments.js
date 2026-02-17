@@ -507,6 +507,7 @@ router.get('/', authenticateToken, async (req, res) => {
                 LIMIT 1
                 
             ) as cleared_at,
+            u_creator.photo_url as creator_photo,
             u_creator.username as creator_name
             FROM shipments s
             LEFT JOIN invoices i ON s.id = i.shipment_id
