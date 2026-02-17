@@ -302,7 +302,7 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     // UPDATE basic fields
                     await pool.query(
                         `UPDATE shipments SET 
-                            customer = $1, receiver_name = $2, sender_name = $3, invoice_no = $4, invoice_items = $5, 
+                            customer = $1, receiver_name = $2, sender_name = $3, exporter = $3, invoice_no = $4, invoice_items = $5, 
                             customs_r_form = $6, status = $7, progress = $8,
                             expense_macl = $9, expense_mpl = $10, expense_mcs = $11,
                             expense_transportation = $12, expense_liner = $13,
@@ -322,12 +322,12 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     // INSERT new shipment
                     await pool.query(
                         `INSERT INTO shipments (
-                            id, customer, receiver_name, sender_name, invoice_no, invoice_items, 
+                            id, customer, receiver_name, sender_name, exporter, invoice_no, invoice_items, 
                             customs_r_form, status, progress,
                             expense_macl, expense_mpl, expense_mcs, 
                             expense_transportation, expense_liner, 
                             billing_contact, service, transport_mode, date, created_at
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW())`,
+                        ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW())`,
                         [id, customer, consignee, exporter, shipmentInvoiceNo, invoiceItems,
                             customsRForm, status, progress,
                             macl, mpl, mcs, transport, liner,
@@ -517,6 +517,7 @@ router.get('/', authenticateToken, async (req, res) => {
                 s.id ILIKE $${params.length + 1} 
                 OR s.customer ILIKE $${params.length + 1} 
                 OR s.sender_name ILIKE $${params.length + 1}
+                OR s.exporter ILIKE $${params.length + 1}
                 OR s.receiver_name ILIKE $${params.length + 1}
                 OR s.invoice_no ILIKE $${params.length + 1}
                 OR s.customs_r_form ILIKE $${params.length + 1}
