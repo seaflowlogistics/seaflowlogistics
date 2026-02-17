@@ -749,6 +749,7 @@ const DeliveryNotes: React.FC = () => {
                         <thead>
                             <tr className="bg-black text-white text-xs uppercase tracking-wider">
                                 <th className="py-4 px-6 font-semibold">Delivery Note #</th>
+                                <th className="py-4 px-6 font-semibold">Shipment</th>
                                 <th className="py-4 px-6 font-semibold">Consignee</th>
                                 <th className="py-4 px-6 font-semibold">File Uploaded By</th>
                                 <th className="py-4 px-6 font-semibold">Status</th>
@@ -769,6 +770,9 @@ const DeliveryNotes: React.FC = () => {
                                     >
                                         <td className="py-4 px-6">
                                             <span className="font-bold text-gray-900 text-sm">{row.noteId}</span>
+                                        </td>
+                                        <td className="py-4 px-6 text-sm font-medium text-gray-900">
+                                            {row.jobIds.join(', ')}
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex flex-col">
