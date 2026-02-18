@@ -2142,22 +2142,24 @@ const ShipmentRegistry: React.FC = () => {
                                                 } else {
                                                     // Flat View (Air/Other)
                                                     const displayPackages = rawPackages;
+                                                    const showCBM = (selectedJob.transport_mode || 'SEA') === 'SEA';
+                                                    const flatGridCols = showCBM ? "grid-cols-4" : "grid-cols-3";
 
                                                     if (displayPackages.length > 0) {
                                                         return (
                                                             <div className="space-y-3">
-                                                                <div className="grid grid-cols-4 gap-4 pb-2 border-b border-gray-200">
-                                                                    <div className="text-xs font-bold text-gray-500 uppercase">Count</div>
-                                                                    <div className="text-xs font-bold text-gray-500 uppercase">CBM</div>
-                                                                    <div className="text-xs font-bold text-gray-500 uppercase">Weight</div>
-                                                                    <div className="text-xs font-bold text-gray-500 uppercase">Type</div>
+                                                                <div className={`grid ${flatGridCols} gap-4 pb-2 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase`}>
+                                                                    <div>Count</div>
+                                                                    {showCBM && <div>CBM</div>}
+                                                                    <div>Weight</div>
+                                                                    <div>Type</div>
                                                                 </div>
                                                                 {displayPackages.map((pkg: any, idx: number) => (
-                                                                    <div key={idx} className="grid grid-cols-4 gap-4 items-center">
-                                                                        <div className="font-bold text-gray-900 text-sm">{pkg.pkg_count || 0}</div>
-                                                                        <div className="font-medium text-gray-700 text-sm">{pkg.cbm || '-'}</div>
-                                                                        <div className="font-medium text-gray-700 text-sm">{pkg.weight || '-'}</div>
-                                                                        <div className="font-bold text-gray-900 text-sm uppercase">{pkg.pkg_type || 'PKG'}</div>
+                                                                    <div key={idx} className={`grid ${flatGridCols} gap-4 items-center text-sm`}>
+                                                                        <div className="font-bold text-gray-900">{pkg.pkg_count || 0}</div>
+                                                                        {showCBM && <div className="font-medium text-gray-700">{pkg.cbm || '-'}</div>}
+                                                                        <div className="font-medium text-gray-700">{pkg.weight || '-'}</div>
+                                                                        <div className="font-bold text-gray-900 uppercase">{pkg.pkg_type || 'PKG'}</div>
                                                                     </div>
                                                                 ))}
                                                             </div>
