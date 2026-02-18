@@ -110,7 +110,35 @@ router.get('/', async (req, res) => {
                    s.sender_name as exporter, 
                    s.receiver_name as consignee,
                    s.transport_mode as shipment_transport_mode,
-                   c.c_number
+                   c.c_number,
+                   (
+                       SELECT SUM(
+                           (
+                               SELECT SUM(COALESCE(NULLIF(REPLACE(elem->>'weight', ',', ''), ''), '0')::numeric)
+                               FROM jsonb_array_elements(CASE WHEN jsonb_typeof(sc.packages::jsonb) = 'array' THEN sc.packages::jsonb ELSE '[]'::jsonb END) elem
+                           )
+                       )
+                       FROM shipment_containers sc
+                       WHERE sc.shipment_id = cs.job_id
+                       AND sc.container_no = ANY(
+                           SELECT TRIM(container) 
+                           FROM unnest(string_to_array(cs.container_no, ',')) AS container
+                       )
+                   ) as calculated_weight,
+                   (
+                       SELECT string_agg(
+                           (
+                               SELECT string_agg(elem->>'pkg_count' || ' ' || (elem->>'pkg_type'), ', ')
+                               FROM jsonb_array_elements(CASE WHEN jsonb_typeof(sc.packages::jsonb) = 'array' THEN sc.packages::jsonb ELSE '[]'::jsonb END) elem
+                           ), ', '
+                       )
+                       FROM shipment_containers sc
+                       WHERE sc.shipment_id = cs.job_id
+                       AND sc.container_no = ANY(
+                           SELECT TRIM(container) 
+                           FROM unnest(string_to_array(cs.container_no, ',')) AS container
+                       )
+                   ) as calculated_packages
             FROM clearance_schedules cs
             JOIN shipments s ON cs.job_id = s.id
             LEFT JOIN consignees c ON REGEXP_REPLACE(LOWER(c.name), '[^a-z0-9]', '', 'g') = REGEXP_REPLACE(LOWER(s.receiver_name), '[^a-z0-9]', '', 'g')

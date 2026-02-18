@@ -534,8 +534,10 @@ const ClearanceSchedule: React.FC = () => {
                                                                 ) : '-'}
                                                             </td>
                                                             {/* Gross Weight */}
+                                                            {/* Gross Weight */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
                                                                 {(() => {
+                                                                    if (item.calculated_weight && item.calculated_weight !== '0') return formatWeight(item.calculated_weight);
                                                                     const job = shipmentsList.find((s: any) => s.id === item.job_id);
                                                                     const blWeight = getWeightFromJobBL(job, item.bl_awb);
                                                                     if (blWeight !== null) return blWeight;
@@ -544,8 +546,8 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
                                                             {/* No. of Packages */}
                                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                                                                {item.packages ? (
-                                                                    item.packages.split(',').map((pkg: string, idx: number) => (
+                                                                {(item.calculated_packages || item.packages) ? (
+                                                                    (item.calculated_packages || item.packages).split(',').map((pkg: string, idx: number) => (
                                                                         <div key={idx}>{pkg.trim()}</div>
                                                                     ))
                                                                 ) : '-'}
@@ -711,6 +713,7 @@ const ClearanceSchedule: React.FC = () => {
                                                             {/* Gross Weight */}
                                                             <td className="py-4 px-6 text-sm text-gray-600">
                                                                 {(() => {
+                                                                    if (item.calculated_weight && item.calculated_weight !== '0') return formatWeight(item.calculated_weight);
                                                                     const job = shipmentsList.find((s: any) => s.id === item.job_id);
                                                                     const blWeight = getWeightFromJobBL(job, item.bl_awb);
                                                                     if (blWeight !== null) return blWeight;
@@ -719,8 +722,8 @@ const ClearanceSchedule: React.FC = () => {
                                                             </td>
                                                             {/* No. of Packages */}
                                                             <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                                                                {item.packages ? (
-                                                                    item.packages.split(',').map((pkg: string, idx: number) => (
+                                                                {(item.calculated_packages || item.packages) ? (
+                                                                    (item.calculated_packages || item.packages).split(',').map((pkg: string, idx: number) => (
                                                                         <div key={idx}>{pkg.trim()}</div>
                                                                     ))
                                                                 ) : '-'}
