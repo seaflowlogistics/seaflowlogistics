@@ -2088,76 +2088,24 @@ const ShipmentRegistry: React.FC = () => {
 
                                         {/* Packages List */}
                                         {/* Packages List */}
-                                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Packages Breakdown</h4>
-                                            {(() => {
-                                                const rawPackages = bl.packages || [];
-                                                // Check for nested container structure (has container_no)
-                                                const hasContainers = rawPackages.length > 0 && rawPackages[0].container_no;
-
-                                                if (hasContainers) {
-                                                    // Grouped by Container View (Sea)
-                                                    return (
-                                                        <div className="space-y-4">
-                                                            {rawPackages.map((container: any, cIdx: number) => {
-                                                                const pkgs = typeof container.packages === 'string' ? JSON.parse(container.packages) : (container.packages || []);
-                                                                const isLCL = ['LCL 20', 'LCL 40'].includes(container.container_type);
-                                                                const gridCols = isLCL ? "grid-cols-4" : "grid-cols-3";
-
-                                                                return (
-                                                                    <div key={cIdx} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                                                                        <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <Package className="w-4 h-4 text-indigo-500" />
-                                                                                <span className="font-bold text-gray-900">{container.container_no}</span>
-                                                                            </div>
-                                                                            <span className="text-xs font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded uppercase tracking-wide">{container.container_type}</span>
-                                                                        </div>
-
-                                                                        {pkgs.length > 0 ? (
-                                                                            <div className="space-y-2">
-                                                                                <div className={`grid ${gridCols} gap-4 text-[10px] font-bold text-gray-400 uppercase px-2`}>
-                                                                                    <div>Count</div>
-                                                                                    {isLCL && <div>CBM</div>}
-                                                                                    <div>Weight</div>
-                                                                                    <div>Type</div>
-                                                                                </div>
-                                                                                {pkgs.map((p: any, pIdx: number) => (
-                                                                                    <div key={pIdx} className={`grid ${gridCols} gap-4 text-sm text-gray-700 px-2 py-1 hover:bg-gray-50 rounded transition-colors`}>
-                                                                                        <div className="font-bold">{p.pkg_count}</div>
-                                                                                        {isLCL && <div className="text-gray-500">{p.cbm || '-'}</div>}
-                                                                                        <div className="text-gray-500">{p.weight || '-'}</div>
-                                                                                        <div className="font-medium uppercase text-gray-900">{p.pkg_type}</div>
-                                                                                    </div>
-                                                                                ))}
-                                                                            </div>
-                                                                        ) : (
-                                                                            <p className="text-xs text-gray-400 italic px-2">No packages listed</p>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    );
-                                                } else {
-                                                    // Flat View (Air/Other)
+                                        {selectedJob.transport_mode !== 'SEA' && (
+                                            <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Packages Breakdown</h4>
+                                                {(() => {
+                                                    const rawPackages = bl.packages || [];
                                                     const displayPackages = rawPackages;
-                                                    const showCBM = (selectedJob.transport_mode || 'SEA') === 'SEA';
-                                                    const flatGridCols = showCBM ? "grid-cols-4" : "grid-cols-3";
 
                                                     if (displayPackages.length > 0) {
                                                         return (
                                                             <div className="space-y-3">
-                                                                <div className={`grid ${flatGridCols} gap-4 pb-2 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase`}>
+                                                                <div className="grid grid-cols-3 gap-4 pb-2 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase">
                                                                     <div>Count</div>
-                                                                    {showCBM && <div>CBM</div>}
                                                                     <div>Weight</div>
                                                                     <div>Type</div>
                                                                 </div>
                                                                 {displayPackages.map((pkg: any, idx: number) => (
-                                                                    <div key={idx} className={`grid ${flatGridCols} gap-4 items-center text-sm`}>
+                                                                    <div key={idx} className="grid grid-cols-3 gap-4 items-center text-sm">
                                                                         <div className="font-bold text-gray-900">{pkg.pkg_count || 0}</div>
-                                                                        {showCBM && <div className="font-medium text-gray-700">{pkg.cbm || '-'}</div>}
                                                                         <div className="font-medium text-gray-700">{pkg.weight || '-'}</div>
                                                                         <div className="font-bold text-gray-900 uppercase">{pkg.pkg_type || 'PKG'}</div>
                                                                     </div>
@@ -2167,9 +2115,9 @@ const ShipmentRegistry: React.FC = () => {
                                                     } else {
                                                         return <p className="text-sm text-gray-400 italic">No package details specified</p>;
                                                     }
-                                                }
-                                            })()}
-                                        </div>
+                                                })()}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             ) : (
