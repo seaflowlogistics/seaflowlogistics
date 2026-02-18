@@ -125,7 +125,6 @@ router.post('/', authenticateToken, async (req, res) => {
             if (totalBLs === 0) totalBLs = 1;
 
             // 2. Get Delivered BLs for this Job
-            // We count distinct BLs from clearance schedules that are linked to ANY delivery note item
             const deliveredRes = await client.query(`
                 SELECT COUNT(DISTINCT cs.bl_awb) 
                 FROM delivery_note_items dni
@@ -134,10 +133,30 @@ router.post('/', authenticateToken, async (req, res) => {
             `, [jobId]);
             const deliveredBLs = parseInt(deliveredRes.rows[0].count);
 
-            console.log(`Job ${jobId} Progress Check: ${deliveredBLs}/${totalBLs} BLs delivered`);
+            // 3. Get Total Containers
+            const contRes = await client.query('SELECT COUNT(*) FROM shipment_containers WHERE shipment_id = $1', [jobId]);
+            const totalContainers = parseInt(contRes.rows[0].count);
 
-            // 3. Update Status if Complete
-            if (deliveredBLs >= totalBLs) {
+            // 4. Get Delivered Containers
+            let deliveredContainers = 0;
+            if (totalContainers > 0) {
+                const deliveredContRes = await client.query(`
+                    SELECT COUNT(DISTINCT TRIM(c_no))
+                    FROM delivery_note_items dni
+                    JOIN clearance_schedules cs ON dni.schedule_id = cs.id
+                    CROSS JOIN LATERAL UNNEST(string_to_array(cs.container_no, ',')) AS c_no
+                    WHERE dni.job_id = $1 AND c_no IS NOT NULL AND TRIM(c_no) != ''
+                `, [jobId]);
+                deliveredContainers = parseInt(deliveredContRes.rows[0].count);
+            }
+
+            console.log(`Job ${jobId} Progress Check: BLs ${deliveredBLs}/${totalBLs}, Containers ${deliveredContainers}/${totalContainers}`);
+
+            const isBLComplete = deliveredBLs >= totalBLs;
+            const isContainerComplete = totalContainers === 0 || deliveredContainers >= totalContainers;
+
+            // 5. Update Status if Complete
+            if (isBLComplete && isContainerComplete) {
                 // Check if Payments are fully paid
                 const payRes = await client.query("SELECT count(*) as pending FROM job_payments WHERE job_id = $1 AND status != 'Paid'", [jobId]);
                 const totalPayRes = await client.query("SELECT count(*) as total FROM job_payments WHERE job_id = $1", [jobId]);
@@ -154,7 +173,18 @@ router.post('/', authenticateToken, async (req, res) => {
             } else {
                 // Optional: Set partial progress? e.g. (delivered / total) * 100
                 // preserving 'status' might be better if not complete, or set to 'In Clearance'
-                const percent = Math.floor((deliveredBLs / totalBLs) * 100);
+                let percent = 0;
+                if (totalContainers > 0) {
+                    percent = Math.floor(((deliveredBLs / totalBLs) + (deliveredContainers / totalContainers)) / 2 * 100);
+                } else {
+                    percent = Math.floor((deliveredBLs / totalBLs) * 100);
+                }
+
+                // Cap at 49 to keep it in Pending Clearance / In Clearance stage (since 50 is cutoff for Cleared usually)
+                // Existing code used progress as display.
+                // Status 'Pending' usually implies < 50.
+                if (percent >= 50) percent = 49;
+
                 await client.query('UPDATE shipments SET progress = $1 WHERE id = $2', [percent, jobId]);
             }
         }
