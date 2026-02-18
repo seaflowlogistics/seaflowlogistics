@@ -69,6 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     const showDeliveryNotes = hasFullAccess || isClearanceMember || isAccountantMember;
 
     const showPayments = hasFullAccess || isAccountantMember;
+    const showPaymentRequests = hasFullAccess || hasRole('Clearance') || hasRole('Clearance - Office') || hasRole('All');
 
     const showAdminToolsExpanded = hasFullAccess;
     const showCompletedShipments = hasFullAccess || isAccountantMember || hasRole('All');
@@ -99,6 +100,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     if (showPayments) {
         menuItems.push(
             { icon: CreditCard, label: 'Payments', path: '/payments' }
+        );
+    }
+
+    if (showPaymentRequests) {
+        menuItems.push(
+            { icon: CheckCircle, label: 'Payment Requests', path: '/payment-requests' }
         );
     }
 

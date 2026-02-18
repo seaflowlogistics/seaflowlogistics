@@ -457,8 +457,6 @@ router.post('/process-batch', authenticateToken, async (req, res) => {
         const voucherNo = `${prefix}${String(sequence).padStart(3, '0')}`;
 
         // Update Payments
-        // We assume all selected payments get the SAME voucher number if processed together? 
-        // Requests usually imply a single "Payment Voucher" for a batch to a vendor.
         const query = `
             UPDATE job_payments 
             SET status = 'Paid',
@@ -531,6 +529,69 @@ router.post('/process-batch', authenticateToken, async (req, res) => {
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Process batch error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    } finally {
+        client.release();
+    }
+});
+
+// Confirm Batch Payments (Clearance -> Accounts)
+router.post('/confirm-batch', authenticateToken, async (req, res) => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const { paymentIds, confirmed } = req.body; // confirmed: boolean
+
+        if (!paymentIds || !Array.isArray(paymentIds) || paymentIds.length === 0) {
+            return res.status(400).json({ error: 'No items selected' });
+        }
+
+        const newStatus = confirmed ? 'Confirmed' : 'Draft';
+
+        // Update Payments
+        const result = await client.query(
+            "UPDATE job_payments SET status = $1 WHERE id = ANY($2) RETURNING *",
+            [newStatus, paymentIds]
+        );
+
+        const updatedPayments = result.rows;
+        const jobIds = [...new Set(updatedPayments.map(p => p.job_id))];
+
+        // Audit Logs
+        const action = confirmed ? 'PAYMENT_CONFIRMED' : 'PAYMENT_REJECTED';
+        const details = confirmed ? 'Payment confirmed by Clearance' : 'Payment rejected by Clearance';
+
+        for (const jId of jobIds) {
+            await client.query(
+                'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
+                [req.user.id, action, details, 'SHIPMENT', jId]
+            );
+
+            // Update Shipment Status
+            if (confirmed) {
+                await client.query("UPDATE shipments SET status = 'Payment', progress = 75 WHERE id = $1", [jId]);
+            } else {
+                await client.query("UPDATE shipments SET status = 'Cleared' WHERE id = $1 AND status = 'Payment Confirmation'", [jId]);
+            }
+        }
+
+        // Notify Accountant
+        const distinctJobs = [...new Set(updatedPayments.map(p => p.job_id))];
+        for (const jId of distinctJobs) {
+            const title = confirmed ? 'Payment Confirmed' : 'Payment Rejected';
+            const msg = confirmed
+                ? `Payments for Job ${jId} confirmed by Clearance.`
+                : `Payments for Job ${jId} rejected by Clearance.`;
+
+            await broadcastNotification('Accountant', title, msg, 'action', `/registry?selectedJobId=${jId}`, 'SHIPMENT', jId);
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: `Payments ${confirmed ? 'confirmed' : 'rejected'}`, count: result.rowCount });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Confirm batch error:', error);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
         client.release();

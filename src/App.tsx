@@ -17,6 +17,7 @@ import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './pages/ForgotPassword';
 import Payments from './pages/Payments';
 import Notifications from './pages/Notifications';
+import PaymentRequests from './pages/PaymentRequests';
 import CompletedShipments from './pages/CompletedShipments';
 
 // Protected Route Component
@@ -107,6 +108,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Payments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment-requests"
+            element={
+              <ProtectedRoute>
+                <PaymentRequests />
               </ProtectedRoute>
             }
           />

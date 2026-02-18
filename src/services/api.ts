@@ -240,6 +240,7 @@ export const paymentsAPI = {
     processBatch: (data: any) => api.post('/payments/process-batch', data),
     noPayment: (job_id: string | number) => api.post('/payments/no-payment', { job_id }),
     requestConfirmation: (paymentIds: string[]) => api.post('/payments/request-confirmation', { paymentIds }),
+    confirmBatch: (paymentIds: string[], confirmed: boolean) => api.post('/payments/confirm-batch', { paymentIds, confirmed }),
 };
 
 // Payment Items Settings API
