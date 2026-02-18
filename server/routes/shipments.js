@@ -862,6 +862,7 @@ const shipmentUpload = upload.fields([
 
 // Create new shipment
 router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Documentation']), shipmentUpload, async (req, res) => {
+    const client = await pool.connect();
     try {
         const {
             sender_name, sender_address,
@@ -888,7 +889,7 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
         const safeWeight = weight || '0';
 
         // Begin transaction
-        await pool.query('BEGIN');
+        await client.query('BEGIN');
 
         const shipmentQuery = `
             INSERT INTO shipments (
@@ -911,7 +912,7 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
             req.user?.id || null, sender_name || null // Set exporter same as sender_name
         ];
 
-        const shipmentResult = await pool.query(shipmentQuery, shipmentValues);
+        const shipmentResult = await client.query(shipmentQuery, shipmentValues);
 
         // Handle File Uploads
         if (req.files) {
@@ -932,7 +933,7 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
                         // Fallback: use local path (if not on Vercel)
                     }
 
-                    await pool.query(
+                    await client.query(
                         'INSERT INTO shipment_documents (shipment_id, file_name, file_path, file_type, file_size, document_type) VALUES ($1, $2, $3, $4, $5, $6)',
                         [id, file.originalname, finalPath, file.mimetype, file.size, type]
                     );
@@ -961,16 +962,16 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
                 // Continue without PDF, just DB record
             }
 
-            await pool.query(
+            await client.query(
                 'INSERT INTO invoices (id, shipment_id, amount, status, file_path) VALUES ($1, $2, $3, $4, $5)',
                 [invoiceId, id, safePrice, 'Pending', invoicePath]
             );
         }
 
         // Log action
-        await logActivity(req.user.id, 'CREATE_SHIPMENT', `Created shipment ${id}`, 'SHIPMENT', id);
+        await logActivity(req.user.id, 'CREATE_SHIPMENT', `Created shipment ${id}`, 'SHIPMENT', id, client);
 
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
 
         // Notifications
         try {
@@ -982,14 +983,17 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
 
         res.status(201).json(shipmentResult.rows[0]);
     } catch (error) {
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
         console.error('Create shipment error:', error);
         res.status(500).json({ error: 'Internal server error: ' + error.message });
+    } finally {
+        client.release();
     }
 });
 
 // Update shipment
 router.put('/:id', authenticateToken, async (req, res) => {
+    const client = await pool.connect();
     try {
         const { id } = req.params;
         const {
@@ -1009,34 +1013,34 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
         // Validations for Duplicates
         if (invoice_no) {
-            const check = await pool.query('SELECT id FROM shipments WHERE invoice_no = $1 AND id != $2', [invoice_no, id]);
+            const check = await client.query('SELECT id FROM shipments WHERE invoice_no = $1 AND id != $2', [invoice_no, id]);
             if (check.rows.length > 0) {
                 return res.status(400).json({ error: `Shipment Invoice No "${invoice_no}" already exists in Job ${check.rows[0].id}` });
             }
         }
 
         if (customs_r_form) {
-            const check = await pool.query('SELECT id FROM shipments WHERE customs_r_form = $1 AND id != $2', [customs_r_form, id]);
+            const check = await client.query('SELECT id FROM shipments WHERE customs_r_form = $1 AND id != $2', [customs_r_form, id]);
             if (check.rows.length > 0) {
                 return res.status(400).json({ error: `Customs R Form "${customs_r_form}" already exists in Job ${check.rows[0].id}` });
             }
         }
 
-        await pool.query('BEGIN');
+        await client.query('BEGIN');
 
         // Update Job Invoice ID if provided
         if (job_invoice_no) {
             // Check if invoice exists for this shipment
-            const invCheck = await pool.query('SELECT id FROM invoices WHERE shipment_id = $1', [id]);
+            const invCheck = await client.query('SELECT id FROM invoices WHERE shipment_id = $1', [id]);
             if (invCheck.rows.length > 0) {
-                await pool.query('UPDATE invoices SET id = $1 WHERE shipment_id = $2', [job_invoice_no, id]);
+                await client.query('UPDATE invoices SET id = $1 WHERE shipment_id = $2', [job_invoice_no, id]);
             } else {
                 // Create new invoice record if missing
-                await pool.query('INSERT INTO invoices (id, shipment_id, amount, status) VALUES ($1, $2, 0, $3)', [job_invoice_no, id, 'Pending']);
+                await client.query('INSERT INTO invoices (id, shipment_id, amount, status) VALUES ($1, $2, 0, $3)', [job_invoice_no, id, 'Pending']);
             }
         }
 
-        const result = await pool.query(
+        const result = await client.query(
             `UPDATE shipments 
              SET status = COALESCE($1, status), 
                  progress = COALESCE($2, progress), 
@@ -1083,7 +1087,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         );
 
         if (result.rows.length === 0) {
-            await pool.query('ROLLBACK');
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Shipment not found' });
         }
 
@@ -1091,11 +1095,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
         // AUTO-CREATE DELIVERY NOTE
         if (status === 'In Transit') {
-            const checkDN = await pool.query('SELECT id FROM delivery_notes WHERE shipment_id = $1', [id]);
+            const checkDN = await client.query('SELECT id FROM delivery_notes WHERE shipment_id = $1', [id]);
             if (checkDN.rows.length === 0) {
                 const dnId = `DN-${new Date().getFullYear()}${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`;
 
-                await pool.query(
+                await client.query(
                     `INSERT INTO delivery_notes (
                         id, shipment_id, consignee, exporter, details_location, issued_by, status
                     ) VALUES ($1, $2, $3, $4, $5, $6, 'Pending')`,
@@ -1109,7 +1113,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
                     ]
                 );
 
-                await pool.query(
+                await client.query(
                     'INSERT INTO delivery_note_jobs (delivery_note_id, job_no) VALUES ($1, $2)',
                     [dnId, id]
                 );
@@ -1118,75 +1122,78 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
         // Specific Activity Logging
         if (req.body.status === 'Completed') {
-            await logActivity(req.user.id, 'JOB_COMPLETED', `Job marked as Completed`, 'SHIPMENT', id);
+            await logActivity(req.user.id, 'JOB_COMPLETED', `Job marked as Completed`, 'SHIPMENT', id, client);
             try {
                 await broadcastToAll('Job Completed', `Job ${id} (${updatedShipment.customer}) is now Completed.`, 'success', `/registry?selectedJobId=${id}`);
             } catch (ne) { console.error('Notification error', ne); }
         } else if (req.body.invoice_no) {
             // Heuristic: If invoice_no is being sent, it's likely a Shipment Invoice update
-            await logActivity(req.user.id, 'UPDATE_SHIPMENT_INVOICE', `Shipment Invoice ${req.body.invoice_no} details updated`, 'SHIPMENT', id);
+            await logActivity(req.user.id, 'UPDATE_SHIPMENT_INVOICE', `Shipment Invoice ${req.body.invoice_no} details updated`, 'SHIPMENT', id, client);
         } else if (req.body.job_invoice_no) {
-            await logActivity(req.user.id, 'UPDATE_JOB_INVOICE', `Job Invoice ${req.body.job_invoice_no} details updated`, 'SHIPMENT', id);
+            await logActivity(req.user.id, 'UPDATE_JOB_INVOICE', `Job Invoice ${req.body.job_invoice_no} details updated`, 'SHIPMENT', id, client);
         } else {
-            await logActivity(req.user.id, 'UPDATE_SHIPMENT', `Updated shipment details`, 'SHIPMENT', id);
+            await logActivity(req.user.id, 'UPDATE_SHIPMENT', `Updated shipment details`, 'SHIPMENT', id, client);
         }
 
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
         res.json(updatedShipment);
     } catch (error) {
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
         console.error('Update shipment error:', error);
         res.status(500).json({ error: 'Internal server error' });
+    } finally {
+        client.release();
     }
 });
 
 // Delete shipment
 router.delete('/:id', authenticateToken, authorizeRole(['Administrator', 'All']), async (req, res) => {
+    const client = await pool.connect();
     try {
         const { id } = req.params;
 
-        await pool.query('BEGIN');
+        await client.query('BEGIN');
 
         // 1. Delete related Invoices
-        await pool.query('DELETE FROM invoices WHERE shipment_id = $1', [id]);
+        await client.query('DELETE FROM invoices WHERE shipment_id = $1', [id]);
 
         // 2. Delete related Delivery Note Jobs (old schema)
-        await pool.query('DELETE FROM delivery_note_jobs WHERE job_no = $1', [id]);
+        await client.query('DELETE FROM delivery_note_jobs WHERE job_no = $1', [id]);
 
         // 2.1 Delete related Delivery Note Items (new schema - foreign key constraints)
         // Check for both direct job reference and schedule reference
-        await pool.query(`
+        await client.query(`
             DELETE FROM delivery_note_items 
             WHERE job_id = $1 
                OR schedule_id IN (SELECT id FROM clearance_schedules WHERE job_id = $1)
         `, [id]);
 
         // 2.2 Delete Job Payments (if cascade fails or to be explicit)
-        await pool.query('DELETE FROM job_payments WHERE job_id = $1', [id]);
+        await client.query('DELETE FROM job_payments WHERE job_id = $1', [id]);
 
         // 2.3 Delete Shipment Documents (if cascade fails or to be explicit)
-        await pool.query('DELETE FROM shipment_documents WHERE shipment_id = $1', [id]);
+        await client.query('DELETE FROM shipment_documents WHERE shipment_id = $1', [id]);
 
         // 3. Delete related Delivery Notes
-        await pool.query('DELETE FROM delivery_notes WHERE shipment_id = $1', [id]);
+        await client.query('DELETE FROM delivery_notes WHERE shipment_id = $1', [id]);
 
         // 4. Delete related Clearance Schedules
-        await pool.query('DELETE FROM clearance_schedules WHERE job_id = $1', [id]);
+        await client.query('DELETE FROM clearance_schedules WHERE job_id = $1', [id]);
 
         // 5. Soft-delete History: Rename entity_id in logs so they don't show up for the new job
         // Preserve them for audit trails if needed, but detach from the active ID "slot"
         const timestamp = Date.now();
         // Rename entity_id for ALL logs matching this ID to ensure history is cleared for the ID slot.
         // We do not filter by entity_type just to be safe and catch everything linked to this ID string.
-        await pool.query(
+        await client.query(
             "UPDATE audit_logs SET entity_id = $1 || '-DELETED-' || $2 WHERE entity_id = $1",
             [id, timestamp]
         );
 
         // 5. Delete the Shipment
-        const result = await pool.query('DELETE FROM shipments WHERE id = $1 RETURNING *', [id]);
+        const result = await client.query('DELETE FROM shipments WHERE id = $1 RETURNING *', [id]);
 
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Shipment not found' });
@@ -1196,9 +1203,11 @@ router.delete('/:id', authenticateToken, authorizeRole(['Administrator', 'All'])
 
         await logActivity(req.user.id, 'DELETE_SHIPMENT', `Deleted shipment ${id}`, 'SHIPMENT', id);
     } catch (error) {
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
         console.error('Delete shipment error:', error);
         res.status(500).json({ error: 'Internal server error: ' + error.message });
+    } finally {
+        client.release();
     }
 });
 
