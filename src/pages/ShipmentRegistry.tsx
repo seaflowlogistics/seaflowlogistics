@@ -3064,8 +3064,8 @@ const ShipmentRegistry: React.FC = () => {
                     onSave={handlePopupSave}
                     job={popupJob}
                     initialData={popupData}
-                    isReschedule={!!popupData}
-                    title={popupData ? "Reschedule Clearance" : "Schedule Clearance"}
+                    isReschedule={!!(popupData && popupData.id)}
+                    title={popupData && popupData.id ? "Reschedule Clearance" : "Schedule Clearance"}
                 />
             )}
 
