@@ -19,6 +19,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
         bl_awb: '',
         transport_mode: '',
         packages: '',
+        weight: '',
         container_details: '',
         container_no: '',
         container_type: '',
@@ -38,6 +39,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                 bl_awb: initialData.bl_awb || '',
                 transport_mode: initialData.transport_mode || '',
                 packages: initialData.packages || '',
+                weight: initialData.weight || '',
                 container_details: initialData.container_details || '',
                 container_no: initialData.container_no || '',
                 container_type: initialData.container_type || '',
@@ -59,6 +61,7 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                 bl_awb: defaultBL,
                 transport_mode: job?.transport_mode ? (job.transport_mode.charAt(0).toUpperCase() + job.transport_mode.slice(1).toLowerCase()) : '',
                 packages: job?.packages || '',
+                weight: job?.weight || '',
                 container_details: '',
                 container_no: '',
                 container_type: '',
@@ -296,6 +299,21 @@ const ScheduleClearanceDrawer: React.FC<ScheduleClearanceDrawerProps> = ({ isOpe
                                     </select>
                                     <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Weight */}
+                        {!isReschedule && (
+                            <div className="form-group">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Weight</label>
+                                <input
+                                    type="text"
+                                    name="weight"
+                                    value={(formData as any).weight}
+                                    onChange={handleInputChange}
+                                    className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-gray-700"
+                                    placeholder="e.g. 1500 KG"
+                                />
                             </div>
                         )}
 
