@@ -2087,40 +2087,81 @@ const ShipmentRegistry: React.FC = () => {
                                         </div>
 
                                         {/* Packages List */}
+                                        {/* Packages List */}
                                         <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
                                             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Packages Breakdown</h4>
                                             {(() => {
-                                                let displayPackages = bl.packages || [];
-                                                // Check for nested container structure
-                                                if (displayPackages.length > 0 && displayPackages[0].container_no) {
-                                                    displayPackages = displayPackages.flatMap((c: any) =>
-                                                        typeof c.packages === 'string' ? JSON.parse(c.packages) : (c.packages || [])
-                                                    );
-                                                }
+                                                const rawPackages = bl.packages || [];
+                                                // Check for nested container structure (has container_no)
+                                                const hasContainers = rawPackages.length > 0 && rawPackages[0].container_no;
 
-                                                if (displayPackages.length > 0) {
+                                                if (hasContainers) {
+                                                    // Grouped by Container View (Sea)
                                                     return (
-                                                        <div className="space-y-3">
-                                                            {/* Header Row */}
-                                                            <div className="grid grid-cols-4 gap-4 pb-2 border-b border-gray-200">
-                                                                <div className="text-xs font-bold text-gray-500 uppercase">Count</div>
-                                                                <div className="text-xs font-bold text-gray-500 uppercase">CBM</div>
-                                                                <div className="text-xs font-bold text-gray-500 uppercase">Weight</div>
-                                                                <div className="text-xs font-bold text-gray-500 uppercase">Type</div>
-                                                            </div>
-                                                            {/* Items */}
-                                                            {displayPackages.map((pkg: any, idx: number) => (
-                                                                <div key={idx} className="grid grid-cols-4 gap-4 items-center">
-                                                                    <div className="font-bold text-gray-900 text-sm">{pkg.pkg_count || 0}</div>
-                                                                    <div className="font-medium text-gray-700 text-sm">{pkg.cbm || '-'}</div>
-                                                                    <div className="font-medium text-gray-700 text-sm">{pkg.weight || '-'}</div>
-                                                                    <div className="font-bold text-gray-900 text-sm uppercase">{pkg.pkg_type || 'PKG'}</div>
-                                                                </div>
-                                                            ))}
+                                                        <div className="space-y-4">
+                                                            {rawPackages.map((container: any, cIdx: number) => {
+                                                                const pkgs = typeof container.packages === 'string' ? JSON.parse(container.packages) : (container.packages || []);
+                                                                return (
+                                                                    <div key={cIdx} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                                                                        <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Package className="w-4 h-4 text-indigo-500" />
+                                                                                <span className="font-bold text-gray-900">{container.container_no}</span>
+                                                                            </div>
+                                                                            <span className="text-xs font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded uppercase tracking-wide">{container.container_type}</span>
+                                                                        </div>
+
+                                                                        {pkgs.length > 0 ? (
+                                                                            <div className="space-y-2">
+                                                                                <div className="grid grid-cols-4 gap-4 text-[10px] font-bold text-gray-400 uppercase px-2">
+                                                                                    <div>Count</div>
+                                                                                    <div>CBM</div>
+                                                                                    <div>Weight</div>
+                                                                                    <div>Type</div>
+                                                                                </div>
+                                                                                {pkgs.map((p: any, pIdx: number) => (
+                                                                                    <div key={pIdx} className="grid grid-cols-4 gap-4 text-sm text-gray-700 px-2 py-1 hover:bg-gray-50 rounded transition-colors">
+                                                                                        <div className="font-bold">{p.pkg_count}</div>
+                                                                                        <div className="text-gray-500">{p.cbm || '-'}</div>
+                                                                                        <div className="text-gray-500">{p.weight || '-'}</div>
+                                                                                        <div className="font-medium uppercase text-gray-900">{p.pkg_type}</div>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <p className="text-xs text-gray-400 italic px-2">No packages listed</p>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
                                                         </div>
                                                     );
                                                 } else {
-                                                    return <p className="text-sm text-gray-400 italic">No package details specified</p>;
+                                                    // Flat View (Air/Other)
+                                                    const displayPackages = rawPackages;
+
+                                                    if (displayPackages.length > 0) {
+                                                        return (
+                                                            <div className="space-y-3">
+                                                                <div className="grid grid-cols-4 gap-4 pb-2 border-b border-gray-200">
+                                                                    <div className="text-xs font-bold text-gray-500 uppercase">Count</div>
+                                                                    <div className="text-xs font-bold text-gray-500 uppercase">CBM</div>
+                                                                    <div className="text-xs font-bold text-gray-500 uppercase">Weight</div>
+                                                                    <div className="text-xs font-bold text-gray-500 uppercase">Type</div>
+                                                                </div>
+                                                                {displayPackages.map((pkg: any, idx: number) => (
+                                                                    <div key={idx} className="grid grid-cols-4 gap-4 items-center">
+                                                                        <div className="font-bold text-gray-900 text-sm">{pkg.pkg_count || 0}</div>
+                                                                        <div className="font-medium text-gray-700 text-sm">{pkg.cbm || '-'}</div>
+                                                                        <div className="font-medium text-gray-700 text-sm">{pkg.weight || '-'}</div>
+                                                                        <div className="font-bold text-gray-900 text-sm uppercase">{pkg.pkg_type || 'PKG'}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        );
+                                                    } else {
+                                                        return <p className="text-sm text-gray-400 italic">No package details specified</p>;
+                                                    }
                                                 }
                                             })()}
                                         </div>
@@ -2194,95 +2235,127 @@ const ShipmentRegistry: React.FC = () => {
                                         {selectedJob.containers && selectedJob.containers.length > 0 ? (
                                             selectedJob.containers.map((c: any) => {
                                                 const isEditing = c.id === editingContainerId;
-                                                return isEditing ? (
-                                                    <tr key={c.id} className="bg-indigo-50/30">
-                                                        <td className="p-2">
-                                                            <input
-                                                                value={newContainer.container_no}
-                                                                onChange={e => setNewContainer({ ...newContainer, container_no: e.target.value })}
-                                                                className="input-field w-full py-1 px-2 border rounded"
-                                                                placeholder="No."
-                                                                autoFocus
-                                                            />
-                                                        </td>
-                                                        <td className="p-2">
-                                                            <select
-                                                                value={newContainer.container_type}
-                                                                onChange={e => setNewContainer({ ...newContainer, container_type: e.target.value })}
-                                                                className="input-field w-full py-1 px-2 border rounded bg-white"
-                                                            >
-                                                                <option value="FCL 20">20' FCL </option>
-                                                                <option value="FCL 40">40' FCL </option>
-                                                                <option value="LCL 20">20' LCL </option>
-                                                                <option value="LCL 40">40' LCL </option>
-                                                                <option value="OT 20">20' OT </option>
-                                                                <option value="OT 40">40' OT </option>
-                                                                <option value="FR 20">20' FR </option>
-                                                                <option value="FR 40">40' FR </option>
-                                                                <option value="RF 20">20' RF </option>
-                                                                <option value="RF 40">40' RF </option>
-                                                                <option value="LO">Loose Cargo</option>
-                                                            </select>
-                                                        </td>
-                                                        <td className="p-2">
-                                                            <input
-                                                                type="date"
-                                                                value={newContainer.unloaded_date || ''}
-                                                                onChange={e => setNewContainer({ ...newContainer, unloaded_date: e.target.value })}
-                                                                className="input-field w-full py-1 px-2 border rounded"
-                                                            />
-                                                        </td>
-                                                        <td className="p-2 text-right">
-                                                            <button onClick={handleSaveNewContainer} className="text-green-600 hover:bg-green-100 p-1 rounded mr-2"><Check className="w-4 h-4" /></button>
-                                                            <button onClick={() => { setEditingContainerId(null); setNewContainer({ container_no: '', container_type: 'FCL 20', unloaded_date: '' }); }} className="text-gray-500 hover:bg-gray-100 p-1 rounded"><X className="w-4 h-4" /></button>
-                                                        </td>
-                                                    </tr>
-                                                ) : (
-                                                    <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                                                        <td className="py-3 px-4 font-bold text-gray-900">{c.container_no}</td>
-                                                        <td className="py-3 px-4 text-gray-600">{c.container_type}</td>
-                                                        <td className="py-3 px-4 text-gray-600">{c.unloaded_date ? new Date(c.unloaded_date).toLocaleDateString() : '-'}</td>
-                                                        <td className="py-3 px-4 text-right">
-                                                            <div className="flex justify-end gap-2">
-                                                                {(hasRole('Clearance') || hasRole('Administrator') || hasRole('All')) && (
+                                                const containerPackages = typeof c.packages === 'string' ? JSON.parse(c.packages) : (c.packages || []);
+
+                                                if (isEditing) {
+                                                    return (
+                                                        <tr key={c.id} className="bg-indigo-50/30">
+                                                            <td className="p-2">
+                                                                <input
+                                                                    value={newContainer.container_no}
+                                                                    onChange={e => setNewContainer({ ...newContainer, container_no: e.target.value })}
+                                                                    className="input-field w-full py-1 px-2 border rounded"
+                                                                    placeholder="No."
+                                                                    autoFocus
+                                                                />
+                                                            </td>
+                                                            <td className="p-2">
+                                                                <select
+                                                                    value={newContainer.container_type}
+                                                                    onChange={e => setNewContainer({ ...newContainer, container_type: e.target.value })}
+                                                                    className="input-field w-full py-1 px-2 border rounded bg-white"
+                                                                >
+                                                                    <option value="FCL 20">20' FCL </option>
+                                                                    <option value="FCL 40">40' FCL </option>
+                                                                    <option value="LCL 20">20' LCL </option>
+                                                                    <option value="LCL 40">40' LCL </option>
+                                                                    <option value="OT 20">20' OT </option>
+                                                                    <option value="OT 40">40' OT </option>
+                                                                    <option value="FR 20">20' FR </option>
+                                                                    <option value="FR 40">40' FR </option>
+                                                                    <option value="RF 20">20' RF </option>
+                                                                    <option value="RF 40">40' RF </option>
+                                                                    <option value="LO">Loose Cargo</option>
+                                                                </select>
+                                                            </td>
+                                                            <td className="p-2">
+                                                                <input
+                                                                    type="date"
+                                                                    value={newContainer.unloaded_date || ''}
+                                                                    onChange={e => setNewContainer({ ...newContainer, unloaded_date: e.target.value })}
+                                                                    className="input-field w-full py-1 px-2 border rounded"
+                                                                />
+                                                            </td>
+                                                            <td className="p-2 text-right">
+                                                                <button onClick={handleSaveNewContainer} className="text-green-600 hover:bg-green-100 p-1 rounded mr-2"><Check className="w-4 h-4" /></button>
+                                                                <button onClick={() => { setEditingContainerId(null); setNewContainer({ container_no: '', container_type: 'FCL 20', unloaded_date: '' }); }} className="text-gray-500 hover:bg-gray-100 p-1 rounded"><X className="w-4 h-4" /></button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <React.Fragment key={c.id}>
+                                                        <tr className="hover:bg-gray-50 transition-colors border-t border-gray-50">
+                                                            <td className="py-3 px-4 font-bold text-gray-900 align-top">{c.container_no}</td>
+                                                            <td className="py-3 px-4 text-gray-600 align-top">{c.container_type}</td>
+                                                            <td className="py-3 px-4 text-gray-600 align-top">{c.unloaded_date ? new Date(c.unloaded_date).toLocaleDateString() : '-'}</td>
+                                                            <td className="py-3 px-4 text-right align-top">
+                                                                <div className="flex justify-end gap-2">
+                                                                    {(hasRole('Clearance') || hasRole('Administrator') || hasRole('All')) && (
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setPopupJob(selectedJob);
+                                                                                setPopupData({
+                                                                                    container_no: c.container_no,
+                                                                                    container_type: c.container_type,
+                                                                                    container_details: `${c.container_type} - ${c.container_no}`,
+                                                                                    packages: selectedJob.packages ? selectedJob.packages.map((p: any) => `${p.count} ${p.type}`).join(', ') : (selectedJob.invoice_items || ''),
+                                                                                    transport_mode: selectedJob.transport_mode
+                                                                                });
+                                                                                setPopupType('schedule');
+                                                                            }}
+                                                                            className="text-gray-400 hover:text-orange-600 p-1.5 rounded hover:bg-orange-50"
+                                                                            title="Schedule Clearance"
+                                                                        >
+                                                                            <Calendar className="w-4 h-4" />
+                                                                        </button>
+                                                                    )}
                                                                     <button
                                                                         onClick={() => {
-                                                                            setPopupJob(selectedJob);
-                                                                            setPopupData({
-                                                                                container_no: c.container_no,
-                                                                                container_type: c.container_type,
-                                                                                container_details: `${c.container_type} - ${c.container_no}`,
-                                                                                // Fallback to job details if needed, but container specific is key
-                                                                                packages: selectedJob.packages ? selectedJob.packages.map((p: any) => `${p.count} ${p.type}`).join(', ') : (selectedJob.invoice_items || ''),
-                                                                                transport_mode: selectedJob.transport_mode
+                                                                            setEditingContainerId(c.id);
+                                                                            setNewContainer({
+                                                                                ...c,
+                                                                                unloaded_date: c.unloaded_date ? new Date(c.unloaded_date).toISOString().split('T')[0] : ''
                                                                             });
-                                                                            setPopupType('schedule');
+                                                                            setAddingContainer(false);
                                                                         }}
-                                                                        className="text-gray-400 hover:text-orange-600 p-1.5 rounded hover:bg-orange-50"
-                                                                        title="Schedule Clearance"
+                                                                        className={`text-gray-400 hover:text-indigo-600 p-1.5 rounded hover:bg-indigo-50 ${!canEdit ? 'hidden' : ''}`}
                                                                     >
-                                                                        <Calendar className="w-4 h-4" />
+                                                                        <Pencil className="w-4 h-4" />
                                                                     </button>
-                                                                )}
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setEditingContainerId(c.id);
-                                                                        setNewContainer({
-                                                                            ...c,
-                                                                            unloaded_date: c.unloaded_date ? new Date(c.unloaded_date).toISOString().split('T')[0] : ''
-                                                                        });
-                                                                        setAddingContainer(false);
-                                                                    }}
-                                                                    className={`text-gray-400 hover:text-indigo-600 p-1.5 rounded hover:bg-indigo-50 ${!canEdit ? 'hidden' : ''}`}
-                                                                >
-                                                                    <Pencil className="w-4 h-4" />
-                                                                </button>
-                                                                {hasRole('Administrator') && (
-                                                                    <button onClick={() => handleDeleteContainerItem(c.id)} className="text-gray-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50"><Trash2 className="w-4 h-4" /></button>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
+                                                                    {hasRole('Administrator') && (
+                                                                        <button onClick={() => handleDeleteContainerItem(c.id)} className="text-gray-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50"><Trash2 className="w-4 h-4" /></button>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        {containerPackages && containerPackages.length > 0 && (
+                                                            <tr className="bg-gray-50/30">
+                                                                <td colSpan={4} className="px-4 py-2 pb-4">
+                                                                    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm ml-8">
+                                                                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 flex items-center gap-1">
+                                                                            <Package className="w-3 h-3" /> Packages inside {c.container_no}
+                                                                        </p>
+                                                                        <div className="grid grid-cols-4 gap-4 text-[10px] font-bold text-gray-500 uppercase border-b border-gray-100 pb-1 mb-1">
+                                                                            <div>Count</div>
+                                                                            <div>Type</div>
+                                                                            <div>CBM</div>
+                                                                            <div>Weight</div>
+                                                                        </div>
+                                                                        {containerPackages.map((pkg: any, pIdx: number) => (
+                                                                            <div key={pIdx} className="grid grid-cols-4 gap-4 text-xs font-medium text-gray-700 py-1">
+                                                                                <div>{pkg.pkg_count}</div>
+                                                                                <div>{pkg.pkg_type}</div>
+                                                                                <div>{pkg.cbm || '-'}</div>
+                                                                                <div>{pkg.weight || '-'}</div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </React.Fragment>
                                                 );
                                             })
                                         ) : (
