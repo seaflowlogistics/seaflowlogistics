@@ -32,7 +32,7 @@ const PaymentRequests: React.FC = () => {
             // For History, maybe fetch 'Confirmed' or 'Rejected' (if we tracked rejected)
             let status = '';
             if (activeTab === 'pending') {
-                status = 'Confirmation Requested,Confirm with clearance';
+                status = 'Confirmation Requested,Confirm with clearance,Awaiting Clearance';
             } else {
                 status = 'Confirmed'; // Just showing confirmed for now in history ?
             }
@@ -231,11 +231,11 @@ const PaymentRequests: React.FC = () => {
                                             {parseFloat(payment.amount).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${['Confirmation Requested', 'Confirm with clearance'].includes(payment.status)
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${['Confirmation Requested', 'Confirm with clearance', 'Awaiting Clearance'].includes(payment.status)
                                                     ? 'bg-purple-100 text-purple-700'
                                                     : 'bg-green-100 text-green-700'
                                                 }`}>
-                                                {['Confirmation Requested', 'Confirm with clearance'].includes(payment.status) ? 'Waiting Clearance' : payment.status}
+                                                {['Confirmation Requested', 'Confirm with clearance', 'Awaiting Clearance'].includes(payment.status) ? 'Waiting Clearance' : payment.status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
