@@ -2101,6 +2101,9 @@ const ShipmentRegistry: React.FC = () => {
                                                         <div className="space-y-4">
                                                             {rawPackages.map((container: any, cIdx: number) => {
                                                                 const pkgs = typeof container.packages === 'string' ? JSON.parse(container.packages) : (container.packages || []);
+                                                                const isLCL = ['LCL 20', 'LCL 40'].includes(container.container_type);
+                                                                const gridCols = isLCL ? "grid-cols-4" : "grid-cols-3";
+
                                                                 return (
                                                                     <div key={cIdx} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                                                                         <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
@@ -2113,16 +2116,16 @@ const ShipmentRegistry: React.FC = () => {
 
                                                                         {pkgs.length > 0 ? (
                                                                             <div className="space-y-2">
-                                                                                <div className="grid grid-cols-4 gap-4 text-[10px] font-bold text-gray-400 uppercase px-2">
+                                                                                <div className={`grid ${gridCols} gap-4 text-[10px] font-bold text-gray-400 uppercase px-2`}>
                                                                                     <div>Count</div>
-                                                                                    <div>CBM</div>
+                                                                                    {isLCL && <div>CBM</div>}
                                                                                     <div>Weight</div>
                                                                                     <div>Type</div>
                                                                                 </div>
                                                                                 {pkgs.map((p: any, pIdx: number) => (
-                                                                                    <div key={pIdx} className="grid grid-cols-4 gap-4 text-sm text-gray-700 px-2 py-1 hover:bg-gray-50 rounded transition-colors">
+                                                                                    <div key={pIdx} className={`grid ${gridCols} gap-4 text-sm text-gray-700 px-2 py-1 hover:bg-gray-50 rounded transition-colors`}>
                                                                                         <div className="font-bold">{p.pkg_count}</div>
-                                                                                        <div className="text-gray-500">{p.cbm || '-'}</div>
+                                                                                        {isLCL && <div className="text-gray-500">{p.cbm || '-'}</div>}
                                                                                         <div className="text-gray-500">{p.weight || '-'}</div>
                                                                                         <div className="font-medium uppercase text-gray-900">{p.pkg_type}</div>
                                                                                     </div>
@@ -2337,20 +2340,28 @@ const ShipmentRegistry: React.FC = () => {
                                                                         <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 flex items-center gap-1">
                                                                             <Package className="w-3 h-3" /> Packages inside {c.container_no}
                                                                         </p>
-                                                                        <div className="grid grid-cols-4 gap-4 text-[10px] font-bold text-gray-500 uppercase border-b border-gray-100 pb-1 mb-1">
-                                                                            <div>Count</div>
-                                                                            <div>Type</div>
-                                                                            <div>CBM</div>
-                                                                            <div>Weight</div>
-                                                                        </div>
-                                                                        {containerPackages.map((pkg: any, pIdx: number) => (
-                                                                            <div key={pIdx} className="grid grid-cols-4 gap-4 text-xs font-medium text-gray-700 py-1">
-                                                                                <div>{pkg.pkg_count}</div>
-                                                                                <div>{pkg.pkg_type}</div>
-                                                                                <div>{pkg.cbm || '-'}</div>
-                                                                                <div>{pkg.weight || '-'}</div>
-                                                                            </div>
-                                                                        ))}
+                                                                        {(() => {
+                                                                            const isLCL = ['LCL 20', 'LCL 40'].includes(c.container_type);
+                                                                            const gridCols = isLCL ? "grid-cols-4" : "grid-cols-3";
+                                                                            return (
+                                                                                <>
+                                                                                    <div className={`grid ${gridCols} gap-4 text-[10px] font-bold text-gray-500 uppercase border-b border-gray-100 pb-1 mb-1`}>
+                                                                                        <div>Count</div>
+                                                                                        <div>Type</div>
+                                                                                        {isLCL && <div>CBM</div>}
+                                                                                        <div>Weight</div>
+                                                                                    </div>
+                                                                                    {containerPackages.map((pkg: any, pIdx: number) => (
+                                                                                        <div key={pIdx} className={`grid ${gridCols} gap-4 text-xs font-medium text-gray-700 py-1`}>
+                                                                                            <div>{pkg.pkg_count}</div>
+                                                                                            <div>{pkg.pkg_type}</div>
+                                                                                            {isLCL && <div>{pkg.cbm || '-'}</div>}
+                                                                                            <div>{pkg.weight || '-'}</div>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </>
+                                                                            );
+                                                                        })()}
                                                                     </div>
                                                                 </td>
                                                             </tr>
