@@ -1489,7 +1489,7 @@ const ShipmentRegistry: React.FC = () => {
 
         // Stage 2: Clearance (50%)
         // Rule: All BLs have Delivery Notes ISSUED
-        const isClearanceComplete = isDocComplete && (selectedJob.status === 'Cleared' || selectedJob.status === 'Payment' || selectedJob.status === 'Completed' || (selectedJob.progress && parseInt(selectedJob.progress) >= 50) || isDeliveryNoteIssued);
+        const isClearanceComplete = isDocComplete && (selectedJob.status === 'Cleared' || selectedJob.status === 'Completed' || (selectedJob.progress && parseInt(selectedJob.progress) === 100) || isDeliveryNoteIssued);
 
         // Stage 3: Accounts (75%)
         // Rule: Clearance Complete AND All payments processed (is_fully_paid) OR Manually set to 75% via No Payment Confirmation
@@ -1717,7 +1717,7 @@ const ShipmentRegistry: React.FC = () => {
                             {/* Action Button Logic */}
                             {/* Action Button Logic */}
                             {!isJobCompleted ? (
-                                (isDeliveryNoteIssued || selectedJob.status === 'Payment' || (selectedJob.progress && parseInt(selectedJob.progress) >= 50)) ? (
+                                isDeliveryNoteIssued ? (
                                     (isAccountsComplete && (hasRole('Administrator') || hasRole('All') || hasRole('Accountant'))) ? (
                                         // Mark Completed Button logic
                                         // Restricted for Clearance and Documentation
