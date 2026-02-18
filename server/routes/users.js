@@ -48,10 +48,14 @@ router.use(authenticateToken);
 router.get('/', authorizeRole(['Administrator', 'All']), async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT u.id, u.username, u.role, u.email, u.created_at,
-            (SELECT MAX(created_at) FROM audit_logs WHERE user_id = u.id) as last_active,
-            (SELECT COUNT(*) > 0 FROM user_sessions WHERE user_id = u.id AND expires_at > NOW()) as is_logged_in
+            SELECT 
+                u.id, u.username, u.role, u.email, u.created_at,
+                MAX(al.created_at) as last_active,
+                COALESCE(BOOL_OR(us.expires_at > NOW()), false) as is_logged_in
             FROM users u
+            LEFT JOIN audit_logs al ON al.user_id = u.id
+            LEFT JOIN user_sessions us ON us.user_id = u.id
+            GROUP BY u.id, u.username, u.role, u.email, u.created_at
             ORDER BY u.created_at DESC
         `);
 
