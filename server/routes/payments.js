@@ -9,7 +9,9 @@ const router = express.Router();
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const { search, status, page = 1, limit = 50 } = req.query;
-        const offset = (page - 1) * limit;
+        const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
+        const limitNumber = Math.max(parseInt(limit, 10) || 50, 1);
+        const offset = (pageNumber - 1) * limitNumber;
 
         let query = `
             SELECT jp.*, u.username as requested_by_name, pu.username as processed_by_name, s.customer
@@ -44,9 +46,7 @@ router.get('/', authenticateToken, async (req, res) => {
         }
 
         query += ` ORDER BY jp.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-        params.push(limit, offset);
-
-        const result = await pool.query(query, params);
+        params.push(limitNumber, offset);
 
         // Count for pagination
         let countQuery = `
@@ -79,15 +79,18 @@ router.get('/', authenticateToken, async (req, res) => {
             countParams.push(`%${search}%`);
         }
 
-        const countResult = await pool.query(countQuery, countParams);
+        const [result, countResult] = await Promise.all([
+            pool.query(query, params),
+            pool.query(countQuery, countParams)
+        ]);
         const total = parseInt(countResult.rows[0].count, 10);
 
         res.json({
             data: result.rows,
             total,
-            page: parseInt(page),
-            limit: parseInt(limit),
-            totalPages: Math.ceil(total / limit)
+            page: pageNumber,
+            limit: limitNumber,
+            totalPages: Math.ceil(total / limitNumber)
         });
     } catch (error) {
         console.error('Get all payments error:', error);
@@ -123,21 +126,31 @@ router.post('/request-confirmation', authenticateToken, async (req, res) => {
                 );
             }
 
-            // 3. Audit Logs
-            for (const jId of jobIds) {
+            // 3. Audit Logs (bulk)
+            if (jobIds.length > 0) {
                 await client.query(
-                    'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
-                    [req.user.id, 'REQUEST_CONFIRMATION', `Accountant requested confirmation for payments`, 'SHIPMENT', jId]
+                    `INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id)
+                     SELECT $1, 'REQUEST_CONFIRMATION', 'Accountant requested confirmation for payments', 'SHIPMENT', unnest($2::text[])`,
+                    [req.user.id, jobIds]
                 );
-
-                // Notify Clearance
-                // Assuming Clearance users have role 'Clearance' or are the 'requested_by' user
-                // Let's notify 'Clearance' role generally or specific user if we tracked who created the job
-                // For simplicity, notify all Clearance users
-                await broadcastNotification('Clearance', 'Payment Confirmation Requested', `Please confirm payment details for Job ${jId}`, 'action', `/registry?selectedJobId=${jId}`, 'SHIPMENT', jId);
             }
 
             await client.query('COMMIT');
+
+            // Notify Clearance after commit
+            if (jobIds.length > 0) {
+                await Promise.all(jobIds.map(jId =>
+                    broadcastNotification(
+                        'Clearance',
+                        'Payment Confirmation Requested',
+                        `Please confirm payment details for Job ${jId}`,
+                        'action',
+                        `/registry?selectedJobId=${jId}`,
+                        'SHIPMENT',
+                        jId
+                    )
+                ));
+            }
             res.json({ message: 'Confirmation requested', count: result.rowCount });
         } catch (e) {
             await client.query('ROLLBACK');
@@ -371,10 +384,11 @@ router.post('/send-batch', authenticateToken, async (req, res) => {
 
         // Audit Logs per Job
         const jobsInBatch = [...new Set(valRes.rows.map(r => r.id))];
-        for (const jId of jobsInBatch) {
+        if (jobsInBatch.length > 0) {
             await pool.query(
-                'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
-                [req.user.id, 'SEND_PAYMENTS_TO_ACCOUNTS', `Payment sent for approval`, 'SHIPMENT', jId]
+                `INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id)
+                 SELECT $1, 'SEND_PAYMENTS_TO_ACCOUNTS', 'Payment sent for approval', 'SHIPMENT', unnest($2::text[])`,
+                [req.user.id, jobsInBatch]
             );
         }
 
@@ -487,21 +501,35 @@ router.post('/process-batch', authenticateToken, async (req, res) => {
         const distinctJobIds = [...new Set(result.rows.map(p => p.job_id))];
         const completedJobs = [];
 
-        for (const jId of distinctJobIds) {
-            // 1. Check if all payments are paid
-            const checkPayRes = await client.query("SELECT count(*) FROM job_payments WHERE job_id = $1 AND status != 'Paid'", [jId]);
-            const allPaid = parseInt(checkPayRes.rows[0].count) === 0;
+        if (distinctJobIds.length > 0) {
+            const pendingRes = await client.query(
+                `SELECT job_id, COUNT(*) FILTER (WHERE status != 'Paid') as pending
+                 FROM job_payments
+                 WHERE job_id = ANY($1)
+                 GROUP BY job_id`,
+                [distinctJobIds]
+            );
 
-            if (allPaid) {
-                // Log Payment Completion separately
-                await pool.query(
-                    'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
-                    [req.user.id, 'ALL_PAYMENTS_COMPLETED', `All payments completed`, 'SHIPMENT', jId]
+            const pendingMap = new Map();
+            pendingRes.rows.forEach(r => {
+                pendingMap.set(r.job_id, parseInt(r.pending, 10));
+            });
+
+            const allPaidJobIds = distinctJobIds.filter(jId => (pendingMap.get(jId) || 0) === 0);
+
+            if (allPaidJobIds.length > 0) {
+                await client.query(
+                    `INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id)
+                     SELECT $1, 'ALL_PAYMENTS_COMPLETED', 'All payments completed', 'SHIPMENT', unnest($2::text[])`,
+                    [req.user.id, allPaidJobIds]
                 );
 
                 // 2. Update Progress to 75% (Accounts Complete)
                 // We do NOT mark as 'Completed' (100%) because that requires manual confirmation of Job Invoice No.
-                await client.query("UPDATE shipments SET progress = 75 WHERE id = $1 AND status != 'Completed'", [jId]);
+                await client.query(
+                    "UPDATE shipments SET progress = 75 WHERE id = ANY($1) AND status != 'Completed'",
+                    [allPaidJobIds]
+                );
             }
         }
 

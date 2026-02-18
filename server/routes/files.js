@@ -7,7 +7,10 @@ const router = express.Router();
 router.get('/view/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query('SELECT * FROM file_storage WHERE id = $1', [id]);
+        const result = await pool.query(
+            'SELECT data, mime_type, size, filename FROM file_storage WHERE id = $1',
+            [id]
+        );
 
         if (result.rows.length === 0) {
             return res.status(404).send('File not found');

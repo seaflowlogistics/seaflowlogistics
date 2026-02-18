@@ -25,9 +25,9 @@ router.get('/', async (req, res) => {
         }
 
         if (date) {
-            // Filter by date (ignoring time)
-            conditions.push(`DATE(a.created_at) = $${params.length + 1}`);
+            // Filter by date (ignoring time) without wrapping the column
             params.push(date);
+            conditions.push(`a.created_at >= $${params.length}::date AND a.created_at < ($${params.length}::date + INTERVAL '1 day')`);
         }
 
         if (req.query.entity_id) {

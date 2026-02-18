@@ -25,6 +25,8 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    const client = await pool.connect();
+
     try {
         const workbook = XLSX.readFile(req.file.path);
         const sheetName = workbook.SheetNames[0];
@@ -33,6 +35,25 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 
         let successCount = 0;
         let errors = [];
+
+        const candidateIds = [];
+        for (const row of data) {
+            const normalizedRow = {};
+            Object.keys(row).forEach(key => {
+                normalizedRow[key.toLowerCase()] = row[key];
+            });
+            const id = normalizedRow['registration no'] || normalizedRow['id'] || normalizedRow['reg no'];
+            if (id) candidateIds.push(id.toString().trim());
+        }
+
+        const uniqueIds = [...new Set(candidateIds)].filter(Boolean);
+        let existingIds = new Set();
+        if (uniqueIds.length > 0) {
+            const existingRes = await client.query('SELECT id FROM vehicles WHERE id = ANY($1)', [uniqueIds]);
+            existingIds = new Set(existingRes.rows.map(r => r.id));
+        }
+
+        await client.query('BEGIN');
 
         for (const row of data) {
             const normalizedRow = {};
@@ -50,9 +71,7 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             }
 
             try {
-                // Check if exists
-                const existing = await pool.query('SELECT id FROM vehicles WHERE id = $1', [id]);
-                if (existing.rows.length > 0) {
+                if (existingIds.has(id)) {
                     // Determine if we should update or skip. For now, let's skip to be safe or update fields? 
                     // Exporters logic inserts new. Let's try INSERT ON CONFLICT DO UPDATE or just skip?
                     // Start simple: Insert only.
@@ -60,7 +79,7 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
                     continue;
                 }
 
-                await pool.query(
+                await client.query(
                     `INSERT INTO vehicles (id, name, type, owner, phone, email, comments, driver, status, location)
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
                     [
@@ -77,12 +96,13 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
                     ]
                 );
                 successCount++;
+                existingIds.add(id);
             } catch (err) {
                 errors.push(`Failed to import ${id}: ${err.message}`);
             }
         }
 
-        fs.unlinkSync(req.file.path);
+        await client.query('COMMIT');
 
         // Log activity if logActivity is available (it should be)
         // await logActivity(req.user.id, 'IMPORT_FLEET', `Imported ${successCount} vehicles`, 'VEHICLE', 'BATCH');
@@ -93,8 +113,14 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         });
 
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Import error:', error);
         res.status(500).json({ error: 'Failed to process file: ' + error.message });
+    } finally {
+        client.release();
+        if (req.file?.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
     }
 });
 

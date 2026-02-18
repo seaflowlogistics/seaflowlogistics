@@ -7,87 +7,77 @@ const router = express.Router();
 // Get dashboard statistics
 router.get('/dashboard', authenticateToken, async (req, res) => {
   try {
-    // Get shipment stats
-    const shipmentStats = await pool.query(`
-      SELECT 
-        COUNT(*) as total_shipments,
-        COUNT(*) FILTER (WHERE status = 'In Transit') as active_deliveries,
-        COUNT(*) FILTER (WHERE status = 'Delivered') as delivered,
-        COUNT(*) FILTER (WHERE status = 'Delayed') as delayed
-      FROM shipments
-    `);
-
-    // Get vehicle count
-    const vehicleStats = await pool.query('SELECT COUNT(*) as total_vehicles FROM vehicles');
-
-    // Calculate on-time rate
-    const onTimeRate = await pool.query(`
-      SELECT 
-        ROUND(
-          (COUNT(*) FILTER (WHERE status = 'Delivered')::DECIMAL / 
-          NULLIF(COUNT(*) FILTER (WHERE status IN ('Delivered', 'Delayed')), 0)) * 100, 
-          1
-        ) as on_time_rate
-      FROM shipments
-    `);
-
-    // Get recent shipments
-    const recentShipments = await pool.query(
-      'SELECT * FROM shipments ORDER BY date DESC LIMIT 5'
-    );
-
-    // Get weekly data (last 7 days)
-    const weeklyData = await pool.query(`
-      SELECT 
-        TO_CHAR(date, 'Dy') as day,
-        COUNT(*) as shipments,
-        COUNT(*) FILTER (WHERE status = 'Delivered') as deliveries
-      FROM shipments
-      WHERE date >= CURRENT_DATE - INTERVAL '7 days'
-      GROUP BY date, TO_CHAR(date, 'Dy')
-      ORDER BY date
-    `);
-
-    // Get status distribution
-    const statusData = await pool.query(`
-      SELECT 
-        status as name,
-        COUNT(*) as value
-      FROM shipments
-      GROUP BY status
-    `);
-
-    // Team Snapshot Data
-
-    // 1. Overdue Clearances: Schedules where date is past today AND job is not cleared
-    const overdueClearances = await pool.query(`
-            SELECT COUNT(*) 
-            FROM clearance_schedules cs
-            JOIN shipments s ON cs.job_id = s.id
-            WHERE cs.clearance_date < CURRENT_DATE
-            AND s.status NOT IN ('Cleared', 'Completed', 'Payment')
-        `);
-
-    // 2. Scheduled Today (Created within 24h as per request)
-    const scheduledToday = await pool.query(`
-            SELECT COUNT(*) 
-            FROM clearance_schedules 
-            WHERE created_at >= NOW() - INTERVAL '24 hours'
-        `);
-
-    // 3. Awaiting Delivery Notes (Pending status)
-    const awaitingDeliveryNotes = await pool.query(`
-            SELECT COUNT(*) 
-            FROM delivery_notes 
-            WHERE status = 'Pending'
-        `);
-
-    // 4. Documents Received (Uploaded today)
-    const documentsReceived = await pool.query(`
-            SELECT COUNT(*) 
-            FROM shipment_documents 
-            WHERE DATE(uploaded_at) = CURRENT_DATE
-        `);
+    const [
+      shipmentStats,
+      vehicleStats,
+      onTimeRate,
+      recentShipments,
+      weeklyData,
+      statusData,
+      overdueClearances,
+      scheduledToday,
+      awaitingDeliveryNotes,
+      documentsReceived
+    ] = await Promise.all([
+      pool.query(`
+        SELECT 
+          COUNT(*) as total_shipments,
+          COUNT(*) FILTER (WHERE status = 'In Transit') as active_deliveries,
+          COUNT(*) FILTER (WHERE status = 'Delivered') as delivered,
+          COUNT(*) FILTER (WHERE status = 'Delayed') as delayed
+        FROM shipments
+      `),
+      pool.query('SELECT COUNT(*) as total_vehicles FROM vehicles'),
+      pool.query(`
+        SELECT 
+          ROUND(
+            (COUNT(*) FILTER (WHERE status = 'Delivered')::DECIMAL / 
+            NULLIF(COUNT(*) FILTER (WHERE status IN ('Delivered', 'Delayed')), 0)) * 100, 
+            1
+          ) as on_time_rate
+        FROM shipments
+      `),
+      pool.query('SELECT * FROM shipments ORDER BY date DESC LIMIT 5'),
+      pool.query(`
+        SELECT 
+          TO_CHAR(date, 'Dy') as day,
+          COUNT(*) as shipments,
+          COUNT(*) FILTER (WHERE status = 'Delivered') as deliveries
+        FROM shipments
+        WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY date, TO_CHAR(date, 'Dy')
+        ORDER BY date
+      `),
+      pool.query(`
+        SELECT 
+          status as name,
+          COUNT(*) as value
+        FROM shipments
+        GROUP BY status
+      `),
+      pool.query(`
+        SELECT COUNT(*) 
+        FROM clearance_schedules cs
+        JOIN shipments s ON cs.job_id = s.id
+        WHERE cs.clearance_date < CURRENT_DATE
+        AND s.status NOT IN ('Cleared', 'Completed', 'Payment')
+      `),
+      pool.query(`
+        SELECT COUNT(*) 
+        FROM clearance_schedules 
+        WHERE created_at >= NOW() - INTERVAL '24 hours'
+      `),
+      pool.query(`
+        SELECT COUNT(*) 
+        FROM delivery_notes 
+        WHERE status = 'Pending'
+      `),
+      pool.query(`
+        SELECT COUNT(*) 
+        FROM shipment_documents 
+        WHERE DATE(uploaded_at) = CURRENT_DATE
+      `)
+    ]);
 
     res.json({
       stats: {

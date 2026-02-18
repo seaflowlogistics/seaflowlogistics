@@ -231,10 +231,6 @@ router.get('/download', authenticateToken, async (req, res) => {
             ${type === 'Monthly' ? `AND EXTRACT(YEAR FROM paid_at) = $1` : `AND paid_at >= NOW() - INTERVAL '5 years'`}
             GROUP BY vendor
         `;
-        const companyExp = await pool.query(companyExpQuery, params);
-        const wsCompany = XLSX.utils.json_to_sheet(companyExp.rows);
-        XLSX.utils.book_append_sheet(wb, wsCompany, "Company Expenses");
-
         // Sheet 3: Expense Summary (Customer Paid)
         const customerExpQuery = `
              SELECT 
@@ -246,7 +242,14 @@ router.get('/download', authenticateToken, async (req, res) => {
             ${type === 'Monthly' ? `AND EXTRACT(YEAR FROM paid_at) = $1` : `AND paid_at >= NOW() - INTERVAL '5 years'`}
             GROUP BY vendor
         `;
-        const customerExp = await pool.query(customerExpQuery, params);
+
+        const [companyExp, customerExp] = await Promise.all([
+            pool.query(companyExpQuery, params),
+            pool.query(customerExpQuery, params)
+        ]);
+
+        const wsCompany = XLSX.utils.json_to_sheet(companyExp.rows);
+        XLSX.utils.book_append_sheet(wb, wsCompany, "Company Expenses");
         const wsCustomer = XLSX.utils.json_to_sheet(customerExp.rows);
         XLSX.utils.book_append_sheet(wb, wsCustomer, "Customer Expenses");
 

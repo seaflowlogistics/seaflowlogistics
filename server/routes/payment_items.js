@@ -85,6 +85,8 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    const client = await pool.connect();
+
     try {
         // Ensure table exists
         // Table creation handled by migration 033_create_payment_items.sql
@@ -98,11 +100,13 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         let errors = [];
 
         // Fetch all vendors for lookup
-        const vendorsResult = await pool.query('SELECT id, name FROM vendors');
+        const vendorsResult = await client.query('SELECT id, name FROM vendors');
         const vendorMap = new Map();
         vendorsResult.rows.forEach(v => {
             if (v.name) vendorMap.set(v.name.toLowerCase().trim(), v.id);
         });
+
+        await client.query('BEGIN');
 
         for (const row of data) {
             const normalizedRow = {};
@@ -121,7 +125,7 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             }
 
             try {
-                await pool.query(
+                await client.query(
                     'INSERT INTO payment_items (name, vendor_id) VALUES ($1, $2)',
                     [name, vendorId]
                 );
@@ -131,7 +135,7 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             }
         }
 
-        fs.unlinkSync(req.file.path);
+        await client.query('COMMIT');
         await logActivity(req.user.id, 'IMPORT_PAYMENT_ITEMS', `Imported ${successCount} payment items`, 'PAYMENT_ITEM', 'BATCH');
 
         res.json({
@@ -140,8 +144,14 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         });
 
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Import error:', error);
         res.status(500).json({ error: 'Failed to process file: ' + error.message });
+    } finally {
+        client.release();
+        if (req.file?.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
     }
 });
 

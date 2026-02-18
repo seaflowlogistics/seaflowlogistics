@@ -8,9 +8,10 @@ const router = express.Router();
 // Get notifications
 router.get('/', authenticateToken, async (req, res) => {
     try {
+        const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
         // Everyone only sees their own notifications
-        const query = 'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50';
-        const params = [req.user.id];
+        const query = 'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2';
+        const params = [req.user.id, limit];
 
         const result = await pool.query(query, params);
         res.json(result.rows);

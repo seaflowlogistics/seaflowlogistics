@@ -78,6 +78,8 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    const client = await pool.connect();
+
     try {
         const workbook = XLSX.readFile(req.file.path);
         const sheetName = workbook.SheetNames[0];
@@ -86,6 +88,8 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 
         let successCount = 0;
         let errors = [];
+
+        await client.query('BEGIN');
 
         for (const row of data) {
             const normalizedRow = {};
@@ -97,7 +101,7 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             if (!name) continue;
 
             try {
-                await pool.query(
+                await client.query(
                     'INSERT INTO delivery_agents (name, email, phone) VALUES ($1, $2, $3)',
                     [
                         name,
@@ -111,7 +115,7 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             }
         }
 
-        fs.unlinkSync(req.file.path);
+        await client.query('COMMIT');
 
         await logActivity(req.user.id, 'IMPORT_DELIVERY_AGENTS', `Imported ${successCount} delivery agents`, 'DELIVERY_AGENT', 'BATCH');
 
@@ -121,8 +125,14 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         });
 
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Import error:', error);
         res.status(500).json({ error: 'Failed to process file: ' + error.message });
+    } finally {
+        client.release();
+        if (req.file?.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
     }
 });
 

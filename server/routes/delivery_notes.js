@@ -92,18 +92,24 @@ router.post('/', authenticateToken, async (req, res) => {
             ]
         );
 
-        // Insert Items
+        // Insert Items (bulk)
+        const itemValues = [];
+        const itemPlaceholders = [];
         for (const item of items) {
             if (!item.job_id) {
                 console.error('Missing job_id for item:', item);
                 throw new Error('Job ID is required for all items');
             }
-            await client.query(
-                `INSERT INTO delivery_note_items (delivery_note_id, schedule_id, job_id, shortage, damaged, remarks)
-                  VALUES ($1, $2, $3, $4, $5, $6)`,
-                [dnId, item.schedule_id, item.job_id, item.shortage, item.damaged, item.remarks]
-            );
+            const baseIndex = itemValues.length;
+            itemValues.push(dnId, item.schedule_id, item.job_id, item.shortage, item.damaged, item.remarks);
+            itemPlaceholders.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6})`);
         }
+
+        await client.query(
+            `INSERT INTO delivery_note_items (delivery_note_id, schedule_id, job_id, shortage, damaged, remarks)
+             VALUES ${itemPlaceholders.join(', ')}`,
+            itemValues
+        );
 
         // Legacy Vehicle Logic (Removed in favor of single transport mode on Delivery Note)
         /*
@@ -115,45 +121,58 @@ router.post('/', authenticateToken, async (req, res) => {
         // UPDATE JOB PROGRESS
         // Check if all BLs for the job(s) are now delivered
         const jobIds = [...new Set(items.map(i => i.job_id))];
+        const blCountsRes = await client.query(
+            `SELECT shipment_id, COUNT(*) as count 
+             FROM shipment_bls 
+             WHERE shipment_id = ANY($1)
+             GROUP BY shipment_id`,
+            [jobIds]
+        );
+        const deliveredRes = await client.query(
+            `SELECT dni.job_id, COUNT(DISTINCT cs.bl_awb) as count
+             FROM delivery_note_items dni
+             JOIN clearance_schedules cs ON dni.schedule_id = cs.id
+             WHERE dni.job_id = ANY($1)
+             GROUP BY dni.job_id`,
+            [jobIds]
+        );
+        const paymentsRes = await client.query(
+            `SELECT job_id,
+                    COUNT(*) FILTER (WHERE status != 'Paid') as pending,
+                    COUNT(*) as total
+             FROM job_payments
+             WHERE job_id = ANY($1)
+             GROUP BY job_id`,
+            [jobIds]
+        );
+
+        const blCountMap = new Map();
+        blCountsRes.rows.forEach(r => blCountMap.set(r.shipment_id, parseInt(r.count, 10)));
+        const deliveredMap = new Map();
+        deliveredRes.rows.forEach(r => deliveredMap.set(r.job_id, parseInt(r.count, 10)));
+        const paymentsMap = new Map();
+        paymentsRes.rows.forEach(r => {
+            paymentsMap.set(r.job_id, {
+                pending: parseInt(r.pending, 10),
+                total: parseInt(r.total, 10)
+            });
+        });
+
         for (const jobId of jobIds) {
-            // 1. Get Total BLs for this Job
-            // We check shipment_bls table. If empty, we fallback to considering the shipment itself as 1 unit (master BL)
-            const blRes = await client.query('SELECT COUNT(*) FROM shipment_bls WHERE shipment_id = $1', [jobId]);
-            let totalBLs = parseInt(blRes.rows[0].count);
-
-            // If no breakdown in shipment_bls, we treat it as 1 main BL (from shipments table)
+            let totalBLs = blCountMap.get(jobId) || 0;
             if (totalBLs === 0) totalBLs = 1;
-
-            // 2. Get Delivered BLs for this Job
-            // We count distinct BLs from clearance schedules that are linked to ANY delivery note item
-            const deliveredRes = await client.query(`
-                SELECT COUNT(DISTINCT cs.bl_awb) 
-                FROM delivery_note_items dni
-                JOIN clearance_schedules cs ON dni.schedule_id = cs.id
-                WHERE dni.job_id = $1
-            `, [jobId]);
-            const deliveredBLs = parseInt(deliveredRes.rows[0].count);
+            const deliveredBLs = deliveredMap.get(jobId) || 0;
 
             console.log(`Job ${jobId} Progress Check: ${deliveredBLs}/${totalBLs} BLs delivered`);
 
-            // 3. Update Status if Complete
             if (deliveredBLs >= totalBLs) {
-                // Check if Payments are fully paid
-                const payRes = await client.query("SELECT count(*) as pending FROM job_payments WHERE job_id = $1 AND status != 'Paid'", [jobId]);
-                const totalPayRes = await client.query("SELECT count(*) as total FROM job_payments WHERE job_id = $1", [jobId]);
-
-                const pendingPayments = parseInt(payRes.rows[0].pending);
-                const totalPayments = parseInt(totalPayRes.rows[0].total);
-
-                if (totalPayments > 0 && pendingPayments === 0) {
+                const paymentInfo = paymentsMap.get(jobId) || { pending: 0, total: 0 };
+                if (paymentInfo.total > 0 && paymentInfo.pending === 0) {
                     await logActivity(req.user.id, 'ALL_PAYMENTS_COMPLETED', `All payments completed`, 'SHIPMENT', jobId, client);
                 }
 
-                // Set to 'Cleared' (Stage 2). Progress 50%.
                 await client.query('UPDATE shipments SET progress = 50, status = $1 WHERE id = $2', ['Cleared', jobId]);
             } else {
-                // Optional: Set partial progress? e.g. (delivered / total) * 100
-                // preserving 'status' might be better if not complete, or set to 'In Clearance'
                 const percent = Math.floor((deliveredBLs / totalBLs) * 100);
                 await client.query('UPDATE shipments SET progress = $1 WHERE id = $2', [percent, jobId]);
             }
@@ -232,35 +251,36 @@ router.get('/:id', authenticateToken, async (req, res) => {
         }
         const dn = dnResult.rows[0];
 
-        const itemsResult = await pool.query(`
-            SELECT dni.*, 
-            COALESCE(cs.bl_awb, (SELECT string_agg(COALESCE(sb.master_bl, sb.house_bl), ', ') FROM shipment_bls sb WHERE sb.shipment_id = s.id)) as bl_awb_no, 
-            s.sender_name, 
-            COALESCE(cs.packages, (SELECT string_agg(sc.packages::text, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id), s.invoice_items) as packages, 
-            COALESCE(cs.container_type, (SELECT string_agg(sc.container_type, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id)) as package_type, 
-            COALESCE(cs.container_no, (SELECT string_agg(sc.container_no, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id)) as container_no,
-            cs.port as schedule_port,
-            s.shipment_type,
-            s.transport_mode
-            FROM delivery_note_items dni
-            LEFT JOIN clearance_schedules cs ON dni.schedule_id = cs.id
-            LEFT JOIN shipments s ON dni.job_id = s.id
-            WHERE dni.delivery_note_id = $1
-        `, [id]);
-
-        const vehiclesResult = await pool.query(`
-            SELECT dnv.id,
-            dnv.vehicle_id as "vehicleId",
-            dnv.driver_name as "driver",
-            dnv.driver_contact as "driverContact",
-            dnv.discharge_location as "dischargeLocation",
-            v.name as "vehicleName",
-            v.id as "registrationNumber",
-            v.type as "vehicle_type"
-            FROM delivery_note_vehicles dnv
-            LEFT JOIN vehicles v ON dnv.vehicle_id = v.id
-            WHERE dnv.delivery_note_id = $1
-            `, [id]);
+        const [itemsResult, vehiclesResult] = await Promise.all([
+            pool.query(`
+                SELECT dni.*, 
+                COALESCE(cs.bl_awb, (SELECT string_agg(COALESCE(sb.master_bl, sb.house_bl), ', ') FROM shipment_bls sb WHERE sb.shipment_id = s.id)) as bl_awb_no, 
+                s.sender_name, 
+                COALESCE(cs.packages, (SELECT string_agg(sc.packages::text, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id), s.invoice_items) as packages, 
+                COALESCE(cs.container_type, (SELECT string_agg(sc.container_type, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id)) as package_type, 
+                COALESCE(cs.container_no, (SELECT string_agg(sc.container_no, ', ') FROM shipment_containers sc WHERE sc.shipment_id = s.id)) as container_no,
+                cs.port as schedule_port,
+                s.shipment_type,
+                s.transport_mode
+                FROM delivery_note_items dni
+                LEFT JOIN clearance_schedules cs ON dni.schedule_id = cs.id
+                LEFT JOIN shipments s ON dni.job_id = s.id
+                WHERE dni.delivery_note_id = $1
+            `, [id]),
+            pool.query(`
+                SELECT dnv.id,
+                dnv.vehicle_id as "vehicleId",
+                dnv.driver_name as "driver",
+                dnv.driver_contact as "driverContact",
+                dnv.discharge_location as "dischargeLocation",
+                v.name as "vehicleName",
+                v.id as "registrationNumber",
+                v.type as "vehicle_type"
+                FROM delivery_note_vehicles dnv
+                LEFT JOIN vehicles v ON dnv.vehicle_id = v.id
+                WHERE dnv.delivery_note_id = $1
+            `, [id])
+        ]);
 
         res.json({
             ...dn,
@@ -385,24 +405,28 @@ router.put('/:id', authenticateToken, upload.array('files'), async (req, res) =>
             const jobsRes = await client.query('SELECT DISTINCT job_id FROM delivery_note_items WHERE delivery_note_id = $1', [id]);
             const jobIds = jobsRes.rows.map(r => r.job_id);
 
-            for (const jobId of jobIds) {
-                // Check if there are any other Delivery Notes for this job that are NOT 'Delivered'
-                // (Since we just updated the current one to 'Delivered' in memory/transaction, the query helps verify the ecosystem)
-                // Note: The current DN is already updated in the transaction above, so 'dn.status' check might need care.
-                // We just ran the UPDATE, so reading it back should show 'Delivered'.
-
+            if (jobIds.length > 0) {
                 const pendingDnRes = await client.query(`
-                    SELECT count(*) FROM delivery_notes dn
+                    SELECT dni.job_id, COUNT(*) FILTER (WHERE dn.status != 'Delivered') as pending
+                    FROM delivery_notes dn
                     JOIN delivery_note_items dni ON dn.id = dni.delivery_note_id
-                    WHERE dni.job_id = $1 AND dn.status != 'Delivered'
-            `, [jobId]);
+                    WHERE dni.job_id = ANY($1)
+                    GROUP BY dni.job_id
+                `, [jobIds]);
 
-                if (parseInt(pendingDnRes.rows[0].count) === 0) {
-                    // All DNs for this job are delivered. Mark Job as Cleared (Delivery Done).
-                    // Status 'Completed' is reserved for when Payments are also done.
-                    await client.query("UPDATE shipments SET status = 'Cleared', progress = 100 WHERE id = $1", [jobId]);
+                const pendingMap = new Map();
+                pendingDnRes.rows.forEach(r => {
+                    pendingMap.set(r.job_id, parseInt(r.pending, 10));
+                });
 
-                    await logActivity(req.user.id, 'JOB_CLEARED', `Job marked as Cleared (Delivery Confirmed)`, 'SHIPMENT', jobId, client);
+                for (const jobId of jobIds) {
+                    if ((pendingMap.get(jobId) || 0) === 0) {
+                        // All DNs for this job are delivered. Mark Job as Cleared (Delivery Done).
+                        // Status 'Completed' is reserved for when Payments are also done.
+                        await client.query("UPDATE shipments SET status = 'Cleared', progress = 100 WHERE id = $1", [jobId]);
+
+                        await logActivity(req.user.id, 'JOB_CLEARED', `Job marked as Cleared (Delivery Confirmed)`, 'SHIPMENT', jobId, client);
+                    }
                 }
             }
         }

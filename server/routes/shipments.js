@@ -45,23 +45,14 @@ const generateShipmentId = async (transportMode) => {
     const sPattern = `S${year}-%`;
     const aPattern = `A${year}-%`;
 
-    // Get all IDs for this year to calculate max sequence safely in JS
     const result = await pool.query(
-        "SELECT id FROM shipments WHERE id LIKE $1 OR id LIKE $2",
+        `SELECT MAX(NULLIF(REGEXP_REPLACE(SPLIT_PART(id, '-', 2), '[^0-9]', '', 'g'), '')::int) as max_num
+         FROM shipments 
+         WHERE id LIKE $1 OR id LIKE $2`,
         [sPattern, aPattern]
     );
 
-    let maxNum = 0;
-    result.rows.forEach(row => {
-        const parts = row.id.split('-');
-        if (parts.length === 2) {
-            const num = parseInt(parts[1], 10);
-            if (!isNaN(num) && num > maxNum) {
-                maxNum = num;
-            }
-        }
-    });
-
+    const maxNum = parseInt(result.rows[0]?.max_num, 10) || 0;
     const nextNum = maxNum + 1;
 
     return `${prefixChar}${year}-${String(nextNum).padStart(4, '0')}`;
@@ -173,6 +164,8 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
 
     const filePath = req.file.path;
 
+    const client = await pool.connect();
+
     try {
         const workbook = XLSX.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
@@ -195,25 +188,16 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
         const sPattern = `S${year}-%`;
         const aPattern = `A${year}-%`;
 
-        const lastIdResult = await pool.query(
-            "SELECT id FROM shipments WHERE id LIKE $1 OR id LIKE $2",
+        const lastIdResult = await client.query(
+            `SELECT MAX(NULLIF(REGEXP_REPLACE(SPLIT_PART(id, '-', 2), '[^0-9]', '', 'g'), '')::int) as max_num
+             FROM shipments 
+             WHERE id LIKE $1 OR id LIKE $2`,
             [sPattern, aPattern]
         );
 
-        let maxNum = 0;
-        lastIdResult.rows.forEach(row => {
-            const parts = row.id.split('-');
-            if (parts.length === 2) {
-                const num = parseInt(parts[1], 10);
-                if (!isNaN(num) && num > maxNum) {
-                    maxNum = num;
-                }
-            }
-        });
+        let nextIdNum = (parseInt(lastIdResult.rows[0]?.max_num, 10) || 0) + 1;
 
-        let nextIdNum = maxNum + 1;
-
-        await pool.query('BEGIN');
+        await client.query('BEGIN');
 
         for (const row of data) {
             try {
@@ -295,12 +279,12 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                 const liner = parseFloat(normalizedRow['liner'] || '0');
 
                 // Check if shipment exists
-                const existingCheck = await pool.query('SELECT id FROM shipments WHERE id = $1', [id]);
+                const existingCheck = await client.query('SELECT id FROM shipments WHERE id = $1', [id]);
                 const isUpdate = existingCheck.rows.length > 0;
 
                 if (isUpdate) {
                     // UPDATE basic fields
-                    await pool.query(
+                    await client.query(
                         `UPDATE shipments SET 
                             customer = $1, receiver_name = $2, sender_name = $3, exporter = $3, invoice_no = $4, invoice_items = $5, 
                             customs_r_form = $6, status = $7, progress = $8,
@@ -320,7 +304,7 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     );
                 } else {
                     // INSERT new shipment
-                    await pool.query(
+                    await client.query(
                         `INSERT INTO shipments (
                             id, customer, receiver_name, sender_name, exporter, invoice_no, invoice_items, 
                             customs_r_form, status, progress,
@@ -352,8 +336,8 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     // Remove existing BLs/Containers to do a clean replace? 
                     // Or Upsert? Replacing is safer for sync behavior requested("update tables").
                     // CAUTION: This deletes existing data for the shipment.
-                    await pool.query('DELETE FROM shipment_bls WHERE shipment_id = $1', [id]);
-                    await pool.query('DELETE FROM shipment_containers WHERE shipment_id = $1', [id]);
+                    await client.query('DELETE FROM shipment_bls WHERE shipment_id = $1', [id]);
+                    await client.query('DELETE FROM shipment_containers WHERE shipment_id = $1', [id]);
 
                     // Construct Packages Array
                     let packagesList = [];
@@ -409,14 +393,14 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                     // If containers exist, we store them inside the 'packages' column as content (same as `routes/shipments.js` line 573 logic)
                     const blContent = (containersData.length > 0) ? JSON.stringify(containersData) : JSON.stringify(packagesList);
 
-                    await pool.query(
+                    await client.query(
                         'INSERT INTO shipment_bls (shipment_id, master_bl, packages) VALUES ($1, $2, $3)',
                         [id, String(blNumber).split(',')[0].trim(), blContent] // Take first BL if comma separated
                     );
 
                     // 2. Insert Containers (Real Tables)
                     for (const c of containersData) {
-                        await pool.query(
+                        await client.query(
                             'INSERT INTO shipment_containers (shipment_id, container_no, container_type, packages) VALUES ($1, $2, $3, $4)',
                             [id, c.container_no, c.container_type, JSON.stringify(c.packages)]
                         );
@@ -425,14 +409,14 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
 
                 // --- 4. Handle Invoice ---
                 try {
-                    const existingInvoice = await pool.query('SELECT id FROM invoices WHERE shipment_id = $1', [id]);
+                    const existingInvoice = await client.query('SELECT id FROM invoices WHERE shipment_id = $1', [id]);
                     const priceVal = parseFloat(normalizedRow['price'] || normalizedRow['value'] || normalizedRow['amount'] || '0');
 
                     if (existingInvoice.rows.length > 0) {
                         // Invoice exists. 
                         // If user provided a specific Job Invoice No in excel, try to update the existing invoice ID to match it.
                         if (jobInvoiceNo && existingInvoice.rows[0].id !== jobInvoiceNo) {
-                            await pool.query('UPDATE invoices SET id = $1 WHERE shipment_id = $2', [jobInvoiceNo, id]);
+                            await client.query('UPDATE invoices SET id = $1 WHERE shipment_id = $2', [jobInvoiceNo, id]);
                         }
                     } else {
                         // Create New Invoice
@@ -442,7 +426,7 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
                             invoiceId = `INV-${new Date().getFullYear()}${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
                         }
 
-                        await pool.query(
+                        await client.query(
                             'INSERT INTO invoices (id, shipment_id, amount, status) VALUES ($1, $2, $3, $4)',
                             [invoiceId, id, priceVal, 'Pending']
                         );
@@ -462,7 +446,7 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
             }
         }
 
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
 
         // Log Action
         await logActivity(req.user.id, 'IMPORT_SHIPMENTS', `Imported ${successCount} shipments`, 'BATCH', 'EXCEL');
@@ -477,9 +461,11 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
 
     } catch (err) {
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
         console.error('Excel Import Error:', err);
         res.status(500).json({ error: 'Internal server error during import: ' + err.message });
+    } finally {
+        client.release();
     }
 });
 

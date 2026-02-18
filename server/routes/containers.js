@@ -9,7 +9,9 @@ const router = express.Router();
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const { search, sort, page = 1, limit = 50 } = req.query;
-        const offset = (page - 1) * limit;
+        const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
+        const limitNumber = Math.max(parseInt(limit, 10) || 50, 1);
+        const offset = (pageNumber - 1) * limitNumber;
 
         const baseCTE = `
             WITH all_containers AS (
@@ -73,9 +75,7 @@ router.get('/', authenticateToken, async (req, res) => {
         const countParams = [...params];
 
         // Add limit/offset to data params
-        params.push(limit, offset);
-
-        const result = await pool.query(query, params);
+        const dataParams = [...params, limitNumber, offset];
 
         // Count Query
         const countQuery = `
@@ -84,15 +84,18 @@ router.get('/', authenticateToken, async (req, res) => {
             ${whereClause}
         `;
 
-        const countResult = await pool.query(countQuery, countParams);
+        const [result, countResult] = await Promise.all([
+            pool.query(query, dataParams),
+            pool.query(countQuery, countParams)
+        ]);
         const totalRecords = parseInt(countResult.rows[0].count, 10);
 
         res.json({
             data: result.rows,
             total: totalRecords,
-            page: parseInt(page, 10),
-            limit: parseInt(limit, 10),
-            totalPages: Math.ceil(totalRecords / limit)
+            page: pageNumber,
+            limit: limitNumber,
+            totalPages: Math.ceil(totalRecords / limitNumber)
         });
 
     } catch (error) {

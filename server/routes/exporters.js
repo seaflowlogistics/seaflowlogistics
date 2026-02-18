@@ -77,6 +77,8 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    const client = await pool.connect();
+
     try {
         const workbook = XLSX.readFile(req.file.path);
         const sheetName = workbook.SheetNames[0];
@@ -90,6 +92,38 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
 
         let successCount = 0;
         let errors = [];
+
+        // Preload existing names once to avoid per-row lookups
+        const candidateNames = [];
+        for (const row of data) {
+            const normalizedRow = {};
+            const noSpaceRow = {};
+
+            Object.keys(row).forEach(key => {
+                const cleanKey = key.toLowerCase().trim()
+                    .replace(/[_\/]/g, ' ')
+                    .replace(/[^a-z0-9 ]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                normalizedRow[cleanKey] = row[key];
+                noSpaceRow[cleanKey.replace(/\s/g, '')] = row[key];
+            });
+
+            const name = normalizedRow['exporter name'] || normalizedRow['name'] || normalizedRow['exporter'] || normalizedRow['company'] || normalizedRow['exporter name company'] ||
+                noSpaceRow['exportername'] || noSpaceRow['name'] || noSpaceRow['exporter'] || noSpaceRow['company'];
+
+            if (name) candidateNames.push(name.toString().trim());
+        }
+
+        const uniqueNames = [...new Set(candidateNames)].filter(Boolean);
+        let existingNames = new Set();
+        if (uniqueNames.length > 0) {
+            const existingRes = await client.query('SELECT name FROM exporters WHERE name = ANY($1)', [uniqueNames]);
+            existingNames = new Set(existingRes.rows.map(r => r.name));
+        }
+
+        await client.query('BEGIN');
 
         for (const row of data) {
             const normalizedRow = {};
@@ -122,14 +156,12 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
             if (!name) continue;
 
             try {
-                // Check if exists
-                const checkRes = await pool.query('SELECT id FROM exporters WHERE name = $1', [name]);
-                if (checkRes.rows.length > 0) {
+                if (existingNames.has(name)) {
                     errors.push(`Exporter '${name}' already exists.`);
                     continue;
                 }
 
-                await pool.query(
+                await client.query(
                     'INSERT INTO exporters (name, country) VALUES ($1, $2)',
                     [
                         name,
@@ -137,12 +169,13 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
                     ]
                 );
                 successCount++;
+                existingNames.add(name);
             } catch (err) {
                 errors.push(`Failed to import ${name}: ${err.message}`);
             }
         }
 
-        fs.unlinkSync(req.file.path);
+        await client.query('COMMIT');
 
         if (successCount === 0 && errors.length === 0) {
             // Debug info if no rows were processed
@@ -160,8 +193,14 @@ router.post('/import', authenticateToken, upload.single('file'), async (req, res
         });
 
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Import error:', error);
         res.status(500).json({ error: 'Failed to process file: ' + error.message });
+    } finally {
+        client.release();
+        if (req.file?.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
     }
 });
 
