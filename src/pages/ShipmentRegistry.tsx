@@ -2187,14 +2187,7 @@ const ShipmentRegistry: React.FC = () => {
                                     <Package className="w-5 h-5 text-orange-600" />
                                     Containers
                                 </h3>
-                                {canEdit && (
-                                    <button
-                                        onClick={() => setAddingContainer(true)}
-                                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-bold flex items-center gap-2"
-                                    >
-                                        <Plus className="w-4 h-4" /> Add Container
-                                    </button>
-                                )}
+                                {/* Add button removed as per user request */}
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm text-left">
