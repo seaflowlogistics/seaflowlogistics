@@ -1446,12 +1446,31 @@ const ShipmentRegistry: React.FC = () => {
         const deliveryNotes = selectedJob.delivery_notes || (selectedJob.delivery_note ? [selectedJob.delivery_note] : []);
 
         // Status Checks
+        // Status Checks
         let isAllScheduled = false;
-        if (bls.length > 0) {
-            // Check if every BL has a corresponding schedule
-            isAllScheduled = bls.every((bl: any) => schedules.some((s: any) => s.bl_awb === bl.master_bl));
+
+        if (isSea && selectedJob.containers && selectedJob.containers.length > 0) {
+            // For Sea with containers, check if ALL containers are scheduled
+            const jobContainers = selectedJob.containers.map((c: any) => c.container_no);
+            const scheduledContainers: string[] = [];
+
+            schedules.forEach((s: any) => {
+                if (s.container_no) {
+                    const buckets = s.container_no.split(',').map((n: string) => n.trim());
+                    scheduledContainers.push(...buckets);
+                }
+            });
+
+            const distinctScheduled = new Set(scheduledContainers);
+            isAllScheduled = jobContainers.every((cNo: string) => distinctScheduled.has(cNo));
         } else {
-            isAllScheduled = schedules.length > 0;
+            // For Air/Other (or Sea with no containers), check BLs
+            if (bls.length > 0) {
+                // Check if every BL has a corresponding schedule
+                isAllScheduled = bls.every((bl: any) => schedules.some((s: any) => s.bl_awb === bl.master_bl));
+            } else {
+                isAllScheduled = schedules.length > 0;
+            }
         }
 
         const isDeliveryNoteIssued = deliveryNotes.length > 0 || (!!selectedJob.cleared_at);
