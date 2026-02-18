@@ -1578,7 +1578,13 @@ const ShipmentRegistry: React.FC = () => {
 
         const handleSaveJobDetails = async () => {
             try {
-                await shipmentsAPI.update(selectedJob.id, jobDetailsForm);
+                // Map exporter/consignee to sender_name/receiver_name for backend compatibility
+                const payload = {
+                    ...jobDetailsForm,
+                    sender_name: jobDetailsForm.exporter,
+                    receiver_name: jobDetailsForm.consignee
+                };
+                await shipmentsAPI.update(selectedJob.id, payload);
                 const res = await shipmentsAPI.getById(selectedJob.id);
                 setSelectedJob(res.data);
                 setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, ...res.data } : j));
