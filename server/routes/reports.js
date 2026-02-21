@@ -58,7 +58,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
                 COUNT(DISTINCT s.id) as count 
                 FROM shipments s
                 JOIN invoices i ON s.id = i.shipment_id
-                WHERE i.status = 'Completed' AND (${type === 'Monthly' ? `EXTRACT(YEAR FROM i.created_at) = $1` : `i.created_at >= NOW() - INTERVAL '5 years'`})
+                WHERE (${type === 'Monthly' ? `EXTRACT(YEAR FROM i.created_at) = $1` : `i.created_at >= NOW() - INTERVAL '5 years'`})
                 GROUP BY time_unit
             `,
             // Expenses (Job Payments) - Grouped by paid_by for counts, but we need vendor details for pie chart
@@ -69,8 +69,8 @@ router.get('/summary', authenticateToken, async (req, res) => {
                     COUNT(*) as count,
                     SUM(amount) as total_amount
                 FROM job_payments
-                WHERE status = 'Paid' 
-                AND (${type === 'Monthly' ? `EXTRACT(YEAR FROM paid_at) = $1` : `paid_at >= NOW() - INTERVAL '5 years'`})
+                WHERE status != 'Draft' 
+                AND (${type === 'Monthly' ? `EXTRACT(YEAR FROM COALESCE(paid_at, created_at)) = $1` : `COALESCE(paid_at, created_at) >= NOW() - INTERVAL '5 years'`})
                 GROUP BY paid_by, vendor
             `
         };
@@ -184,8 +184,8 @@ router.get('/download', authenticateToken, async (req, res) => {
                 (SELECT i.id FROM invoices i WHERE i.shipment_id = s.id LIMIT 1) as "Invoice No",
                 
                 -- Expense Summaries
-                COALESCE((SELECT SUM(amount) FROM job_payments WHERE job_id = s.id AND status = 'Paid' AND paid_by = 'Company'), 0) as "Company Paid Exp",
-                COALESCE((SELECT SUM(amount) FROM job_payments WHERE job_id = s.id AND status = 'Paid' AND paid_by IN ('Client', 'Customer')), 0) as "Customer Paid Exp"
+                COALESCE((SELECT SUM(amount) FROM job_payments WHERE job_id = s.id AND status != 'Draft' AND paid_by = 'Company'), 0) as "Company Paid Exp",
+                COALESCE((SELECT SUM(amount) FROM job_payments WHERE job_id = s.id AND status != 'Draft' AND paid_by IN ('Client', 'Customer')), 0) as "Customer Paid Exp"
 
             FROM shipments s
             WHERE 1=1
@@ -227,8 +227,8 @@ router.get('/download', authenticateToken, async (req, res) => {
                 COUNT(*) as "Count",
                 SUM(amount) as "Total Amount"
             FROM job_payments
-            WHERE status = 'Paid' AND paid_by = 'Company'
-            ${type === 'Monthly' ? `AND EXTRACT(YEAR FROM paid_at) = $1` : `AND paid_at >= NOW() - INTERVAL '5 years'`}
+            WHERE status != 'Draft' AND paid_by = 'Company'
+            ${type === 'Monthly' ? `AND EXTRACT(YEAR FROM COALESCE(paid_at, created_at)) = $1` : `AND COALESCE(paid_at, created_at) >= NOW() - INTERVAL '5 years'`}
             GROUP BY vendor
         `;
         const companyExp = await pool.query(companyExpQuery, params);
@@ -242,8 +242,8 @@ router.get('/download', authenticateToken, async (req, res) => {
                 COUNT(*) as "Count",
                 SUM(amount) as "Total Amount"
             FROM job_payments
-            WHERE status = 'Paid' AND paid_by IN ('Client', 'Customer')
-            ${type === 'Monthly' ? `AND EXTRACT(YEAR FROM paid_at) = $1` : `AND paid_at >= NOW() - INTERVAL '5 years'`}
+            WHERE status != 'Draft' AND paid_by IN ('Client', 'Customer')
+            ${type === 'Monthly' ? `AND EXTRACT(YEAR FROM COALESCE(paid_at, created_at)) = $1` : `AND COALESCE(paid_at, created_at) >= NOW() - INTERVAL '5 years'`}
             GROUP BY vendor
         `;
         const customerExp = await pool.query(customerExpQuery, params);
