@@ -218,7 +218,7 @@ const ClearanceSchedule: React.FC = () => {
                 const consigneesRes = await consigneesAPI.getAll();
                 setConsigneesList(consigneesRes.data || []);
 
-                const shipmentsRes = await shipmentsAPI.getAll();
+                const shipmentsRes = await shipmentsAPI.getAll({ status: 'All' });
                 setShipmentsList(shipmentsRes.data || []);
             } catch (error) {
                 console.error("Failed to fetch clearance schedules", error);
