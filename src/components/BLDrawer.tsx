@@ -164,7 +164,7 @@ const BLDrawer: React.FC<BLDrawerProps> = ({ isOpen, onClose, onSave, initialDat
 
             // CHECK LCL CONTAINERS HAVE CBM
             for (const container of formData.containers || []) {
-                if (['LCL 20', 'LCL 40'].includes(container.container_type)) {
+                if (['LCL 20', 'LCL 40', 'LO'].includes(container.container_type)) {
                     if (container.packages && container.packages.some((p: any) => !p.cbm)) {
                         alert(`CBM is required for all packages in ${container.container_type} container`);
                         return;
@@ -245,7 +245,7 @@ const BLDrawer: React.FC<BLDrawerProps> = ({ isOpen, onClose, onSave, initialDat
                                     // SEA MODE: Containers & Nested Packages
                                     <>
                                         {formData.containers?.map((container: any, cIdx: number) => {
-                                            const isLCL = ['LCL 20', 'LCL 40'].includes(container.container_type);
+                                            const isLCL = ['LCL 20', 'LCL 40', 'LO'].includes(container.container_type);
                                             return (
                                                 <div key={cIdx} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                                                     {/* Container Header Line */}
