@@ -2185,7 +2185,7 @@ const ShipmentRegistry: React.FC = () => {
                                                         <option value="FR 40">40' FR </option>
                                                         <option value="RF 20">20' RF </option>
                                                         <option value="RF 40">40' RF </option>
-                                                        <option value="LO">Loose Cargo</option>
+                                                        <option value="LOOSE CARGO">Loose Cargo</option>
                                                     </select>
                                                 </td>
                                                 <td className="p-2">
@@ -2230,7 +2230,7 @@ const ShipmentRegistry: React.FC = () => {
                                                                     <option value="FR 40">40' FR </option>
                                                                     <option value="RF 20">20' RF </option>
                                                                     <option value="RF 40">40' RF </option>
-                                                                    <option value="LO">Loose Cargo</option>
+                                                                    <option value="LOOSE CARGO">Loose Cargo</option>
                                                                 </select>
                                                             </td>
                                                             <td className="p-2">
@@ -2303,7 +2303,7 @@ const ShipmentRegistry: React.FC = () => {
                                                                             <Package className="w-3 h-3" /> Packages inside {c.container_no}
                                                                         </p>
                                                                         {(() => {
-                                                                            const isLCL = ['LCL 20', 'LCL 40'].includes(c.container_type);
+                                                                            const isLCL = ['LCL 20', 'LCL 40', 'LOOSE CARGO'].includes(c.container_type);
                                                                             const gridCols = isLCL ? "grid-cols-4" : "grid-cols-3";
                                                                             return (
                                                                                 <>
