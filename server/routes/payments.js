@@ -185,14 +185,26 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
             [req.user.id, 'UPDATE_PAYMENT_STATUS', `Updated payment status to ${status}`, 'PAYMENT', id]
         );
 
-        // Update Job Status/Progress based on Confirmation
-        if (status === 'Confirmed') {
-            // If Confirmed (by Clearance), send back to Accounts (Shipment Status: 'Payment')
-            // And update progress 75%
-            await pool.query("UPDATE shipments SET status = 'Payment', progress = 75 WHERE id = $1", [updatedPayment.job_id]);
+        // Update Job Status/Progress based on state
+        if (status === 'Confirmed' || status === 'Approved') {
+            const jobCheck = await pool.query(`
+                SELECT COUNT(*) FILTER (WHERE status NOT IN ('Paid', 'Approved', 'Confirmed')) as pending_count
+                FROM job_payments 
+                WHERE job_id = $1
+            `, [updatedPayment.job_id]);
 
-            // Notify Accountants
-            await broadcastNotification('Accountant', 'Payment Confirmed', `Payment for Job ${updatedPayment.job_id} confirmed by Clearance.`, 'action', `/registry?selectedJobId=${updatedPayment.job_id}`, 'SHIPMENT', updatedPayment.job_id);
+            const pendingCount = parseInt(jobCheck.rows[0].pending_count) || 0;
+            if (pendingCount === 0) {
+                await pool.query("UPDATE shipments SET progress = 75 WHERE id = $1 AND status != 'Completed' AND progress < 75", [updatedPayment.job_id]);
+            }
+
+            if (status === 'Confirmed') {
+                // If Confirmed (by Clearance), send back to Accounts (Shipment Status: 'Payment')
+                await pool.query("UPDATE shipments SET status = 'Payment' WHERE id = $1", [updatedPayment.job_id]);
+
+                // Notify Accountants
+                await broadcastNotification('Accountant', 'Payment Confirmed', `Payment for Job ${updatedPayment.job_id} confirmed by Clearance.`, 'action', `/registry?selectedJobId=${updatedPayment.job_id}`, 'SHIPMENT', updatedPayment.job_id);
+            }
         }
 
         res.json(result.rows[0]);
