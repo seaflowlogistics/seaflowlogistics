@@ -917,7 +917,7 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
         `;
 
         const shipmentValues = [
-            id, customer || null, status, progress,
+            id, customer || 'Unknown', status, progress,
             sender_name || null, sender_address || null, receiver_name || null, receiver_address || null,
             safeWeight, dimensions || null, safePrice,
             date || null, expected_delivery_date || null, transport_mode || 'SEA',
