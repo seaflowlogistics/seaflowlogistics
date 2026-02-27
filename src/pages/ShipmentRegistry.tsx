@@ -168,9 +168,9 @@ const ShipmentRegistry: React.FC = () => {
             const payload = {
                 ...data,
                 // no_of_pkgs: data.no_of_pkgs ? data.no_of_pkgs.toString() : null, // Removed per request
-                invoice_items: data.invoice_items || null,
-                invoice_no: data.invoice_no || null,
-                customs_r_form: data.customs_r_form || null,
+                invoice_items: data.invoice_items ?? '',
+                invoice_no: data.invoice_no ?? '',
+                customs_r_form: data.customs_r_form ?? '',
                 unloaded_date: data.unloaded_date || null
             };
 
