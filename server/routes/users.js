@@ -228,6 +228,11 @@ router.delete('/:id', authorizeRole(['Administrator', 'All']), async (req, res) 
         }
         const usernameToDelete = check.rows[0].username;
 
+        // Handle missing foreign key constraints manually
+        await pool.query('DELETE FROM notifications WHERE user_id = $1', [id]);
+        await pool.query('UPDATE job_payments SET requested_by = NULL WHERE requested_by = $1', [id]);
+        await pool.query('UPDATE job_payments SET processed_by = NULL WHERE processed_by = $1', [id]);
+
         await pool.query('DELETE FROM users WHERE id = $1', [id]);
 
         // Log action

@@ -133,9 +133,11 @@ const Users: React.FC = () => {
         if (!window.confirm('Are you sure you want to delete this user?')) return;
         try {
             await usersAPI.delete(id);
+            setSuccess('User deleted successfully');
             fetchUsers();
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error deleting user:', err);
+            setError(err.response?.data?.error || 'Failed to delete user');
         }
     };
 
@@ -219,6 +221,14 @@ const Users: React.FC = () => {
                 </div>
 
                 <div className="glass-card overflow-hidden">
+                    {error && !isModalOpen && (
+                        <div className="bg-red-50 text-red-700 p-4 border-b border-red-100 flex items-center justify-between animate-fade-in">
+                            <span className="font-medium">{error}</span>
+                            <button onClick={() => setError('')} className="text-red-500 hover:text-red-700">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    )}
                     {success && (
                         <div className="bg-green-50 text-green-700 p-4 border-b border-green-100 flex items-center justify-between animate-fade-in">
                             <span className="font-medium">{success}</span>
