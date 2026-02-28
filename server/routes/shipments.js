@@ -45,23 +45,15 @@ const generateShipmentId = async (transportMode) => {
     const sPattern = `S${year}-%`;
     const aPattern = `A${year}-%`;
 
-    // Get all IDs for this year to calculate max sequence safely in JS
+    // Calculate max sequence directly in the database
     const result = await pool.query(
-        "SELECT id FROM shipments WHERE id LIKE $1 OR id LIKE $2",
+        `SELECT MAX(CAST(SUBSTRING(id FROM '-([0-9]+)$') AS INTEGER)) as max_num
+         FROM shipments 
+         WHERE id LIKE $1 OR id LIKE $2`,
         [sPattern, aPattern]
     );
 
-    let maxNum = 0;
-    result.rows.forEach(row => {
-        const parts = row.id.split('-');
-        if (parts.length === 2) {
-            const num = parseInt(parts[1], 10);
-            if (!isNaN(num) && num > maxNum) {
-                maxNum = num;
-            }
-        }
-    });
-
+    const maxNum = result.rows[0]?.max_num || 0;
     const nextNum = maxNum + 1;
 
     return `${prefixChar}${year}-${String(nextNum).padStart(4, '0')}`;
@@ -196,21 +188,13 @@ router.post('/import', authenticateToken, authorizeRole(['Administrator', 'All',
         const aPattern = `A${year}-%`;
 
         const lastIdResult = await pool.query(
-            "SELECT id FROM shipments WHERE id LIKE $1 OR id LIKE $2",
+            `SELECT MAX(CAST(SUBSTRING(id FROM '-([0-9]+)$') AS INTEGER)) as max_num
+             FROM shipments 
+             WHERE id LIKE $1 OR id LIKE $2`,
             [sPattern, aPattern]
         );
 
-        let maxNum = 0;
-        lastIdResult.rows.forEach(row => {
-            const parts = row.id.split('-');
-            if (parts.length === 2) {
-                const num = parseInt(parts[1], 10);
-                if (!isNaN(num) && num > maxNum) {
-                    maxNum = num;
-                }
-            }
-        });
-
+        let maxNum = lastIdResult.rows[0]?.max_num || 0;
         let nextIdNum = maxNum + 1;
 
         await pool.query('BEGIN');
@@ -927,11 +911,10 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
 
         const shipmentResult = await pool.query(shipmentQuery, shipmentValues);
 
-        // Handle File Uploads
+        // Handle File Uploads (Parallel)
         if (req.files) {
             const fileTypes = ['invoice', 'packing_list', 'transport_doc'];
-
-            for (const type of fileTypes) {
+            const uploadPromises = fileTypes.map(async (type) => {
                 if (req.files[type]) {
                     const file = req.files[type][0];
                     let finalPath = file.path;
@@ -939,11 +922,9 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
                     try {
                         const uploadResult = await uploadToSupabase(file.path, 'uploads', `shipments/${id}`);
                         finalPath = uploadResult.publicUrl;
-                        // Clean up local file after successful upload
                         if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
                     } catch (uploadError) {
                         console.error(`Supabase upload failed for ${type}:`, uploadError.message);
-                        // Fallback: use local path (if not on Vercel)
                     }
 
                     await pool.query(
@@ -951,45 +932,53 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
                         [id, file.originalname, finalPath, file.mimetype, file.size, type]
                     );
                 }
-            }
+            });
+            await Promise.all(uploadPromises);
         }
 
         // Create Job Invoice only if provided manually
+        let invoiceGenerationPromise = null;
         if (job_invoice_no) {
             const invoiceId = job_invoice_no;
 
-            // Generate PDF
-            let invoicePath = null;
-            try {
-                const invoiceData = {
-                    receiver_name: receiver_name,
-                    customer: customer,
-                    receiver_address: receiver_address,
-                    destination: destination,
-                    description: description,
-                    price: safePrice
-                };
-                invoicePath = await generateInvoicePDF(invoiceData, invoiceId);
-            } catch (pdfError) {
-                console.error('PDF Generation failed:', pdfError);
-                // Continue without PDF, just DB record
-            }
+            // Generate PDF concurrently with other tasks after commit
+            invoiceGenerationPromise = (async () => {
+                let invoicePath = null;
+                try {
+                    const invoiceData = {
+                        receiver_name: receiver_name,
+                        customer: customer,
+                        receiver_address: receiver_address,
+                        destination: destination,
+                        description: description,
+                        price: safePrice
+                    };
+                    invoicePath = await generateInvoicePDF(invoiceData, invoiceId);
+                } catch (pdfError) {
+                    console.error('PDF Generation failed:', pdfError);
+                }
 
-            await pool.query(
-                'INSERT INTO invoices (id, shipment_id, amount, status, file_path) VALUES ($1, $2, $3, $4, $5)',
-                [invoiceId, id, safePrice, 'Pending', invoicePath]
-            );
+                await pool.query(
+                    'INSERT INTO invoices (id, shipment_id, amount, status, file_path) VALUES ($1, $2, $3, $4, $5)',
+                    [invoiceId, id, safePrice, 'Pending', invoicePath]
+                );
+            })();
         }
 
-        // Log action
-        await logActivity(req.user.id, 'CREATE_SHIPMENT', `Created shipment ${id}`, 'SHIPMENT', id);
+        // Log action (Parallel)
+        const logPromise = logActivity(req.user.id, 'CREATE_SHIPMENT', `Created shipment ${id}`, 'SHIPMENT', id);
 
         await pool.query('COMMIT');
 
+        // Fire and forget additional parallel actions
+        if (invoiceGenerationPromise) {
+            invoiceGenerationPromise.catch(console.error);
+        }
+        logPromise.catch(console.error);
+
         // Notifications
         try {
-            // Notify All Users
-            await broadcastToAll('New Job Created', `New Job ${id} created by ${req.user.username}`, 'info', `/registry?selectedJobId=${id}`);
+            broadcastToAll('New Job Created', `New Job ${id} created by ${req.user.username}`, 'info', `/registry?selectedJobId=${id}`).catch(console.error);
         } catch (noteError) {
             console.error('Notification error:', noteError);
         }
