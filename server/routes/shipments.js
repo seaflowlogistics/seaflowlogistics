@@ -885,107 +885,112 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
         const safePrice = price ? parseFloat(price) : 0;
         const safeWeight = weight || '0';
 
-        // Begin transaction
-        await pool.query('BEGIN');
-
-        const shipmentQuery = `
-            INSERT INTO shipments (
-                id, customer, status, progress, 
-                sender_name, sender_address, receiver_name, receiver_address,
-                weight, dimensions, price,
-                date, expected_delivery_date, transport_mode,
-                driver, vehicle_id, service, billing_contact, shipment_type, origin, 
-                created_by, exporter
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-            RETURNING *
-        `;
-
-        const shipmentValues = [
-            id, customer || 'Unknown', status, progress,
-            sender_name || null, sender_address || null, receiver_name || null, receiver_address || null,
-            safeWeight, dimensions || null, safePrice,
-            date || null, expected_delivery_date || null, transport_mode || 'SEA',
-            driver || null, vehicle_id || null, service || null, billing_contact || null, shipment_type || null, origin || null,
-            req.user?.id || null, sender_name || null // Set exporter same as sender_name
-        ];
-
-        const shipmentResult = await pool.query(shipmentQuery, shipmentValues);
-
-        // Handle File Uploads (Parallel)
-        if (req.files) {
-            const fileTypes = ['invoice', 'packing_list', 'transport_doc'];
-            const uploadPromises = fileTypes.map(async (type) => {
-                if (req.files[type]) {
-                    const file = req.files[type][0];
-                    let finalPath = file.path;
-
-                    try {
-                        const uploadResult = await uploadToSupabase(file.path, 'uploads', `shipments/${id}`);
-                        finalPath = uploadResult.publicUrl;
-                        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-                    } catch (uploadError) {
-                        console.error(`Supabase upload failed for ${type}:`, uploadError.message);
-                    }
-
-                    await pool.query(
-                        'INSERT INTO shipment_documents (shipment_id, file_name, file_path, file_type, file_size, document_type) VALUES ($1, $2, $3, $4, $5, $6)',
-                        [id, file.originalname, finalPath, file.mimetype, file.size, type]
-                    );
-                }
-            });
-            await Promise.all(uploadPromises);
-        }
-
-        // Create Job Invoice only if provided manually
-        let invoiceGenerationPromise = null;
-        if (job_invoice_no) {
-            const invoiceId = job_invoice_no;
-
-            // Generate PDF concurrently with other tasks after commit
-            invoiceGenerationPromise = (async () => {
-                let invoicePath = null;
-                try {
-                    const invoiceData = {
-                        receiver_name: receiver_name,
-                        customer: customer,
-                        receiver_address: receiver_address,
-                        destination: destination,
-                        description: description,
-                        price: safePrice
-                    };
-                    invoicePath = await generateInvoicePDF(invoiceData, invoiceId);
-                } catch (pdfError) {
-                    console.error('PDF Generation failed:', pdfError);
-                }
-
-                await pool.query(
-                    'INSERT INTO invoices (id, shipment_id, amount, status, file_path) VALUES ($1, $2, $3, $4, $5)',
-                    [invoiceId, id, safePrice, 'Pending', invoicePath]
-                );
-            })();
-        }
-
-        // Log action (Parallel)
-        const logPromise = logActivity(req.user.id, 'CREATE_SHIPMENT', `Created shipment ${id}`, 'SHIPMENT', id);
-
-        await pool.query('COMMIT');
-
-        // Fire and forget additional parallel actions
-        if (invoiceGenerationPromise) {
-            invoiceGenerationPromise.catch(console.error);
-        }
-        logPromise.catch(console.error);
-
-        // Notifications
+        const client = await pool.connect();
         try {
-            broadcastToAll('New Job Created', `New Job ${id} created by ${req.user.username}`, 'info', `/registry?selectedJobId=${id}`).catch(console.error);
-        } catch (noteError) {
-            console.error('Notification error:', noteError);
-        }
+            await client.query('BEGIN');
 
-        res.status(201).json(shipmentResult.rows[0]);
+            const shipmentQuery = `
+                INSERT INTO shipments (
+                    id, customer, status, progress, 
+                    sender_name, sender_address, receiver_name, receiver_address,
+                    weight, dimensions, price,
+                    date, expected_delivery_date, transport_mode,
+                    driver, vehicle_id, service, billing_contact, shipment_type, origin, 
+                    created_by, exporter
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+                RETURNING *
+            `;
+
+            const shipmentValues = [
+                id, customer || 'Unknown', status, progress,
+                sender_name || null, sender_address || null, receiver_name || null, receiver_address || null,
+                safeWeight, dimensions || null, safePrice,
+                date || null, expected_delivery_date || null, transport_mode || 'SEA',
+                driver || null, vehicle_id || null, service || null, billing_contact || null, shipment_type || null, origin || null,
+                req.user?.id || null, sender_name || null
+            ];
+
+            const shipmentResult = await client.query(shipmentQuery, shipmentValues);
+
+            // Handle File Uploads (Parallel)
+            if (req.files) {
+                const fileTypes = ['invoice', 'packing_list', 'transport_doc'];
+                const uploadPromises = fileTypes.map(async (type) => {
+                    if (req.files[type]) {
+                        const file = req.files[type][0];
+                        let finalPath = file.path;
+
+                        try {
+                            const uploadResult = await uploadToSupabase(file.path, 'uploads', `shipments/${id}`);
+                            finalPath = uploadResult.publicUrl;
+                            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                        } catch (uploadError) {
+                            console.error(`Supabase upload failed for ${type}:`, uploadError.message);
+                        }
+
+                        await client.query(
+                            'INSERT INTO shipment_documents (shipment_id, file_name, file_path, file_type, file_size, document_type) VALUES ($1, $2, $3, $4, $5, $6)',
+                            [id, file.originalname, finalPath, file.mimetype, file.size, type]
+                        );
+                    }
+                });
+                await Promise.all(uploadPromises);
+            }
+
+            // Create Job Invoice only if provided manually
+            let invoiceGenerationPromise = null;
+            if (job_invoice_no) {
+                const invoiceId = job_invoice_no;
+
+                // Fire invoice creation using client inside the tx
+                await client.query(
+                    'INSERT INTO invoices (id, shipment_id, amount, status) VALUES ($1, $2, $3, $4)',
+                    [invoiceId, id, safePrice, 'Pending']
+                );
+
+                // Generate PDF concurrently with other tasks after commit
+                invoiceGenerationPromise = (async () => {
+                    try {
+                        const invoiceData = {
+                            receiver_name, customer, receiver_address, destination, description, price: safePrice
+                        };
+                        const invoicePath = await generateInvoicePDF(invoiceData, invoiceId);
+
+                        await pool.query('UPDATE invoices SET file_path = $1 WHERE id = $2', [invoicePath, invoiceId]);
+                    } catch (pdfError) {
+                        console.error('PDF Generation failed:', pdfError);
+                    }
+                })();
+            }
+
+            // Log action synchronously in the transaction
+            await client.query(
+                'INSERT INTO audit_logs (user_id, action, details, entity_type, entity_id) VALUES ($1, $2, $3, $4, $5)',
+                [req.user.id, 'CREATE_SHIPMENT', `Created shipment ${id}`, 'SHIPMENT', id]
+            ).catch(err => console.error('Failed to write audit log:', err));
+
+            await client.query('COMMIT');
+            client.release();
+
+            // Fire and forget additional parallel actions
+            if (invoiceGenerationPromise) {
+                invoiceGenerationPromise.catch(console.error);
+            }
+
+            // Notifications
+            try {
+                broadcastToAll('New Job Created', `New Job ${id} created by ${req.user.username}`, 'info', `/registry?selectedJobId=${id}`).catch(console.error);
+            } catch (noteError) {
+                console.error('Notification error:', noteError);
+            }
+
+            res.status(201).json(shipmentResult.rows[0]);
+        } catch (error) {
+            await client.query('ROLLBACK');
+            client.release();
+            throw error;
+        }
     } catch (error) {
-        await pool.query('ROLLBACK');
         console.error('Create shipment error:', error);
         res.status(500).json({ error: 'Internal server error: ' + error.message });
     }
