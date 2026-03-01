@@ -205,14 +205,8 @@ const Login: React.FC = () => {
                         )}
                     </form>
 
-                    {!requires2FA && (
-                        /* Demo Credentials */
-                        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-xs text-blue-800 font-medium mb-1">Demo Credentials:</p>
-                            <p className="text-xs text-blue-700">Username: <span className="font-mono font-semibold">admin</span></p>
-                            <p className="text-xs text-blue-700">Password: <span className="font-mono font-semibold">admin123</span></p>
-                        </div>
-                    )}
+
+
                 </div>
 
                 <p className="text-center mt-6 text-white/80 text-sm">
