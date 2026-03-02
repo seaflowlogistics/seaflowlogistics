@@ -1622,7 +1622,7 @@ const ShipmentRegistry: React.FC = () => {
                         <div>
                             {/* Quick Actions Icons */}
                             <div className="flex items-center gap-2 mb-3">
-                                {canEdit && (
+                                {canEditjobinvoice && (
                                     <>
                                         <button
                                             onClick={() => handleOpenPopup('invoice', selectedJob)}
@@ -1631,6 +1631,10 @@ const ShipmentRegistry: React.FC = () => {
                                         >
                                             <FileText className="w-5 h-5" />
                                         </button>
+                                    </>
+                                )}
+                                {canEdit && (
+                                    <>
                                         <button
                                             onClick={() => handleOpenPopup('bl', selectedJob)}
                                             className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
@@ -1965,7 +1969,7 @@ const ShipmentRegistry: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-200 relative">
                             <div className="absolute top-6 right-6 flex gap-2">
                                 <div className="relative">
-                                    {canEdit && (
+                                    {canEditjobinvoice && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'invoice' ? null : 'invoice'); }}
                                             className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
@@ -1976,7 +1980,7 @@ const ShipmentRegistry: React.FC = () => {
                                     )}
                                     {openMenu === 'invoice' && (
                                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-100 py-1 animate-fade-in-down">
-                                            {canEdit && (
+                                            {canEditjobinvoice && (
                                                 <button
                                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium flex items-center gap-2"
                                                     onClick={() => { handleOpenPopup('invoice', selectedJob); setOpenMenu(null); }}
