@@ -740,7 +740,17 @@ router.post('/:id/bls', authenticateToken, async (req, res) => {
                 [master_bl]
             );
             if (check.rows.length > 0) {
-                return res.status(400).json({ error: `BL Number "${master_bl}" already exists in Job ${check.rows[0].shipment_id}` });
+                return res.status(400).json({ error: 'You have entered duplicate value' });
+            }
+        }
+
+        if (house_bl) {
+            const check = await pool.query(
+                'SELECT shipment_id FROM shipment_bls WHERE house_bl = $1',
+                [house_bl]
+            );
+            if (check.rows.length > 0) {
+                return res.status(400).json({ error: 'You have entered duplicate value' });
             }
         }
 
@@ -798,7 +808,17 @@ router.put('/:id/bls/:blId', authenticateToken, async (req, res) => {
                 [master_bl, blId]
             );
             if (check.rows.length > 0) {
-                return res.status(400).json({ error: `BL Number "${master_bl}" already exists in Job ${check.rows[0].shipment_id}` });
+                return res.status(400).json({ error: 'You have entered duplicate value' });
+            }
+        }
+
+        if (house_bl) {
+            const check = await pool.query(
+                'SELECT shipment_id FROM shipment_bls WHERE house_bl = $1 AND id != $2',
+                [house_bl, blId]
+            );
+            if (check.rows.length > 0) {
+                return res.status(400).json({ error: 'You have entered duplicate value' });
             }
         }
 
@@ -884,6 +904,13 @@ router.post('/', authenticateToken, authorizeRole(['Administrator', 'All', 'Docu
         // Handle case where numeric fields might be undefined or empty string
         const safePrice = price ? parseFloat(price) : 0;
         const safeWeight = weight || '0';
+
+        if (job_invoice_no) {
+            const check = await pool.query('SELECT shipment_id FROM invoices WHERE id = $1', [job_invoice_no]);
+            if (check.rows.length > 0) {
+                return res.status(400).json({ error: 'You have entered duplicate value' });
+            }
+        }
 
         const client = await pool.connect();
         try {
@@ -1019,14 +1046,21 @@ router.put('/:id', authenticateToken, async (req, res) => {
         if (invoice_no) {
             const check = await pool.query('SELECT id FROM shipments WHERE invoice_no = $1 AND id != $2', [invoice_no, id]);
             if (check.rows.length > 0) {
-                return res.status(400).json({ error: `Shipment Invoice No "${invoice_no}" already exists in Job ${check.rows[0].id}` });
+                return res.status(400).json({ error: 'You have entered duplicate value' });
             }
         }
 
         if (customs_r_form) {
             const check = await pool.query('SELECT id FROM shipments WHERE customs_r_form = $1 AND id != $2', [customs_r_form, id]);
             if (check.rows.length > 0) {
-                return res.status(400).json({ error: `Customs R Form "${customs_r_form}" already exists in Job ${check.rows[0].id}` });
+                return res.status(400).json({ error: 'You have entered duplicate value' });
+            }
+        }
+
+        if (job_invoice_no) {
+            const check = await pool.query('SELECT shipment_id FROM invoices WHERE id = $1 AND shipment_id != $2', [job_invoice_no, id]);
+            if (check.rows.length > 0) {
+                return res.status(400).json({ error: 'You have entered duplicate value' });
             }
         }
 
